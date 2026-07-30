@@ -1,11 +1,11 @@
-# API Sözleşmesi (v1.0)
+# API Sözleşmesi (v1.0 — FINAL)
 
 > **Sahiplik:** Bu dosyayı SADECE backend ajanı/geliştiricisi günceller. Mobile ajanı
-> salt okur ve buradaki sözleşmeye göre kod yazar. Bir alan/endpoint burada yoksa
-> mobile tarafı onu varsaymaz — `docs/DECISIONS.md`'e istek olarak düşer.
+> salt okur ve buradaki sözleşmeye göre kod yazar.
 >
 > Değişiklik yapan backend ajanı: önce burayı güncelle, sonra `docs/DECISIONS.md`'e
 > tarihli not düş ve PR açıklamasında mobile'ı etiketle.
+
 
 Temel yol: `/api/v1`  
 Kimlik doğrulama: JWT (access + refresh). `/auth/*` hariç tüm endpoint'ler geçerli
