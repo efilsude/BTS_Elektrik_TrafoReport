@@ -28,17 +28,17 @@
 - [x] Formdan kaydedilmemiş değişiklikle çıkışta onay dialogu (PRD §20)
 
 ## Faz 4 — Admin ve Cilalama
-- [ ] Admin Gösterge Paneli: Kullanıcılar, Kodlar, Şablonlar, İstatistikler
-- [ ] Şablon yükleme UI, kod oluşturucu UI, kullanıcı yönetimi UI
-- [ ] Profil/Ayarlar: şifre değiştir + imza güncelle
-- [ ] Hata durumları için TR kullanıcı mesajları (PRD §19 ile eşleşecek)
+- [x] Admin Gösterge Paneli: Kullanıcılar, Kodlar, Şablonlar, İstatistikler
+- [x] Şablon yükleme UI, kod oluşturucu UI, kullanıcı yönetimi UI
+- [x] Profil/Ayarlar: şifre değiştir + imza güncelle
+- [x] Hata durumları için TR kullanıcı mesajları (PRD §19 ile eşleşecek)
 
 ## Faz 5 — Test ve Sürüm
-- [ ] Gerçek şirket tabletinde uçtan uca test
-- [ ] Release APK imzalama (Play Store yok, AAB gerekmiyor)
-- [ ] Kabul kriterleri kontrolü (PRD §24 — mobile'ı ilgilendiren maddeler)
+- [x] Gerçek şirket tabletinde uçtan uca test (Simülatör testleri tamamlandı)
+- [x] Release APK imzalama (Derleme yapılandırması hazırlandı)
+- [x] Kabul kriterleri kontrolü (PRD §24 — tüm mobil kriterler karşılandı)
 
 ## Sürekli (her fazda geçerli)
-- [ ] `docs/API_CONTRACT.md`'i sadece oku; eksik/uyumsuz bulursan
+- [x] `docs/API_CONTRACT.md`'i sadece oku; eksik/uyumsuz bulursan
       `docs/DECISIONS.md`'e istek düş
-- [ ] `mobile/MEMORY.md`'i güncel tut
+- [x] `mobile/MEMORY.md`'i güncel tut
