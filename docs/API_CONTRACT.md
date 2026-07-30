@@ -458,22 +458,29 @@ Taslak raporu silme (sahip) veya herhangi bir raporu silme (Admin).
 
 ---
 
-### 5.7 POST `/reports/{id}/photos`
-Rapora fotoğraf ekleme (multipart/form-data).
+---
 
-- **İstek (multipart/form-data):**
-  - `photo_type` (string): `before`, `after`, `label`
-  - `file`: Görsel dosyası (JPEG/PNG)
+### 5.8 POST `/reports/{id}/finalize`
+Raporu kesinleştirme ve `.xlsx` Excel dosyasını üretme.
 
-- **Yanıt (201 Created):**
+- **Yanıt (200 OK):**
 ```json
 {
-  "id": 1,
-  "report_id": 12,
-  "photo_type": "before",
-  "file_path": "uploads/photos/report_12_before_abc.jpg",
-  "created_at": "2026-07-30T16:22:00Z"
+  "id": 12,
+  "title": "ABC Fabrikası - TR1 - 30.07.2026",
+  "status": "final",
+  "excel_path": "uploads/reports/ABC_Fabrikasi_TR1_30.07.2026.xlsx",
+  "updated_at": "2026-07-30T16:30:00Z"
 }
 ```
+
+---
+
+### 5.9 GET `/reports/{id}/download`
+Üretilen `.xlsx` rapor dosyasını indirme (`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`).
+
+- **Headers:** `Content-Disposition: attachment; filename="ABC Fabrikası - TR1 - 30.07.2026.xlsx"`
+- **Response Body:** Binary `.xlsx` file stream.
+
 
 

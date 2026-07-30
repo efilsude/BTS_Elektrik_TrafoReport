@@ -21,15 +21,16 @@
 
 
 ## Faz 3 — Excel Motoru (EN KRİTİK, PRD §12)
-- [ ] Üç şablonun (`HERMETIK`, `KURU TİP`, `GT`) hücre eşlemesini çıkar →
+- [x] Üç şablonun (`HERMETIK`, `KURU TİP`, `GT`) hücre eşlemesini çıkar →
       `docs/EXCEL_CELL_MAPPING.md`'i doldur
-- [ ] openpyxl üretim motoru: stil/birleşim/formül koruma
-- [ ] Tarih → Excel seri dönüşümü (epoch 1899-12-30)
-- [ ] Fotoğraf ekleme (yer tutucu varsa/yoksa mantığı, PRD §10)
-- [ ] Dosya adlandırma: `{Müşteri} - {Trafo Etiketi} - {GG.AA.YYYY}.xlsx`
-- [ ] `POST /reports/{id}/finalize`, `GET /reports/{id}/download`
-- [ ] Doğrulama: üretilen dosya orijinal şablonla düzen bakımından birebir aynı
+- [x] openpyxl üretim motoru: stil/birleşim/formül koruma
+- [x] Tarih → Excel seri dönüşümü (epoch 1899-12-30)
+- [x] Fotoğraf ekleme (yer tutucu varsa/yoksa mantığı, PRD §10)
+- [x] Dosya adlandırma: `{Müşteri} - {Trafo Etiketi} - {GG.AA.YYYY}.xlsx`
+- [x] `POST /reports/{id}/finalize`, `GET /reports/{id}/download`
+- [x] Doğrulama: üretilen dosya orijinal şablonla düzen bakımından birebir aynı
       (Kabul Kriteri #1, PRD §24)
+
 
 ## Faz 4 — Admin ve Cilalama
 - [ ] Şablon yükleme (`POST /admin/templates`)
