@@ -1,0 +1,32 @@
+# --- Python / FastAPI (backend/) ---
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.pyc
+backend/.venv/
+backend/venv/
+backend/.env
+backend/*.egg-info/
+backend/.pytest_cache/
+backend/instance/
+backend/storage/uploads/
+
+# --- Flutter / Dart (mobile/) ---
+mobile/.dart_tool/
+mobile/.packages
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/**/ios/Pods/
+mobile/**/ios/.symlinks/
+mobile/**/android/.gradle/
+mobile/**/android/local.properties
+mobile/*.iml
+
+# --- Genel ---
+.DS_Store
+.idea/
+.vscode/
+*.log
+*.db
+backend/uploads/
+
