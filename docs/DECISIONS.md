@@ -15,6 +15,14 @@ Kurallar:
 - Not: `docs/API_CONTRACT.md`, `docs/DB_SCHEMA.md`, `docs/EXCEL_CELL_MAPPING.md` şu an
   PRD'den türetilmiş taslak (v0) durumda; backend geliştirmesi ilerledikçe netleşecek.
 
+## 2026-07-30 — [mobile] Mobil Faz 1, 2 ve 3 Kararları
+- Ne: Mobil tarafta kimlik doğrulama, dinamik form sihirbazı, otomatik kaydetme, imza çizim paneli ve üretim sonrası ekranları geliştirildi.
+- Alınan Kararlar:
+  1. **Çevrimdışı/Mock Modu**: Backend servisleri hazır olmadığından, uygulamanın sunucu hatası durumunda otomatik olarak (veya manuel geçişle) simülasyon moduna geçmesi ve secure storage üzerinde mock verilerle çalışması sağlandı.
+  2. **Saf Flutter İmza Pedi**: Dış kütüphanelerin tablet derleme uyumsuzluklarını önlemek için imza çizim alanı Gesture-detector ve CustomPainter ile tamamen yerel kodlandı.
+  3. **Durum Koruma**: Otomatik taslak kaydetme debounced (2 sn) olarak secure storage üzerine JSON formatında aktarılarak tablet kapansa bile %100 durum koruma sağlandı.
+  4. **Intent Simülasyonu**: Excel üretimi sonrası paylaşma, yazdırma ve açma işlemleri için Android native intent'leri snackbar/toast bildirimleri ile simüle edildi.
+
 ## 2026-07-30 — [backend] Faz 1 API sözleşmesi ve DB şeması netleştirildi
 - Ne: `docs/API_CONTRACT.md` ve `docs/DB_SCHEMA.md` güncellenerek Faz 1 endpoint'lerinin (auth, admin, davet kodları, kullanıcı CRUD) request/response JSON şemaları ve DB sütun tipleri detaylandırıldı.
 - Neden: Mobil ajanın auth ve admin ekranlarını tam eşleşen kontrat ile geliştirebilmesi için.
