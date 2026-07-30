@@ -50,15 +50,48 @@ Admin tarafından oluşturulan tek kullanımlık kayıt davet kodları.
 
 ---
 
-## 3. Gelecek Faz Tabloları (Özet)
+## 3. `reports` Tablosu
 
-### `templates`
-`id, name, report_type (hermetik/kuru/gt/kesici), file_path, mapping_json, version, uploaded_at`
+Saha raporları ve taslak veri kayıtları.
 
-### `reports`
-`id, title, report_type, status (draft/final), created_by, creator_display_name, customer_name, trafo_label, test_date, report_date, data_json, excel_path, created_at, updated_at`
-- **Önemli:** `creator_display_name` alanı kullanıcı silinse dahi geçmiş raporlarda oluşturucu adını korumak için denormalize saklanır (PRD §15/§24.13).
+| Kolon Adı | Veri Tipi | Kısıtlar / Açıklama |
+|---|---|---|
+| `id` | `INTEGER` | `PRIMARY KEY`, `AUTOINCREMENT` / `SERIAL` |
+| `title` | `VARCHAR(255)` | `NOT NULL` (Rapor başlığı) |
+| `report_type` | `VARCHAR(50)` | `NOT NULL` (`HERMETIK`, `KURU_TIP`, `GT`) |
+| `maintenance_type` | `VARCHAR(50)` | `NOT NULL`, Default: `'maintenance'` (`maintenance` veya `test`) |
+| `status` | `VARCHAR(20)` | `NOT NULL`, Default: `'draft'` (`draft` veya `final`) |
+| `created_by` | `INTEGER` | `NULLABLE`, `FOREIGN KEY (users.id) ON DELETE SET NULL` |
+| `creator_display_name` | `VARCHAR(150)` | `NOT NULL` (Kullanıcı silinse dahi saklanan Ad Soyad) |
+| `customer_name` | `VARCHAR(255)` | `NOT NULL` (Müşteri Adı / Şalt Sahası) |
+| `trafo_label` | `VARCHAR(150)` | `NOT NULL` (Trafo Etiketi / Lokasyon) |
+| `test_date` | `DATE` | `NULLABLE` |
+| `report_date` | `DATE` | `NULLABLE` |
+| `data_json` | `JSON` / `TEXT` | `NOT NULL` (Tüm dinamik form verisi JSON string/dict) |
+| `excel_path` | `VARCHAR(255)` | `NULLABLE` (Üretilen .xlsx dosya yolu) |
+| `created_at` | `TIMESTAMP WITH TIME ZONE` | `NOT NULL`, Default: `CURRENT_TIMESTAMP` |
+| `updated_at` | `TIMESTAMP WITH TIME ZONE` | `NOT NULL`, Default: `CURRENT_TIMESTAMP` |
 
-### `photos`
-`id, report_id, photo_type (before/after/label/signature), file_path, created_at`
+**İndeksler:**
+- `idx_reports_customer_name`
+- `idx_reports_status`
+- `idx_reports_created_by`
+
+---
+
+## 4. `photos` Tablosu
+
+Raporlara ait yüklenen saha fotoğrafları.
+
+| Kolon Adı | Veri Tipi | Kısıtlar / Açıklama |
+|---|---|---|
+| `id` | `INTEGER` | `PRIMARY KEY`, `AUTOINCREMENT` / `SERIAL` |
+| `report_id` | `INTEGER` | `NOT NULL`, `FOREIGN KEY (reports.id) ON DELETE CASCADE` |
+| `photo_type` | `VARCHAR(30)` | `NOT NULL` (`before`, `after`, `label`, `signature`) |
+| `file_path` | `VARCHAR(255)` | `NOT NULL` (Görsel dosya yolu) |
+| `created_at` | `TIMESTAMP WITH TIME ZONE` | `NOT NULL`, Default: `CURRENT_TIMESTAMP` |
+
+**İndeksler:**
+- `idx_photos_report_id`
+
 

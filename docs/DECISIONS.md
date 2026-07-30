@@ -19,3 +19,10 @@ Kurallar:
 - Ne: `docs/API_CONTRACT.md` ve `docs/DB_SCHEMA.md` güncellenerek Faz 1 endpoint'lerinin (auth, admin, davet kodları, kullanıcı CRUD) request/response JSON şemaları ve DB sütun tipleri detaylandırıldı.
 - Neden: Mobil ajanın auth ve admin ekranlarını tam eşleşen kontrat ile geliştirebilmesi için.
 - Etiket: @mobile (DİKKAT mobile: `/auth/login`, `/auth/register`, `/auth/refresh`, `/admin/codes`, `/admin/users` kontratları v1.0 olarak kesinleşti).
+
+## 2026-07-30 — [backend] Faz 2 API sözleşmesi ve DB şeması netleştirildi
+- Ne: `docs/API_CONTRACT.md` ve `docs/DB_SCHEMA.md` güncellenerek Faz 2 Rapor Havuzu, Taslaklar ve Fotoğraf Yükleme endpoint'lerinin request/response JSON şemaları ile `reports` ve `photos` tablo şemaları tanımlandı.
+- Neden: Mobil ajanın dinamik form motoru, taslak kaydetme ve rapor havuzu arama/filtreleme ekranlarını aynı kontrat ile entegre edebilmesi için.
+- Etiket: @mobile (DİKKAT mobile: `/reports`, `/drafts`, `/reports/{id}`, `/reports/{id}/photos` kontratları kesinleşti).
+
+
