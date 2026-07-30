@@ -5,20 +5,20 @@
 > ve `mobile/MEMORY.md`'e kısa not düş.
 
 ## Faz 1 — Temel (PRD §22)
-- [ ] Flutter proje iskeleti (Material Design 3, TR dil)
-- [ ] JWT güvenli saklama (flutter secure storage)
-- [ ] Başlangıç ekranı: Çalışan Girişi | Kayıt Ol | Admin Girişi (PRD §6)
-- [ ] Giriş / Kayıt Ol ekranları (`docs/API_CONTRACT.md`'deki `/auth/*`'a bağlan)
-- [ ] Ana Sayfa navigasyonu (Yeni Rapor | Rapor Havuzu | Taslaklar | Profil | Admin)
+- [x] Flutter proje iskeleti (Material Design 3, TR dil)
+- [x] JWT güvenli saklama (flutter secure storage)
+- [x] Başlangıç ekranı: Çalışan Girişi | Kayıt Ol | Admin Girişi (PRD §6)
+- [x] Giriş / Kayıt Ol ekranları (`docs/API_CONTRACT.md`'deki `/auth/*`'a bağlan) - **BLOKE: backend bekleniyor (MOCK modu aktif edildi)**
+- [x] Ana Sayfa navigasyonu (Yeni Rapor | Rapor Havuzu | Taslaklar | Profil | Admin)
 
 ## Faz 2 — Rapor Çekirdeği (PRD §22)
-- [ ] Yeni Rapor akışı: tip seçimi (Bakım/Test → Normal/Kesici → Hermetik/Kuru/GT)
-- [ ] QR/Barcode tarama ile etiket verisi otomatik doldurma (PRD §21.2, Kabul #10)
-- [ ] Dinamik form motoru: PRD §2.4 karar ağacına göre alan gizleme/gösterme
-- [ ] Anlık UYGUN/UYGUN DEĞİL geri bildirimi (PRD §2.5 sınır değerlerine göre)
-- [ ] Taslak sistemi: otomatik kayıt (2-3 sn gecikmeli + adım geçişinde), tam
+- [x] Yeni Rapor akışı: tip seçimi (Bakım/Test → Normal/Kesici → Hermetik/Kuru/GT)
+- [x] QR/Barcode tarama ile etiket verisi otomatik doldurma (PRD §21.2, Kabul #10)
+- [x] Dinamik form motoru: PRD §2.4 karar ağacına göre alan gizleme/gösterme
+- [x] Anlık UYGUN/UYGUN DEĞİL geri bildirimi (PRD §2.5 sınır değerlerine göre)
+- [x] Taslak sistemi: otomatik kayıt (2-3 sn gecikmeli + adım geçişinde), tam
       durum geri yükleme (PRD §8)
-- [ ] Rapor Havuzu UI: liste, arama, filtre (PRD §9)
+- [x] Rapor Havuzu UI: liste, arama, filtre (PRD §9)
 
 ## Faz 3 — Fotoğraf, İmza, Üretim
 - [ ] Kamera + galeri entegrasyonu (Öncesi/Sonrası/Etiket, PRD §10)
