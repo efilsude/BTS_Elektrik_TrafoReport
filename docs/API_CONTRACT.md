@@ -277,17 +277,203 @@ Kullanıcıyı devre dışı bırakma / silme.
 
 ---
 
-## 5. Gelecek Faz Uç Noktaları (Faz 2 - 4)
+---
 
-- `GET /templates`
-- `POST /admin/templates`
-- `GET /reports`
-- `POST /reports`
-- `GET /reports/{id}`
-- `PUT /reports/{id}`
-- `POST /reports/{id}/finalize`
-- `GET /reports/{id}/download`
-- `POST /reports/{id}/photos`
-- `GET /drafts`
-- `DELETE /reports/{id}`
+## 5. Rapor Havuzu ve Taslak Uç Noktaları (Faz 2)
+
+### 5.1 GET `/reports`
+Rapor Havuzu (arama, filtreleme, sayfalama).
+
+- **Query Parametreleri:**
+  - `search` (string, opsiyonel): Müşteri adı, trafo etiketi, seri no veya oluşturan adı araması
+  - `report_type` (string, opsiyonel): `HERMETIK`, `KURU_TIP`, `GT`
+  - `maintenance_type` (string, opsiyonel): `maintenance` veya `test`
+  - `status` (string, opsiyonel): `draft` veya `final`
+  - `page` (int, varsayılan: 1)
+  - `limit` (int, varsayılan: 20)
+
+- **Yanıt (200 OK):**
+```json
+{
+  "items": [
+    {
+      "id": 10,
+      "title": "ABC Fabrikası - TR1 - 30.07.2026",
+      "report_type": "HERMETIK",
+      "maintenance_type": "maintenance",
+      "status": "final",
+      "created_by": 2,
+      "creator_display_name": "Ahmet Yılmaz",
+      "customer_name": "ABC Fabrikası",
+      "trafo_label": "TR1",
+      "test_date": "2026-07-30",
+      "report_date": "2026-07-30",
+      "excel_path": "uploads/reports/ABC_Fabrikasi_TR1_30.07.2026.xlsx",
+      "created_at": "2026-07-30T16:00:00Z",
+      "updated_at": "2026-07-30T16:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 20
+}
+```
+
+---
+
+### 5.2 GET `/drafts`
+Oturum açmış kullanıcının kendi taslak raporları.
+
+- **Yanıt (200 OK):**
+```json
+[
+  {
+    "id": 11,
+    "title": "XYZ Tesisleri - TR2 - 30.07.2026",
+    "report_type": "KURU_TIP",
+    "maintenance_type": "maintenance",
+    "status": "draft",
+    "created_by": 2,
+    "creator_display_name": "Ahmet Yılmaz",
+    "customer_name": "XYZ Tesisleri",
+    "trafo_label": "TR2",
+    "created_at": "2026-07-30T16:10:00Z",
+    "updated_at": "2026-07-30T16:15:00Z"
+  }
+]
+```
+
+---
+
+### 5.3 POST `/reports`
+Yeni rapor (taslak veya kesinleştirilecek veri gövdesi) oluşturma.
+
+- **İstek (Body):**
+```json
+{
+  "title": "ABC Fabrikası - TR1 - 30.07.2026",
+  "report_type": "HERMETIK",
+  "maintenance_type": "maintenance",
+  "status": "draft",
+  "customer_name": "ABC Fabrikası",
+  "trafo_label": "TR1",
+  "test_date": "2026-07-30",
+  "report_date": "2026-07-30",
+  "data_json": {
+    "brand": "Schneider",
+    "power_kva": "1600",
+    "serial_no": "SN998877",
+    "winding_resistance": {},
+    "insulation": {}
+  }
+}
+```
+
+- **Yanıt (201 Created):**
+```json
+{
+  "id": 12,
+  "title": "ABC Fabrikası - TR1 - 30.07.2026",
+  "report_type": "HERMETIK",
+  "maintenance_type": "maintenance",
+  "status": "draft",
+  "created_by": 2,
+  "creator_display_name": "Ahmet Yılmaz",
+  "customer_name": "ABC Fabrikası",
+  "trafo_label": "TR1",
+  "test_date": "2026-07-30",
+  "report_date": "2026-07-30",
+  "data_json": { ... },
+  "excel_path": null,
+  "created_at": "2026-07-30T16:20:00Z",
+  "updated_at": "2026-07-30T16:20:00Z"
+}
+```
+
+---
+
+### 5.4 GET `/reports/{id}`
+Rapor detayı, tam `data_json` ve bağlı fotoğraflar.
+
+- **Yanıt (200 OK):**
+```json
+{
+  "id": 12,
+  "title": "ABC Fabrikası - TR1 - 30.07.2026",
+  "report_type": "HERMETIK",
+  "maintenance_type": "maintenance",
+  "status": "draft",
+  "created_by": 2,
+  "creator_display_name": "Ahmet Yılmaz",
+  "customer_name": "ABC Fabrikası",
+  "trafo_label": "TR1",
+  "test_date": "2026-07-30",
+  "report_date": "2026-07-30",
+  "data_json": { ... },
+  "excel_path": null,
+  "photos": [
+    {
+      "id": 1,
+      "photo_type": "before",
+      "file_path": "uploads/photos/report_12_before_abc.jpg",
+      "created_at": "2026-07-30T16:22:00Z"
+    }
+  ],
+  "created_at": "2026-07-30T16:20:00Z",
+  "updated_at": "2026-07-30T16:20:00Z"
+}
+```
+
+---
+
+### 5.5 PUT `/reports/{id}`
+Taslak raporu güncelleme (sahibi olan teknisyen) veya kesinleşmiş raporu düzenleme (Admin).
+
+- **İstek (Body):**
+```json
+{
+  "title": "ABC Fabrikası - TR1 - 30.07.2026",
+  "customer_name": "ABC Fabrikası",
+  "trafo_label": "TR1",
+  "test_date": "2026-07-30",
+  "report_date": "2026-07-30",
+  "data_json": { ... }
+}
+```
+
+- **Yanıt (200 OK):** Güncellenmiş rapor nesnesi.
+
+---
+
+### 5.6 DELETE `/reports/{id}`
+Taslak raporu silme (sahip) veya herhangi bir raporu silme (Admin).
+
+- **Yanıt (200 OK):**
+```json
+{
+  "message": "Rapor başarıyla silindi.",
+  "report_id": 12
+}
+```
+
+---
+
+### 5.7 POST `/reports/{id}/photos`
+Rapora fotoğraf ekleme (multipart/form-data).
+
+- **İstek (multipart/form-data):**
+  - `photo_type` (string): `before`, `after`, `label`
+  - `file`: Görsel dosyası (JPEG/PNG)
+
+- **Yanıt (201 Created):**
+```json
+{
+  "id": 1,
+  "report_id": 12,
+  "photo_type": "before",
+  "file_path": "uploads/photos/report_12_before_abc.jpg",
+  "created_at": "2026-07-30T16:22:00Z"
+}
+```
+
 

@@ -14,10 +14,11 @@
 
 
 ## Faz 2 — Rapor Çekirdeği (PRD §22)
-- [ ] `reports`, `photos` tabloları + `data_json` modeli
-- [ ] `POST/GET/PUT/DELETE /reports`, `GET /drafts`
-- [ ] Rapor Havuzu: filtre/arama/sayfalama (PRD §9)
-- [ ] Kullanıcı silindiğinde `creator_display_name` denormalizasyonu (PRD §15/§24.13)
+- [x] `reports`, `photos` tabloları + `data_json` modeli
+- [x] `POST/GET/PUT/DELETE /reports`, `GET /drafts`
+- [x] Rapor Havuzu: filtre/arama/sayfalama (PRD §9)
+- [x] Kullanıcı silindiğinde `creator_display_name` denormalizasyonu (PRD §15/§24.13)
+
 
 ## Faz 3 — Excel Motoru (EN KRİTİK, PRD §12)
 - [ ] Üç şablonun (`HERMETIK`, `KURU TİP`, `GT`) hücre eşlemesini çıkar →
