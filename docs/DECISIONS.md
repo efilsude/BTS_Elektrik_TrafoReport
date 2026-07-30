@@ -25,4 +25,11 @@ Kurallar:
 - Neden: Mobil ajanın dinamik form motoru, taslak kaydetme ve rapor havuzu arama/filtreleme ekranlarını aynı kontrat ile entegre edebilmesi için.
 - Etiket: @mobile (DİKKAT mobile: `/reports`, `/drafts`, `/reports/{id}`, `/reports/{id}/photos` kontratları kesinleşti).
 
+## 2026-07-30 — [backend] Faz 3 Excel üretim motoru ve indirme kontratı tamamlandı
+- Ne: `docs/API_CONTRACT.md` ve `docs/EXCEL_CELL_MAPPING.md` güncellenerek `/reports/{id}/finalize` ve `/reports/{id}/download` endpoint'leri ve 3 şablon ailesinin hücre adresleri kesinleştirildi.
+- Neden: Mobil istemcinin rapor kesinleştirme sonrası Excel indirme/açma/paylaşma akışını bağlayabilmesi için.
+- Etiket: @mobile (DİKKAT mobile: `POST /reports/{id}/finalize` ve `GET /reports/{id}/download` v1.0 olarak eklendi).
+
+
+
 
