@@ -33,16 +33,19 @@
 
 
 ## Faz 4 — Admin ve Cilalama
-- [ ] Şablon yükleme (`POST /admin/templates`)
-- [ ] İstatistik endpoint'leri
-- [ ] Hata yönetimi senaryoları (PRD §19 tablosu — tümü)
+- [x] Şablon yükleme (`POST /admin/templates`)
+- [x] İstatistik endpoint'leri (`GET /admin/stats`)
+- [x] Hata yönetimi senaryoları (PRD §19 tablosu — tümü)
+
 
 ## Faz 5 — Test ve Sürüm
-- [ ] Uçtan uca API testleri
-- [ ] `docs/API_CONTRACT.md` son hali (tüm "açık nokta"lar kapatıldı)
-- [ ] Performans/güvenlik son kontrol (PRD §15)
+- [x] Uçtan uca API testleri (`tests/test_e2e_full_workflow.py`)
+- [x] `docs/API_CONTRACT.md` son hali (tüm "açık nokta"lar kapatıldı, v1.0 Final)
+- [x] Performans/güvenlik son kontrol (PRD §15)
+
 
 ## Sürekli (her fazda geçerli)
-- [ ] Kontrat değişikliklerini `docs/API_CONTRACT.md` / `docs/DB_SCHEMA.md` /
+- [x] Kontrat değişikliklerini `docs/API_CONTRACT.md` / `docs/DB_SCHEMA.md` /
       `docs/EXCEL_CELL_MAPPING.md`'e işle + `docs/DECISIONS.md`'e not düş
-- [ ] `backend/MEMORY.md`'i güncel tut
+- [x] `backend/MEMORY.md`'i güncel tut
+

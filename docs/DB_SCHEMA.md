@@ -91,7 +91,23 @@ Raporlara ait yüklenen saha fotoğrafları.
 | `file_path` | `VARCHAR(255)` | `NOT NULL` (Görsel dosya yolu) |
 | `created_at` | `TIMESTAMP WITH TIME ZONE` | `NOT NULL`, Default: `CURRENT_TIMESTAMP` |
 
+---
+
+## 5. `templates` Tablosu
+
+Yüklenebilir Excel şablon dosyaları ve versiyonları.
+
+| Kolon Adı | Veri Tipi | Kısıtlar / Açıklama |
+|---|---|---|
+| `id` | `INTEGER` | `PRIMARY KEY`, `AUTOINCREMENT` / `SERIAL` |
+| `name` | `VARCHAR(150)` | `NOT NULL` (Şablon görünen adı) |
+| `report_type` | `VARCHAR(50)` | `NOT NULL` (`HERMETIK`, `KURU_TIP`, `GT`) |
+| `file_path` | `VARCHAR(255)` | `NOT NULL` (.xlsx dosya yolu) |
+| `version` | `VARCHAR(20)` | `NOT NULL`, Default: `'1.0'` |
+| `uploaded_at` | `TIMESTAMP WITH TIME ZONE` | `NOT NULL`, Default: `CURRENT_TIMESTAMP` |
+
 **İndeksler:**
-- `idx_photos_report_id`
+- `idx_templates_report_type`
+
 
 
