@@ -1,8 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/signature_pad.dart';
 import 'auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -13,7 +17,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final StorageService _storageService = StorageService();
   final GlobalKey<FormState> _passwordFormKey = GlobalKey<FormState>();
+  
   final TextEditingController _oldPasswordController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
@@ -21,6 +27,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _obscureOld = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
+  
+  String? _signatureBase64;
+  bool _loadingSignature = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSignature();
+  }
 
   @override
   void dispose() {
@@ -28,6 +43,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSignature() async {
+    // Standard key in API_CONTRACT is signature image
+    final String? sig = await _storageService.getAccessToken(); // We can store signature in custom storage
+    // Let's store signature under a specific key in StorageService
+    final String? signature = await const FlutterSecureStorage().read(key: 'user_signature_base64');
+    setState(() {
+      _signatureBase64 = signature;
+      _loadingSignature = false;
+    });
   }
 
   void _handleChangePassword() {
@@ -57,11 +83,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _handleUpdateSignature() {
-    // Show signature pad dialog or page
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('İmza düzenleme ekranı Faz 3\'te eklenecektir.'),
-        backgroundColor: AppTheme.primaryColor,
+    showDialog<dynamic>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: Text(
+          'Dijital İmza Çizimi',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+        ),
+        content: SizedBox(
+          width: 500,
+          height: 300,
+          child: SignaturePad(
+            onSave: (String base64Png) async {
+              // Save to secure storage
+              await const FlutterSecureStorage().write(key: 'user_signature_base64', value: base64Png);
+              Navigator.pop(context);
+              _loadSignature();
+              
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Dijital imzanız başarıyla kaydedildi!'),
+                    backgroundColor: AppTheme.successColor,
+                  ),
+                );
+              }
+            },
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Kapat'),
+          ),
+        ],
       ),
     );
   }
@@ -170,28 +225,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: GoogleFonts.inter(color: AppTheme.textLight, fontSize: 13, height: 1.4),
                     ),
                     const SizedBox(height: 16),
-                    // Imza durumu
-                    Container(
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: AppTheme.backgroundColor,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppTheme.borderLight),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Kayıtlı İmza Bulunmamaktadır',
-                        style: GoogleFonts.inter(
-                          fontStyle: FontStyle.italic,
-                          color: AppTheme.textLight,
-                        ),
-                      ),
-                    ),
+                    // Imza durumu veya resmi
+                    _loadingSignature
+                        ? const Center(child: CircularProgressIndicator())
+                        : _signatureBase64 != null
+                            ? Container(
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.backgroundColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppTheme.borderLight),
+                                ),
+                                padding: const EdgeInsets.all(8),
+                                alignment: Alignment.center,
+                                child: Image.memory(
+                                  base64Decode(_signatureBase64!),
+                                  fit: BoxFit.contain,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              )
+                            : Container(
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.backgroundColor,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: AppTheme.borderLight),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  'Kayıtlı İmza Bulunmamaktadır',
+                                  style: GoogleFonts.inter(
+                                    fontStyle: FontStyle.italic,
+                                    color: AppTheme.textLight,
+                                  ),
+                                ),
+                              ),
                     const SizedBox(height: 16),
                     OutlinedButton.icon(
                       onPressed: _handleUpdateSignature,
                       icon: const Icon(Icons.gesture_rounded),
-                      label: const Text('İmza Çiz & Güncelle'),
+                      label: Text(_signatureBase64 != null ? 'İmzayı Yenile' : 'İmza Çiz & Kaydet'),
                     ),
                   ],
                 ),
