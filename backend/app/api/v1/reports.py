@@ -200,3 +200,62 @@ async def upload_report_photo(
     db.refresh(photo)
 
     return PhotoResponse.model_validate(photo)
+
+from fastapi.responses import FileResponse
+from app.services.excel_engine import generate_report_excel
+
+
+@router.post("/{report_id}/finalize", response_model=ReportResponse)
+def finalize_report(
+    report_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    report = db.query(Report).filter(Report.id == report_id).first()
+    if not report:
+        raise NotFoundException("Rapor bulunamadı.")
+
+    if current_user.role != "admin" and report.created_by != current_user.id:
+        raise ForbiddenException("Bu raporu kesinleştirme yetkiniz bulunmamaktadır.")
+
+    photos = db.query(Photo).filter(Photo.report_id == report_id).all()
+    signature_path = current_user.signature_path
+
+    # Generate Excel file using openpyxl engine
+    try:
+        excel_file_path = generate_report_excel(report, photos, signature_path)
+        report.excel_path = excel_file_path
+        report.status = "final"
+        db.commit()
+        db.refresh(report)
+    except Exception as e:
+        db.rollback()
+        raise BadRequestException(code="EXCEL_GENERATION_FAILED", message=f"Excel raporu üretilirken hata oluştu: {str(e)}")
+
+    return ReportResponse.model_validate(report)
+
+@router.get("/{report_id}/download")
+def download_report_excel(
+    report_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    report = db.query(Report).filter(Report.id == report_id).first()
+    if not report:
+        raise NotFoundException("Rapor bulunamadı.")
+
+    # Generate if not already generated
+    if not report.excel_path or not os.path.exists(report.excel_path):
+        photos = db.query(Photo).filter(Photo.report_id == report_id).all()
+        signature_path = current_user.signature_path
+        excel_file_path = generate_report_excel(report, photos, signature_path)
+        report.excel_path = excel_file_path
+        db.commit()
+
+    filename = os.path.basename(report.excel_path)
+    return FileResponse(
+        path=report.excel_path,
+        filename=filename,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
