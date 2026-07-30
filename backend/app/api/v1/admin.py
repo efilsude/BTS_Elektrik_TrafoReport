@@ -112,8 +112,53 @@ def deactivate_user(
     if user.id == current_admin.id:
         raise BadRequestException(code="CANNOT_DELETE_SELF", message="Kendi admin hesabınızı devre dışı bırakamazsınız.")
 
-    # Soft delete / deactivate user (preserves reports creator_display_name ownership)
     user.is_active = False
     db.commit()
 
     return {"message": "Kullanıcı devre dışı bırakıldı.", "user_id": user_id}
+
+from sqlalchemy import func
+from app.models.report import Report
+from app.schemas.stats import AdminStatsResponse, UserReportCount
+
+
+@router.get("/stats", response_model=AdminStatsResponse)
+def get_admin_stats(
+    current_admin: User = Depends(get_current_active_admin),
+    db: Session = Depends(get_db)
+):
+    now = datetime.now(timezone.utc)
+    
+    total_reports = db.query(Report).count()
+    draft_reports = db.query(Report).filter(Report.status == "draft").count()
+    final_reports = db.query(Report).filter(Report.status == "final").count()
+
+    # Reports by type
+    type_counts = db.query(Report.report_type, func.count(Report.id)).group_by(Report.report_type).all()
+    reports_by_type = {t: cnt for t, cnt in type_counts}
+    for default_t in ["HERMETIK", "KURU_TIP", "GT"]:
+        if default_t not in reports_by_type:
+            reports_by_type[default_t] = 0
+
+    # Reports by user
+    user_counts = db.query(Report.creator_display_name, func.count(Report.id)).group_by(Report.creator_display_name).all()
+    reports_by_user = [UserReportCount(creator_display_name=name, count=cnt) for name, cnt in user_counts]
+
+    total_active_users = db.query(User).filter(User.is_active == True).count()
+    
+    # Active registration codes count
+    active_codes = db.query(RegistrationCode).filter(
+        RegistrationCode.used_at == None,
+        RegistrationCode.expires_at > now
+    ).count()
+
+    return AdminStatsResponse(
+        total_reports=total_reports,
+        draft_reports=draft_reports,
+        final_reports=final_reports,
+        reports_by_type=reports_by_type,
+        reports_by_user=reports_by_user,
+        total_active_users=total_active_users,
+        active_invite_codes=active_codes
+    )
+
