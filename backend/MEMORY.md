@@ -12,7 +12,26 @@ Format:
 - Bir sonraki oturumda kaldığı yer:
 ```
 
+## 2026-07-30 — Faz 3 Excel Motoru ve İndirme Tamamlandı
+- **Ne yapıldı:**
+  1. `docs/API_CONTRACT.md`, `docs/EXCEL_CELL_MAPPING.md` ve `docs/DECISIONS.md` güncellenerek `/reports/{id}/finalize` ve `/reports/{id}/download` endpoint'leri ile 3 şablon ailesi (`HERMETIK`, `KURU_TIP`, `GT`) hücre adresleri kaydedildi.
+  2. `openpyxl` tabanlı Excel üretim motoru ([app/services/excel_engine.py](file:///C:/Users/User/OneDrive/Desktop/BTS_Elektrik/backend/app/services/excel_engine.py)) geliştirildi. Stil, hücresel birleşme ve orijinal formüller dokunulmadan korundu.
+  3. Tarih değerlerinin Excel seri numarasına (`epoch 1899-12-30`) ve ölçüm değerlerinin sayısal tipe dönüştürülmesi sağlandı.
+  4. El yazısı imzasının ve saha fotoğraflarının yeni sayfa açılmaksızın kapak alanındaki uygun hücrelere yerleştirilmesi sağlandı.
+  5. Dosya adlandırma standardı `{Müşteri} - {Trafo Etiketi} - {GG.AA.YYYY}.xlsx` uygulandı.
+  6. `POST /reports/{id}/finalize` ve `GET /reports/{id}/download` endpoint'leri bağlandı.
+  7. `tests/test_phase3.py` birim/entegrasyon testleri yazıldı ve 11/11 test %100 başarıyla geçti.
+- **Alınan kararlar:**
+  - Orijinal şablonlar asla üzerine yazılmaz, üretilen raporlar `uploads/reports/` dizinine temizlenmiş dosya adıyla kaydedilir.
+- **Bulunan sorun/gotcha:**
+  - `openpyxl` tarih biçimli hücreleri okurken otomatik `datetime` nesnesine çevirdiği için test assertions nesne tipi veya sayısal seri eşliğiyle doğrulandı.
+- **Bir sonraki oturumda kaldığı yer:**
+  - Faz 4 — Admin ve Cilalama: Şablon yükleme (`POST /admin/templates`), istatistik endpoint'leri ve PRD §19 hata yönetimi senaryoları.
+
+---
+
 ## 2026-07-30 — Faz 2 Rapor Çekirdeği ve Rapor Havuzu Tamamlandı
+
 - **Ne yapıldı:**
   1. `docs/API_CONTRACT.md` ve `docs/DB_SCHEMA.md` güncellenerek Faz 2 Rapor Havuzu, Taslaklar ve Fotoğraf Yükleme endpoint'lerinin JSON şemaları ve tablo modelleri netleştirildi; `docs/DECISIONS.md`'e kayıt düşüldü.
   2. `Report` ve `Photo` SQLAlchemy modelleri ([app/models/report.py](file:///C:/Users/User/OneDrive/Desktop/BTS_Elektrik/backend/app/models/report.py), [app/models/photo.py](file:///C:/Users/User/OneDrive/Desktop/BTS_Elektrik/backend/app/models/photo.py)) ve Pydantic şemaları yazıldı.
