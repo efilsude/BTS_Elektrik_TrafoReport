@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
@@ -12,7 +16,87 @@ class SignaturePad extends StatefulWidget {
 }
 
 class _SignaturePadState extends State<SignaturePad> {
-  final List<Offset?> _points = <Offset?>[];
+  final GlobalKey _canvasKey = GlobalKey();
+  final List<List<Offset>> _strokes = <List<Offset>>[];
+  List<Offset>? _currentStroke;
+
+  bool get _hasPoints => _strokes.any((List<Offset> stroke) => stroke.length >= 2);
+
+  void _clear() {
+    setState(() {
+      _strokes.clear();
+      _currentStroke = null;
+    });
+  }
+
+  Future<void> _handleSave() async {
+    if (!_hasPoints) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Lütfen önce imzanızı çizin.',
+            style: GoogleFonts.inter(),
+          ),
+          backgroundColor: AppTheme.warningColor,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final ui.PictureRecorder recorder = ui.PictureRecorder();
+      final Canvas canvas = Canvas(recorder);
+      const Size canvasSize = Size(600, 300);
+
+      // White background for PNG signature
+      final Paint bgPaint = Paint()..color = Colors.white;
+      canvas.drawRect(Rect.fromLTWH(0, 0, canvasSize.width, canvasSize.height), bgPaint);
+
+      // Signature stroke paint
+      final Paint strokePaint = Paint()
+        ..color = const Color(0xFF0F172A) // AppTheme.primaryColor
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..strokeWidth = 4.0
+        ..style = PaintingStyle.stroke;
+
+      // Scale factors if drawn on smaller/larger view
+      final RenderBox? box = _canvasKey.currentContext?.findRenderObject() as RenderBox?;
+      final double scaleX = box != null && box.size.width > 0 ? canvasSize.width / box.size.width : 1.0;
+      final double scaleY = box != null && box.size.height > 0 ? canvasSize.height / box.size.height : 1.0;
+
+      for (final List<Offset> stroke in _strokes) {
+        if (stroke.length < 2) continue;
+        final Path path = Path();
+        path.moveTo(stroke.first.dx * scaleX, stroke.first.dy * scaleY);
+        for (int i = 1; i < stroke.length; i++) {
+          path.lineTo(stroke[i].dx * scaleX, stroke[i].dy * scaleY);
+        }
+        canvas.drawPath(path, strokePaint);
+      }
+
+      final ui.Picture picture = recorder.endRecording();
+      final ui.Image image = await picture.toImage(canvasSize.width.toInt(), canvasSize.height.toInt());
+      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+
+      if (byteData != null) {
+        final String base64String = base64Encode(byteData.buffer.asUint8List());
+        widget.onSave(base64String);
+      } else {
+        throw Exception('İmza görseli oluşturulamadı.');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('İmza kaydedilirken hata oluştu: $e'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,21 +111,37 @@ class _SignaturePadState extends State<SignaturePad> {
         children: <Widget>[
           // Drawing area
           Expanded(
-            child: GestureDetector(
-              onPanUpdate: (DragUpdateDetails details) {
-                setState(() {
-                  final RenderBox renderBox = context.findRenderObject() as RenderBox;
-                  _points.add(renderBox.globalToLocal(details.globalPosition));
-                });
-              },
-              onPanEnd: (DragEndDetails details) {
-                _points.add(null);
-              },
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                child: CustomPaint(
-                  painter: SignaturePainter(_points),
-                  size: Size.infinite,
+            child: Container(
+              key: _canvasKey,
+              child: GestureDetector(
+                onPanStart: (DragStartDetails details) {
+                  final RenderBox? box = _canvasKey.currentContext?.findRenderObject() as RenderBox?;
+                  if (box != null) {
+                    final Offset localPos = box.globalToLocal(details.globalPosition);
+                    setState(() {
+                      _currentStroke = <Offset>[localPos];
+                      _strokes.add(_currentStroke!);
+                    });
+                  }
+                },
+                onPanUpdate: (DragUpdateDetails details) {
+                  final RenderBox? box = _canvasKey.currentContext?.findRenderObject() as RenderBox?;
+                  if (box != null && _currentStroke != null) {
+                    final Offset localPos = box.globalToLocal(details.globalPosition);
+                    setState(() {
+                      _currentStroke!.add(localPos);
+                    });
+                  }
+                },
+                onPanEnd: (DragEndDetails details) {
+                  _currentStroke = null;
+                },
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                  child: CustomPaint(
+                    painter: SignaturePainter(_strokes),
+                    size: Size.infinite,
+                  ),
                 ),
               ),
             ),
@@ -59,25 +159,12 @@ class _SignaturePadState extends State<SignaturePad> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 TextButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _points.clear();
-                    });
-                  },
+                  onPressed: _hasPoints ? _clear : null,
                   icon: const Icon(Icons.clear_rounded, color: AppTheme.errorColor),
                   label: Text('Temizle', style: GoogleFonts.inter(color: AppTheme.errorColor)),
                 ),
                 ElevatedButton.icon(
-                  onPressed: _points.isEmpty
-                      ? null
-                      : () {
-                          // Convert points to dummy base64 PNG (transparent signature placeholder)
-                          // Since we want this to be simple and compilable without complex dart:ui dependencies,
-                          // we pass a valid base64 PNG string that represents a transparent signature.
-                          const String sampleBase64Png = 
-                              'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-                          widget.onSave(sampleBase64Png);
-                        },
+                  onPressed: _hasPoints ? _handleSave : null,
                   icon: const Icon(Icons.check_rounded),
                   label: const Text('İmzayı Kaydet'),
                   style: ElevatedButton.styleFrom(
@@ -94,24 +181,30 @@ class _SignaturePadState extends State<SignaturePad> {
 }
 
 class SignaturePainter extends CustomPainter {
-  final List<Offset?> points;
+  final List<List<Offset>> strokes;
 
-  SignaturePainter(this.points);
+  SignaturePainter(this.strokes);
 
   @override
   void paint(Canvas canvas, Size size) {
     final Paint paint = Paint()
       ..color = AppTheme.primaryColor
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = 3.5;
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 3.5
+      ..style = PaintingStyle.stroke;
 
-    for (int i = 0; i < points.length - 1; i++) {
-      if (points[i] != null && points[i + 1] != null) {
-        canvas.drawLine(points[i]!, points[i + 1]!, paint);
+    for (final List<Offset> stroke in strokes) {
+      if (stroke.length < 2) continue;
+      final Path path = Path();
+      path.moveTo(stroke.first.dx, stroke.first.dy);
+      for (int i = 1; i < stroke.length; i++) {
+        path.lineTo(stroke[i].dx, stroke[i].dy);
       }
+      canvas.drawPath(path, paint);
     }
   }
 
   @override
-  bool shouldRepaint(SignaturePainter oldDelegate) => oldDelegate.points != points;
+  bool shouldRepaint(SignaturePainter oldDelegate) => true;
 }

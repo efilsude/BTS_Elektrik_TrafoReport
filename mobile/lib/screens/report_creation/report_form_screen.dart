@@ -1,9 +1,15 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../models/report_model.dart';
 import '../../services/report_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/photo_picker_widget.dart';
+import '../../widgets/qr_scanner_dialog.dart';
+
 
 class ReportFormScreen extends StatefulWidget {
   const ReportFormScreen({super.key});
@@ -157,52 +163,42 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     return shouldExit ?? false;
   }
 
-  // QR scanner simulation dialog (PRD §21.2, Kabul #10)
-  void _simulateQrScan() {
-    showDialog<dynamic>(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: Row(
-          children: <Widget>[
-            const Icon(Icons.qr_code_scanner_rounded, color: AppTheme.primaryColor),
-            const SizedBox(width: 12),
-            Text('QR Kod Tara (Simülasyon)', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-          ],
+  // QR / Barcode Scanner (PRD §21.2, Kabul #10)
+  Future<void> _simulateQrScan() async {
+    final String? scannedCode = await QrScannerDialog.scan(context);
+    if (scannedCode != null && scannedCode.isNotEmpty && mounted) {
+      // If code is JSON string, parse attributes
+      try {
+        if (scannedCode.startsWith('{') && scannedCode.endsWith('}')) {
+          final Map<String, dynamic> jsonMap = jsonDecode(scannedCode) as Map<String, dynamic>;
+          _populateLabelData(
+            brand: jsonMap['brand']?.toString() ?? '',
+            power: jsonMap['power']?.toString() ?? jsonMap['power_kva']?.toString() ?? '',
+            voltage: jsonMap['voltage']?.toString() ?? '',
+            serial: jsonMap['serial_no']?.toString() ?? jsonMap['serial']?.toString() ?? '',
+            year: jsonMap['manufacture_year']?.toString() ?? jsonMap['year']?.toString() ?? '',
+            connection: jsonMap['connection_group']?.toString() ?? jsonMap['connection']?.toString() ?? '',
+          );
+          return;
+        }
+      } catch (_) {}
+
+      // If raw serial string (e.g. SN-ABB-99120)
+      setState(() {
+        _serialNoController.text = scannedCode;
+      });
+      final ReportService service = Provider.of<ReportService>(context, listen: false);
+      service.updateField('serial_no', scannedCode);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('QR Kod Başarıyla Okundu: $scannedCode', style: GoogleFonts.inter()),
+          backgroundColor: AppTheme.successColor,
         ),
-        content: const Text('Saha tabletinizdeki trafo etiket QR kodunu okutarak etiket bilgilerini hızlıca doldurabilirsiniz. Bir test şablonu seçin:'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              _populateLabelData(
-                brand: 'ABB Transformers',
-                power: '1600',
-                voltage: '34500 / 400 V',
-                serial: 'SN-ABB-99120',
-                year: '2022',
-                connection: 'Dyn11',
-              );
-              Navigator.pop(context);
-            },
-            child: const Text('ABB 1600kVA (2022)'),
-          ),
-          TextButton(
-            onPressed: () {
-              _populateLabelData(
-                brand: 'Siemens Energy',
-                power: '1250',
-                voltage: '34500 / 400 V',
-                serial: 'SN-SIE-12401',
-                year: '2019',
-                connection: 'Dyn11',
-              );
-              Navigator.pop(context);
-            },
-            child: const Text('Siemens 1250kVA (2019)'),
-          ),
-        ],
-      ),
-    );
+      );
+    }
   }
+
 
   void _populateLabelData({
     required String brand,
@@ -326,8 +322,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final bool success = await service.finalizeReport(report.id);
 
     if (mounted && success) {
-      _showPostProductionDialog(report.title);
+      _showPostProductionDialog(report.title, report.id);
     } else if (mounted) {
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Rapor kesinleştirilirken hata oluştu.'),
@@ -360,7 +357,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   }
 
   // Post-Production Screen (PRD §21.4): Open | Share | Print | Close
-  void _showPostProductionDialog(String reportTitle) {
+  void _showPostProductionDialog(String reportTitle, String reportId) {
     showDialog<dynamic>(
       context: context,
       barrierDismissible: false, // Must select an action
@@ -411,7 +408,11 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             
             // Native intents buttons
             ElevatedButton.icon(
-              onPressed: () => _simulateIntent('Excel\'i Aç', 'Excel dosyası yerel ofis uygulaması ile açılıyor...'),
+              onPressed: () async {
+                final ReportService service = Provider.of<ReportService>(context, listen: false);
+                final File? file = await service.downloadExcelFile(reportId, reportTitle);
+                if (file != null) service.openExcelFile(file);
+              },
               icon: const Icon(Icons.open_in_new_rounded),
               label: const Text('Excel\'i Aç'),
               style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
@@ -421,7 +422,11 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               children: <Widget>[
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _simulateIntent('Paylaş', 'Rapor paylaşma seçenekleri hazırlanıyor...'),
+                    onPressed: () async {
+                      final ReportService service = Provider.of<ReportService>(context, listen: false);
+                      final File? file = await service.downloadExcelFile(reportId, reportTitle);
+                      if (file != null) service.shareExcelFile(file, reportTitle);
+                    },
                     icon: const Icon(Icons.share_rounded),
                     label: const Text('Paylaş'),
                   ),
@@ -429,7 +434,11 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _simulateIntent('Yazdır', 'Sistem yazdırma servisi aranıyor...'),
+                    onPressed: () async {
+                      final ReportService service = Provider.of<ReportService>(context, listen: false);
+                      final File? file = await service.downloadExcelFile(reportId, reportTitle);
+                      if (file != null) service.shareExcelFile(file, reportTitle);
+                    },
                     icon: const Icon(Icons.print_rounded),
                     label: const Text('Yazdır'),
                   ),
@@ -453,6 +462,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       ),
     );
   }
+
+
 
   void _simulateIntent(String label, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1243,10 +1254,11 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   // Phase 3: Photos Management Step (PRD §10)
   Widget _buildPhotosStep(Report report) {
     final bool isTestOnly = report.reportType == 'test';
+    final ReportService service = Provider.of<ReportService>(context, listen: false);
     
     final dynamic labelPhoto = report.dataJson['photo_label'];
     final dynamic beforePhoto = report.dataJson['photo_before'];
-    final dynamic hasAfterPhoto = report.dataJson['photo_after'];
+    final dynamic afterPhoto = report.dataJson['photo_after'];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1255,28 +1267,35 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         const SizedBox(height: 24),
 
         // 1. Etiket Fotoğrafı (Zorunlu - Hepsi için)
-        _buildPhotoCard(
-          title: 'Trafo Etiket / Plaka Fotoğrafı *',
-          desc: 'Trafonun marka, model ve seri numarasını gösteren plakanın net resmi.',
-          photoKey: 'photo_label',
-          photoPath: labelPhoto?.toString(),
+        PhotoPickerWidget(
+          label: 'Trafo Etiket / Plaka Fotoğrafı',
+          description: 'Trafonun marka, model ve seri numarasını gösteren plakanın net resmi.',
+          imagePath: labelPhoto?.toString(),
+          isRequired: true,
+          onPhotoSelected: (String? path) {
+            service.updateField('photo_label', path);
+          },
         ),
-        const SizedBox(height: 16),
 
         // 2. Öncesi ve Sonrası Fotoğrafları (Bakım ise Zorunlu)
         if (!isTestOnly) ...<Widget>[
-          _buildPhotoCard(
-            title: 'Bakım Öncesi Genel Görünüm *',
-            desc: 'Çalışmaya başlamadan önce trafonun ve şalt sahasının durum resmi.',
-            photoKey: 'photo_before',
-            photoPath: beforePhoto?.toString(),
+          PhotoPickerWidget(
+            label: 'Bakım Öncesi Genel Görünüm',
+            description: 'Çalışmaya başlamadan önce trafonun ve şalt sahasının durum resmi.',
+            imagePath: beforePhoto?.toString(),
+            isRequired: true,
+            onPhotoSelected: (String? path) {
+              service.updateField('photo_before', path);
+            },
           ),
-          const SizedBox(height: 16),
-          _buildPhotoCard(
-            title: 'Bakım Sonrası Genel Görünüm *',
-            desc: 'Temizlik, sıkma ve klemens bakımları tamamlanmış trafonun bitiş resmi.',
-            photoKey: 'photo_after',
-            photoPath: hasAfterPhoto?.toString(),
+          PhotoPickerWidget(
+            label: 'Bakım Sonrası Genel Görünüm',
+            description: 'Temizlik, sıkma ve klemens bakımları tamamlanmış trafonun bitiş resmi.',
+            imagePath: afterPhoto?.toString(),
+            isRequired: true,
+            onPhotoSelected: (String? path) {
+              service.updateField('photo_after', path);
+            },
           ),
         ] else
           _buildAlertText('Yalnızca Test raporlarında Bakım Öncesi/Sonrası fotoğrafları zorunlu değildir.'),
@@ -1284,87 +1303,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     );
   }
 
-  Widget _buildPhotoCard({
-    required String title,
-    required String desc,
-    required String photoKey,
-    required String? photoPath,
-  }) {
-    final bool isAttached = photoPath != null;
-
-    return Card(
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: <Widget>[
-            // Image Preview or Icon
-            Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                color: isAttached ? AppTheme.successColor.withOpacity(0.06) : AppTheme.backgroundColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: isAttached ? AppTheme.successColor : AppTheme.borderLight),
-              ),
-              child: isAttached
-                  ? const Icon(Icons.image_outlined, color: AppTheme.successColor, size: 36)
-                  : const Icon(Icons.add_a_photo_outlined, color: AppTheme.textLight, size: 32),
-            ),
-            const SizedBox(width: 16),
-            
-            // Description & Button
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Text(
-                        title,
-                        style: GoogleFonts.outfit(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: isAttached ? AppTheme.successColor : AppTheme.textDark,
-                        ),
-                      ),
-                      if (isAttached) ...<Widget>[
-                        const SizedBox(width: 6),
-                        const Icon(Icons.check_circle_rounded, color: AppTheme.successColor, size: 16),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(desc, style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textLight)),
-                  const SizedBox(height: 10),
-                  isAttached
-                      ? OutlinedButton.icon(
-                          onPressed: () => _deletePhoto(photoKey),
-                          icon: const Icon(Icons.delete_outline, size: 16, color: AppTheme.errorColor),
-                          label: const Text('Kaldır'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppTheme.errorColor,
-                            side: const BorderSide(color: AppTheme.errorColor),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          ),
-                        )
-                      : ElevatedButton.icon(
-                          onPressed: () => _simulatePhotoCapture(photoKey, title),
-                          icon: const Icon(Icons.add_a_photo, size: 14),
-                          label: const Text('Fotoğraf Ekle'),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            textStyle: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   // Step 6 / Finalize: Overview and submit
   Widget _buildFinalizeStep(Report report) {

@@ -1,18 +1,16 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../core/config.dart';
 import '../models/user_model.dart';
 import 'storage_service.dart';
 
 class AuthService extends ChangeNotifier {
   final StorageService _storageService = StorageService();
   
-  // API URL Config
-  static const String baseUrl = 'http://localhost:8000/api/v1'; // Adjust as needed
-  
   User? _currentUser;
   bool _isLoading = false;
-  bool _isMockMode = true; // Enabled by default since backend is not ready (Phase 1)
+  bool _isMockMode = false; // Default to false for real API integration as required by Task A
   String? _errorMessage;
 
   User? get currentUser => _currentUser;
@@ -52,9 +50,83 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  // Login
+  // Helper method to parse Turkish error message from API response
+  String _parseErrorMessage(http.Response response, String defaultMsg) {
+    try {
+      final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data.containsKey('error') && data['error'] is Map && data['error']['message'] != null) {
+        return data['error']['message'].toString();
+      } else if (data.containsKey('detail')) {
+        if (data['detail'] is String) return data['detail'].toString();
+        if (data['detail'] is List && (data['detail'] as List).isNotEmpty) {
+          final firstErr = (data['detail'] as List).first;
+          if (firstErr is Map && firstErr['msg'] != null) return firstErr['msg'].toString();
+        }
+      }
+    } catch (_) {}
+    return defaultMsg;
+  }
+
+  // Attempt to refresh access token using saved refresh token
+  Future<bool> refreshAccessToken() async {
+    final String? refreshToken = await _storageService.getRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) {
+      await logout();
+      return false;
+    }
+
+    try {
+      final http.Response response = await http.post(
+        Uri.parse('${AppConfig.apiBaseUrl}/auth/refresh'),
+        headers: <String, String>{'Content-Type': 'application/json'},
+        body: jsonEncode(<String, String>{'refresh_token': refreshToken}),
+      ).timeout(AppConfig.requestTimeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
+        final String newAccessToken = data['access_token'] as String;
+        await _storageService.saveTokens(
+          accessToken: newAccessToken,
+          refreshToken: refreshToken,
+        );
+        return true;
+      } else {
+        await logout();
+        return false;
+      }
+    } catch (_) {
+      await logout();
+      return false;
+    }
+  }
+
+  // Authenticated HTTP request wrapper with automatic 401 Token Refresh retry
+  Future<http.Response> authenticatedRequest(
+    Future<http.Response> Function(String token) requestFn,
+  ) async {
+    String? token = await _storageService.getAccessToken();
+    if (token == null) {
+      throw Exception('Oturum açılmamış.');
+    }
+
+    http.Response response = await requestFn(token);
+    
+    // If 401 Unauthorized, try refreshing token
+    if (response.statusCode == 401) {
+      final bool refreshed = await refreshAccessToken();
+      if (refreshed) {
+        token = await _storageService.getAccessToken();
+        if (token != null) {
+          response = await requestFn(token);
+        }
+      }
+    }
+    return response;
+  }
+
+  // Login — aligned with API_CONTRACT.md §2.2
   Future<bool> login({
-    required String identifier, // email or sicil_no
+    required String identifier, // phone, email, or sicil_no
     required String password,
     required bool isAdminMode,
   }) async {
@@ -63,9 +135,8 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
 
     if (_isMockMode) {
-      await Future<void>.delayed(const Duration(seconds: 1)); // Simulate network delay
+      await Future<void>.delayed(const Duration(milliseconds: 600));
       
-      // Basic mock credentials validation
       if (password.length < 4) {
         _errorMessage = 'Şifre en az 4 karakter olmalıdır.';
         _isLoading = false;
@@ -73,34 +144,34 @@ class AuthService extends ChangeNotifier {
         return false;
       }
 
-      // Check for user/admin login
       if (isAdminMode) {
-        if (identifier == 'admin' || identifier.contains('admin') || identifier == '99999') {
+        if (identifier == 'admin' || identifier.contains('admin') || identifier == '05000000000' || identifier == '99999') {
           _currentUser = User(
-            id: 'mock_admin_1',
-            fullName: 'Mehmet Admin',
+            id: '1',
+            fullName: 'Yönetici Admin',
             email: 'admin@btselektrik.com',
-            phone: '5551112233',
+            phone: '05000000000',
             sicilNo: '99999',
             role: 'admin',
             isActive: true,
+            hasSignature: true,
           );
         } else {
-          _errorMessage = 'Hatalı admin kimlik bilgileri. (Mock için: admin / 12345)';
+          _errorMessage = 'Hatalı admin kimlik bilgileri. (Mock için: 05000000000 / Admin123!)';
           _isLoading = false;
           notifyListeners();
           return false;
         }
       } else {
-        // Employee login
         _currentUser = User(
-          id: 'mock_employee_1',
+          id: '2',
           fullName: 'Ahmet Teknisyen',
-          email: identifier.contains('@') ? identifier : null,
-          phone: '5552223344',
-          sicilNo: identifier.contains('@') ? '12345' : identifier,
+          email: identifier.contains('@') ? identifier : 'ahmet@btselektrik.com',
+          phone: '05551112233',
+          sicilNo: '12345',
           role: 'employee',
           isActive: true,
+          hasSignature: false,
         );
       }
 
@@ -115,23 +186,18 @@ class AuthService extends ChangeNotifier {
       return true;
     }
 
-    // Real network integration
+    // Real API integration: POST /auth/login
     try {
       final Map<String, String> body = <String, String>{
+        'identifier': identifier.trim(),
         'password': password,
       };
-      
-      if (identifier.contains('@')) {
-        body['email'] = identifier;
-      } else {
-        body['sicil_no'] = identifier;
-      }
 
       final http.Response response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
+        Uri.parse('${AppConfig.apiBaseUrl}/auth/login'),
         headers: <String, String>{'Content-Type': 'application/json'},
         body: jsonEncode(body),
-      );
+      ).timeout(AppConfig.requestTimeout);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -141,7 +207,7 @@ class AuthService extends ChangeNotifier {
         
         _currentUser = User.fromJson(userJson);
         
-        // Check role compatibility
+        // Role check
         if (isAdminMode && _currentUser!.role != 'admin') {
           _errorMessage = 'Bu hesap admin yetkilerine sahip değil.';
           _currentUser = null;
@@ -157,11 +223,10 @@ class AuthService extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        final Map<String, dynamic> errData = jsonDecode(response.body) as Map<String, dynamic>;
-        _errorMessage = errData['error']?['message'] ?? 'Giriş başarısız oldu. Lütfen bilgilerinizi kontrol edin.';
+        _errorMessage = _parseErrorMessage(response, 'Giriş başarısız oldu. Lütfen bilgilerinizi kontrol edin.');
       }
     } catch (e) {
-      _errorMessage = 'Sunucuyla bağlantı kurulamadı. Çevrimdışı/Mock modunu etkinleştirebilirsiniz.';
+      _errorMessage = 'Sunucuyla bağlantı kurulamadı (${AppConfig.apiBaseUrl}). İnternet bağlantınızı veya sunucu durumunu kontrol edin.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -169,7 +234,7 @@ class AuthService extends ChangeNotifier {
     return false;
   }
 
-  // Register
+  // Register — aligned with API_CONTRACT.md §2.1
   Future<bool> register({
     required String fullName,
     required String? email,
@@ -183,7 +248,7 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
 
     if (_isMockMode) {
-      await Future<void>.delayed(const Duration(seconds: 1)); // Delay simulation
+      await Future<void>.delayed(const Duration(milliseconds: 600));
 
       if (inviteCode == 'EXPIRED' || inviteCode == 'INVALID') {
         _errorMessage = 'Davet kodu geçersiz veya süresi dolmuş.';
@@ -199,15 +264,15 @@ class AuthService extends ChangeNotifier {
         return false;
       }
 
-      // Simulate successful registration
       _currentUser = User(
-        id: 'mock_registered_user_${DateTime.now().millisecondsSinceEpoch}',
+        id: 'mock_registered_${DateTime.now().millisecondsSinceEpoch}',
         fullName: fullName,
         email: email,
         phone: phone,
         sicilNo: sicilNo,
         role: 'employee',
         isActive: true,
+        hasSignature: false,
       );
 
       await _storageService.saveTokens(
@@ -221,50 +286,43 @@ class AuthService extends ChangeNotifier {
       return true;
     }
 
-    // Real API call
+    // Real API call: POST /auth/register
     try {
       final Map<String, dynamic> body = <String, dynamic>{
-        'full_name': fullName,
-        'email': email,
-        'phone': phone,
-        'sicil_no': sicilNo,
-        'invite_code': inviteCode,
+        'full_name': fullName.trim(),
+        'phone': phone.trim(),
+        'invite_code': inviteCode.trim(),
         'password': password,
       };
 
+      if (email != null && email.trim().isNotEmpty) {
+        body['email'] = email.trim();
+      }
+      if (sicilNo != null && sicilNo.trim().isNotEmpty) {
+        body['sicil_no'] = sicilNo.trim();
+      }
+
       final http.Response response = await http.post(
-        Uri.parse('$baseUrl/auth/register'),
+        Uri.parse('${AppConfig.apiBaseUrl}/auth/register'),
         headers: <String, String>{'Content-Type': 'application/json'},
         body: jsonEncode(body),
-      );
+      ).timeout(AppConfig.requestTimeout);
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
-        final Map<String, dynamic> userJson = data['user'] as Map<String, dynamic>;
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final Map<String, dynamic> userJson = jsonDecode(response.body) as Map<String, dynamic>;
         _currentUser = User.fromJson(userJson);
         
-        // Wait, does register automatically log in or return tokens?
-        // Usually, in API_CONTRACT: /auth/register returns {user}
-        // Let's assume the user should then log in, or the registration endpoint returns tokens too.
-        // If register only returns user, let's login right after, or save mock/temp tokens.
-        // Let's call login to retrieve real tokens, or if registration returned tokens we save them.
-        // For security & compatibility, we'll save a temp login session or instruct them to log in.
-        // Let's save a placeholder and let them navigate, or perform a login command.
-        await _storageService.saveTokens(
-          accessToken: 'temp_access_token_from_register',
-          refreshToken: 'temp_refresh_token_from_register',
+        // Automatically attempt login right after registration to acquire tokens
+        return await login(
+          identifier: phone,
+          password: password,
+          isAdminMode: false,
         );
-        await _storageService.saveUser(_currentUser!);
-
-        _isLoading = false;
-        notifyListeners();
-        return true;
       } else {
-        final Map<String, dynamic> errData = jsonDecode(response.body) as Map<String, dynamic>;
-        _errorMessage = errData['error']?['message'] ?? 'Kayıt başarısız oldu. Davet kodunu kontrol edin.';
+        _errorMessage = _parseErrorMessage(response, 'Kayıt başarısız oldu. Lütfen davet kodunu ve bilgilerinizi kontrol edin.');
       }
     } catch (e) {
-      _errorMessage = 'Sunucuyla bağlantı kurulamadı. Lütfen internetinizi kontrol edin.';
+      _errorMessage = 'Sunucuyla bağlantı kurulamadı. Lütfen sunucu adresini ve internet bağlantınızı kontrol edin.';
     } finally {
       _isLoading = false;
       notifyListeners();

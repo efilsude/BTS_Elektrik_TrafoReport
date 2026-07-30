@@ -8,7 +8,8 @@
 - [x] Flutter proje iskeleti (Material Design 3, TR dil)
 - [x] JWT güvenli saklama (flutter secure storage)
 - [x] Başlangıç ekranı: Çalışan Girişi | Kayıt Ol | Admin Girişi (PRD §6)
-- [x] Giriş / Kayıt Ol ekranları (`docs/API_CONTRACT.md`'deki `/auth/*`'a bağlan) - **BLOKE: backend bekleniyor (MOCK modu aktif edildi)**
+- [x] Giriş / Kayıt Ol ekranları (`docs/API_CONTRACT.md`'deki `/auth/*`'a bağlandı)
+
 - [x] Ana Sayfa navigasyonu (Yeni Rapor | Rapor Havuzu | Taslaklar | Profil | Admin)
 
 ## Faz 2 — Rapor Çekirdeği (PRD §22)

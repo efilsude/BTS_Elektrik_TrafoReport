@@ -7,7 +7,9 @@ class AppTheme {
   static const Color primaryLight = Color(0xFF3B82F6); // Bright Blue
   static const Color secondaryColor = Color(0xFF0D9488); // Teal
   static const Color accentColor = Color(0xFFF59E0B); // Amber
+  static const Color warningColor = Color(0xFFF59E0B); // Amber Warning
   static const Color errorColor = Color(0xFFEF4444); // Rose Red
+
   static const Color successColor = Color(0xFF10B981); // Emerald Green
   
   // Background & Neutral Colors

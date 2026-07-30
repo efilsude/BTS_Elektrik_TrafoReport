@@ -13,9 +13,27 @@ Format:
 - Bir sonraki oturumda kaldığı yer:
 ```
 
+## 2026-07-30 — Gerçek API Entegrasyonu, QR Scanner, Kamera/Galeri & İmza Pedi Sertleştirme
+- **Ne yapıldı:**
+  1. `AuthService`: Varsayılan `_isMockMode = false` yapıldı. `AppConfig.apiBaseUrl` (`http://10.0.2.2:8000/api/v1`) bağlandı. `/auth/login`, `/auth/register`, `/auth/refresh` entegre edildi. 401 refresh token interceptor ve Türkçe hata parser eklendi.
+  2. `RegisterScreen`: Yönetici (Admin) olarak kayıt seçeneği ve bilgi kartı eklendi.
+  3. `QrScannerDialog`: `mobile_scanner` ile canlı kamera QR tarama, galeri görseli tarama ve manuel kod girişi modalları yazıldı ve `report_form_screen.dart` etiket doldurma akışına bağlandı.
+  4. `PhotoPickerWidget`: Kamera & galeri fotoğraf seçici, tam ekran önizleme ve silme widget'ı yazıldı. Etiket (zorunlu), Bakım Öncesi & Sonrası (Bakım için zorunlu) doğrulama kuralları uygulandı.
+  5. `SignaturePad`: Koordinat kayması, repaint delegate ve çizim eksiklikleri giderildi. `dart:ui` `PictureRecorder` ile gerçek PNG base64 üretimi ve `PUT /users/me/signature` multipart yükleme bağlandı.
+  6. `ReportService` & `ReportsPoolScreen`: Gerçek `GET /reports`, `GET /drafts`, `POST /reports`, `PUT /reports/{id}`, `POST /reports/{id}/finalize`, `GET /reports/{id}/download` HTTP çağrıları, çevrimdışı fallback önbellek, "Excel'i Aç | Paylaş | Yazdır | Kapat" yerel intent aksiyonları tamamlandı.
+  7. Statik kod analizi (`flutter analyze`) 0 hata ile doğrulandı.
+  8. Yeni eklentilerle üretim imzalı release APK (`app-release.apk`, 70.65 MB) sıfır hatayla derlendi.
+- **Alınan kararlar:**
+  - `compileSdk` ve `targetSdk` Android SDK 36 sürümlerine yükseltildi (yeni `mobile_scanner` ve `image_picker` eklentilerinin minimum SDK şartı).
+- **Bulunan sorun/gotcha:**
+  - OneDrive klasör kilitlemelerine karşı `build` dizini temizlendikten sonra derleme yapıldığında `assembleRelease` sıfır hatayla tamamlandı.
+- **Bir sonraki oturumda kaldığı yer:**
+  - Backend sunucusu canlıya alındığında uçtan uca canlı API HTTP duman testleri yürütülecek.
+
 ---
 
 ## 2026-07-30 — Headless Production Release APK Build Altyapısı Tamamlandı
+
 - **Ne yapıldı:**
   1. Headless/CLI ortamlarında Android Studio IDE gereksinimi olmaksızın `flutter build apk --release` komutu ile imzalı üretim APK'sı üretilmesi sağlandı.
   2. Ortam doğrulama betikleri (`validate_environment.ps1`, `validate_environment.sh`) yazıldı.

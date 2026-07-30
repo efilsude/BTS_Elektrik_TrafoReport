@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import '../core/config.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
-import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/signature_pad.dart';
 import 'auth/login_screen.dart';
@@ -19,7 +19,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final StorageService _storageService = StorageService();
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   final GlobalKey<FormState> _passwordFormKey = GlobalKey<FormState>();
   
   final TextEditingController _oldPasswordController = TextEditingController();
@@ -32,6 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   
   String? _signatureBase64;
   bool _loadingSignature = true;
+  bool _isSubmittingPassword = false;
 
   @override
   void initState() {
@@ -48,46 +49,104 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadSignature() async {
-    // Standard key in API_CONTRACT is signature image
-    final String? sig = await _storageService.getAccessToken(); // We can store signature in custom storage
-    // Let's store signature under a specific key in StorageService
-    final String? signature = await FlutterSecureStorage().read(key: 'user_signature_base64');
+    final String? signature = await _secureStorage.read(key: 'user_signature_base64');
     setState(() {
       _signatureBase64 = signature;
       _loadingSignature = false;
     });
   }
 
-  void _handleChangePassword() {
+  Future<void> _handleChangePassword() async {
     if (!_passwordFormKey.currentState!.validate()) return;
     
     if (_newPasswordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Yeni şifreler eşleşmiyor!'),
+        SnackBar(
+          content: Text('Yeni şifreler eşleşmiyor!', style: GoogleFonts.inter()),
           backgroundColor: AppTheme.errorColor,
         ),
       );
       return;
     }
 
-    // Call service update password (mock for now)
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Şifreniz başarıyla güncellendi! (Mock)'),
-        backgroundColor: AppTheme.successColor,
-      ),
-    );
-    
-    _oldPasswordController.clear();
-    _newPasswordController.clear();
-    _confirmPasswordController.clear();
+    final AuthService authService = Provider.of<AuthService>(context, listen: false);
+
+    setState(() => _isSubmittingPassword = true);
+
+    try {
+      if (authService.isMockMode) {
+        await Future<void>.delayed(const Duration(milliseconds: 600));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Şifreniz başarıyla güncellendi (Mock).', style: GoogleFonts.inter()),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+        }
+      } else {
+        // Real API call: PUT /users/me/password
+        final http.Response response = await authService.authenticatedRequest(
+          (String token) => http.put(
+            Uri.parse('${AppConfig.apiBaseUrl}/users/me/password'),
+            headers: <String, String>{
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(<String, String>{
+              'current_password': _oldPasswordController.text,
+              'new_password': _newPasswordController.text,
+            }),
+          ),
+        );
+
+        if (response.statusCode == 200) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Şifreniz başarıyla güncellendi.', style: GoogleFonts.inter()),
+                backgroundColor: AppTheme.successColor,
+              ),
+            );
+          }
+        } else {
+          String errMsg = 'Şifre güncellenemedi.';
+          try {
+            final Map<String, dynamic> errJson = jsonDecode(response.body) as Map<String, dynamic>;
+            errMsg = errJson['error']?['message'] ?? errJson['detail'] ?? errMsg;
+          } catch (_) {}
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(errMsg, style: GoogleFonts.inter()),
+                backgroundColor: AppTheme.errorColor,
+              ),
+            );
+          }
+        }
+      }
+
+      _oldPasswordController.clear();
+      _newPasswordController.clear();
+      _confirmPasswordController.clear();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Bağlantı hatası: $e', style: GoogleFonts.inter()),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmittingPassword = false);
+    }
   }
 
   void _handleUpdateSignature() {
     showDialog<dynamic>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
+      builder: (BuildContext ctx) => AlertDialog(
         title: Text(
           'Dijital İmza Çizimi',
           style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
@@ -97,16 +156,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
           height: 300,
           child: SignaturePad(
             onSave: (String base64Png) async {
-              // Save to secure storage
-              await FlutterSecureStorage().write(key: 'user_signature_base64', value: base64Png);
-
-              Navigator.pop(context);
-              _loadSignature();
+              Navigator.pop(ctx);
               
+              // 1. Local secure storage cache
+              await _secureStorage.write(key: 'user_signature_base64', value: base64Png);
+              await _loadSignature();
+
+              final AuthService authService = Provider.of<AuthService>(context, listen: false);
+              
+              // 2. Real API upload if online: PUT /users/me/signature
+              if (!authService.isMockMode) {
+                try {
+                  final List<int> imageBytes = base64Decode(base64Png);
+                  final http.MultipartRequest request = http.MultipartRequest(
+                    'PUT',
+                    Uri.parse('${AppConfig.apiBaseUrl}/users/me/signature'),
+                  );
+                  
+                  final String? token = await _secureStorage.read(key: 'access_token');
+                  if (token != null) {
+                    request.headers['Authorization'] = 'Bearer $token';
+                  }
+
+                  request.files.add(
+                    http.MultipartFile.fromBytes(
+                      'file',
+                      imageBytes,
+                      filename: 'signature.png',
+                    ),
+                  );
+
+                  await request.send();
+                } catch (_) {}
+              }
+
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Dijital imzanız başarıyla kaydedildi!'),
+                  SnackBar(
+                    content: Text('Dijital imzanız başarıyla kaydedildi!', style: GoogleFonts.inter()),
                     backgroundColor: AppTheme.successColor,
                   ),
                 );
@@ -116,7 +203,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('Kapat'),
           ),
         ],
@@ -143,7 +230,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            // User Card
+            // User Info Card
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -153,7 +240,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       radius: 36,
                       backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
                       child: Text(
-                        user.fullName.substring(0, 1).toUpperCase(),
+                        user.fullName.isNotEmpty ? user.fullName.substring(0, 1).toUpperCase() : 'U',
                         style: GoogleFonts.outfit(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -184,7 +271,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          if (user.sicilNo != null)
+                          if (user.sicilNo != null && user.sicilNo!.isNotEmpty)
                             Text(
                               'Sicil No: ${user.sicilNo}',
                               style: GoogleFonts.inter(color: AppTheme.textLight, fontSize: 13),
@@ -193,7 +280,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             'Telefon: ${user.phone}',
                             style: GoogleFonts.inter(color: AppTheme.textLight, fontSize: 13),
                           ),
-                          if (user.email != null)
+                          if (user.email != null && user.email!.isNotEmpty)
                             Text(
                               'E-posta: ${user.email}',
                               style: GoogleFonts.inter(color: AppTheme.textLight, fontSize: 13),
@@ -207,7 +294,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Signature Setup Card
+            // Debug / Developer Mode Card (Task A #6: Toggle for Mock Mode)
+            Card(
+              color: Colors.blueGrey.shade50,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: Colors.blueGrey.shade200),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: SwitchListTile(
+                  title: Text(
+                    'Çevrimdışı / Simülasyon (Mock) Modu',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  subtitle: Text(
+                    authService.isMockMode
+                        ? 'Aktif: Sunucusuz yerel bellek kullanılıyor.'
+                        : 'Devre Dışı: Gerçek API bağlantısı (${AppConfig.apiBaseUrl}).',
+                    style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textLight),
+                  ),
+                  value: authService.isMockMode,
+                  onChanged: (bool val) => authService.setMockMode(val),
+                  activeColor: AppTheme.primaryColor,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Digital Signature Card
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -228,7 +343,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: GoogleFonts.inter(color: AppTheme.textLight, fontSize: 13, height: 1.4),
                     ),
                     const SizedBox(height: 16),
-                    // Imza durumu veya resmi
                     _loadingSignature
                         ? const Center(child: CircularProgressIndicator())
                         : _signatureBase64 != null
@@ -354,8 +468,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton(
-                        onPressed: _handleChangePassword,
-                        child: const Text('Şifreyi Güncelle'),
+                        onPressed: _isSubmittingPassword ? null : _handleChangePassword,
+                        child: _isSubmittingPassword
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              )
+                            : const Text('Şifreyi Güncelle'),
                       ),
                     ],
                   ),

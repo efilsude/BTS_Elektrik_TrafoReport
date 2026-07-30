@@ -43,6 +43,13 @@ Kurallar:
 - Neden: Mobil istemcinin Admin gösterge paneli istatistiklerini görüntülemesi ve şablon yönetimi gerçekleştirebilmesi için.
 - Etiket: @mobile (DİKKAT mobile: `/templates`, `/admin/templates` ve `/admin/stats` v1.0 olarak eklendi).
 
+## 2026-07-30 — [mobile] Admin Kaydı Davet Kodu ve Rol Desteği İsteği
+- Ne: `RegisterScreen` ekranına Yönetici Kaydı seçeneği eklendi.
+- İSTEK: backend — davet koduna role (admin|employee) eklensin veya `POST /auth/register` body’de `role` desteklensin; admin kodları sadece mevcut admin üretebilsin.
+- Neden: Sistemde yeni yöneticilerin de davet koduyla doğrudan admin rolüyle kayıt olabilmesi için.
+
+
+
 
 
 

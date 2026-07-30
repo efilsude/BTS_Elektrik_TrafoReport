@@ -6,6 +6,7 @@ class User {
   final String? sicilNo;
   final String role; // 'admin' or 'employee'
   final bool isActive;
+  final bool hasSignature;
 
   User({
     required this.id,
@@ -15,6 +16,7 @@ class User {
     this.sicilNo,
     required this.role,
     required this.isActive,
+    this.hasSignature = false,
   });
 
   bool get isAdmin => role == 'admin';
@@ -29,6 +31,7 @@ class User {
       sicilNo: json['sicil_no'] ?? json['sicilNo'],
       role: json['role'] ?? 'employee',
       isActive: json['is_active'] ?? json['isActive'] ?? true,
+      hasSignature: json['has_signature'] ?? json['hasSignature'] ?? false,
     );
   }
 
@@ -41,6 +44,7 @@ class User {
       'sicil_no': sicilNo,
       'role': role,
       'is_active': isActive,
+      'has_signature': hasSignature,
     };
   }
 }

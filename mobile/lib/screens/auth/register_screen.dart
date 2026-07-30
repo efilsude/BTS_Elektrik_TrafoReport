@@ -24,8 +24,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isAdminRegister = false;
 
   @override
+
   void dispose() {
     _fullNameController.dispose();
     _emailController.dispose();
@@ -128,11 +130,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     children: <Widget>[
                       // Header info
                       Text(
-                        'Çalışan Kayıt Formu',
+                        _isAdminRegister ? 'Yönetici (Admin) Kayıt Formu' : 'Çalışan Kayıt Formu',
                         style: GoogleFonts.outfit(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryColor,
+                          color: _isAdminRegister ? Colors.orange.shade800 : AppTheme.primaryColor,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -146,7 +148,67 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
+
+                      // Admin registration selection
+                      Container(
+                        decoration: BoxDecoration(
+                          color: _isAdminRegister ? Colors.orange.shade50 : Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: _isAdminRegister ? Colors.orange.shade300 : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: CheckboxListTile(
+                          value: _isAdminRegister,
+                          onChanged: (bool? val) {
+                            setState(() => _isAdminRegister = val ?? false);
+                          },
+                          title: Text(
+                            'Yönetici (Admin) olarak kayıt ol',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: _isAdminRegister ? Colors.orange.shade900 : AppTheme.textDark,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Sistem yöneticisi yetkileri talep eder.',
+                            style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textLight),
+                          ),
+                          activeColor: Colors.orange.shade800,
+                          controlAffinity: ListTileControlAffinity.leading,
+                        ),
+                      ),
+                      if (_isAdminRegister) ...<Widget>[
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade100,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.amber.shade600),
+                          ),
+                          child: Row(
+                            children: <Widget>[
+                              Icon(Icons.warning_amber_rounded, color: Colors.amber.shade900, size: 20),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Geçerli bir admin davet kodu gereklidir. Yöneticinizden temin ediniz.',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.amber.shade900,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 20),
+
 
                       // Full Name
                       TextFormField(

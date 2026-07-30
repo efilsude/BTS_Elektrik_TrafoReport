@@ -9,6 +9,7 @@ class Report {
   final String customerName;
   final String trafoLabel;
   final String status; // 'draft' or 'final'
+  final String? creatorDisplayName;
   final Map<String, dynamic> dataJson;
   final int currentStep;
   final DateTime createdAt;
@@ -23,6 +24,7 @@ class Report {
     required this.customerName,
     required this.trafoLabel,
     required this.status,
+    this.creatorDisplayName,
     required this.dataJson,
     required this.currentStep,
     required this.createdAt,
@@ -38,6 +40,7 @@ class Report {
     String? customerName,
     String? trafoLabel,
     String? status,
+    String? creatorDisplayName,
     Map<String, dynamic>? dataJson,
     int? currentStep,
     DateTime? createdAt,
@@ -52,6 +55,7 @@ class Report {
       customerName: customerName ?? this.customerName,
       trafoLabel: trafoLabel ?? this.trafoLabel,
       status: status ?? this.status,
+      creatorDisplayName: creatorDisplayName ?? this.creatorDisplayName,
       dataJson: dataJson ?? Map<String, dynamic>.from(this.dataJson),
       currentStep: currentStep ?? this.currentStep,
       createdAt: createdAt ?? this.createdAt,
@@ -69,6 +73,7 @@ class Report {
       customerName: json['customer_name'] ?? '',
       trafoLabel: json['trafo_label'] ?? '',
       status: json['status'] ?? 'draft',
+      creatorDisplayName: json['creator_display_name'] ?? json['creatorDisplayName'],
       dataJson: json['data_json'] is String
           ? jsonDecode(json['data_json'] as String) as Map<String, dynamic>
           : (json['data_json'] as Map<String, dynamic>? ?? <String, dynamic>{}),
@@ -88,6 +93,7 @@ class Report {
       'customer_name': customerName,
       'trafo_label': trafoLabel,
       'status': status,
+      'creator_display_name': creatorDisplayName,
       'data_json': dataJson,
       'current_step': currentStep,
       'created_at': createdAt.toIso8601String(),
