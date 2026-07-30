@@ -33,9 +33,10 @@
 
 
 ## Faz 4 — Admin ve Cilalama
-- [ ] Şablon yükleme (`POST /admin/templates`)
-- [ ] İstatistik endpoint'leri
-- [ ] Hata yönetimi senaryoları (PRD §19 tablosu — tümü)
+- [x] Şablon yükleme (`POST /admin/templates`)
+- [x] İstatistik endpoint'leri (`GET /admin/stats`)
+- [x] Hata yönetimi senaryoları (PRD §19 tablosu — tümü)
+
 
 ## Faz 5 — Test ve Sürüm
 - [ ] Uçtan uca API testleri

@@ -482,5 +482,77 @@ Raporu kesinleştirme ve `.xlsx` Excel dosyasını üretme.
 - **Headers:** `Content-Disposition: attachment; filename="ABC Fabrikası - TR1 - 30.07.2026.xlsx"`
 - **Response Body:** Binary `.xlsx` file stream.
 
+---
+
+## 6. Şablon Yönetimi Uç Noktaları (Faz 4)
+
+### 6.1 GET `/templates`
+Mevcut şablonları listeleme.
+
+- **Yanıt (200 OK):**
+```json
+[
+  {
+    "id": 1,
+    "name": "HERMETİK TRAFO BAKIM RAPORU HİLMİ.xlsx",
+    "report_type": "HERMETIK",
+    "version": "1.0",
+    "file_path": "templates/HERMETİK TRAFO BAKIM RAPORU HİLMİ.xlsx",
+    "uploaded_at": "2026-07-30T16:00:00Z"
+  }
+]
+```
+
+---
+
+### 6.2 POST `/admin/templates`
+Yeni `.xlsx` şablon dosyası yükleme ve tipe atama (Sadece Admin).
+
+- **İstek (multipart/form-data):**
+  - `name` (string): Şablon adı
+  - `report_type` (string): `HERMETIK`, `KURU_TIP`, `GT`
+  - `file`: `.xlsx` uzantılı dosya
+
+- **Yanıt (201 Created):**
+```json
+{
+  "id": 4,
+  "name": "Yeni Hermetik Şablonu.xlsx",
+  "report_type": "HERMETIK",
+  "version": "1.1",
+  "file_path": "uploads/templates/hermetik_v1.1.xlsx",
+  "uploaded_at": "2026-07-30T16:40:00Z"
+}
+```
+
+---
+
+## 7. Admin İstatistik Uç Noktaları (Faz 4)
+
+### 7.1 GET `/admin/stats`
+Gösterge paneli istatistikleri (Sadece Admin).
+
+- **Yanıt (200 OK):**
+```json
+{
+  "total_reports": 15,
+  "draft_reports": 3,
+  "final_reports": 12,
+  "reports_by_type": {
+    "HERMETIK": 8,
+    "KURU_TIP": 4,
+    "GT": 3
+  },
+  "reports_by_user": [
+    { "creator_display_name": "Ahmet Yılmaz", "count": 10 },
+    { "creator_display_name": "Mehmet Teknisyen", "count": 5 }
+  ],
+  "total_active_users": 5,
+  "active_invite_codes": 2
+}
+```
+
+
+
 
 
