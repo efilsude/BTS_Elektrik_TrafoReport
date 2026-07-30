@@ -298,32 +298,240 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     };
   }
 
+  // Finalize report and show Post-Production dialog (PRD §21.4)
   Future<void> _finalizeReport() async {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
     final Report? report = service.activeReport;
 
     if (report == null) return;
 
-    final bool success = await service.finalizeReport(report.id);
+    // Check mandatory photos before finalization
+    final bool isTestOnly = report.reportType == 'test';
+    final dynamic hasLabelPhoto = report.dataJson['photo_label'];
+    final dynamic hasBeforePhoto = report.dataJson['photo_before'];
+    final dynamic hasAfterPhoto = report.dataJson['photo_after'];
 
-    if (mounted) {
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Rapor kesinleştirildi! Excel üretildi ve havuza eklendi.'),
-            backgroundColor: AppTheme.successColor,
-          ),
-        );
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Rapor kesinleştirilirken hata oluştu.'),
-            backgroundColor: AppTheme.errorColor,
-          ),
-        );
+    if (isTestOnly) {
+      if (hasLabelPhoto == null) {
+        _showPhotoWarningDialog('Etiket Fotoğrafı zorunludur.');
+        return;
+      }
+    } else {
+      if (hasLabelPhoto == null || hasBeforePhoto == null || hasAfterPhoto == null) {
+        _showPhotoWarningDialog('Bakım raporu için Öncesi, Sonrası ve Etiket fotoğraflarının hepsi zorunludur.');
+        return;
       }
     }
+
+    final bool success = await service.finalizeReport(report.id);
+
+    if (mounted && success) {
+      _showPostProductionDialog(report.title);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Rapor kesinleştirilirken hata oluştu.'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+    }
+  }
+
+  void _showPhotoWarningDialog(String message) {
+    showDialog<dynamic>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: Row(
+          children: <Widget>[
+            const Icon(Icons.warning_amber_rounded, color: AppTheme.errorColor),
+            const SizedBox(width: 10),
+            Text('Eksik Fotoğraflar', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(message),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Kapat'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Post-Production Screen (PRD §21.4): Open | Share | Print | Close
+  void _showPostProductionDialog(String reportTitle) {
+    showDialog<dynamic>(
+      context: context,
+      barrierDismissible: false, // Must select an action
+      builder: (BuildContext context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Column(
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.successColor.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check_circle_rounded, color: AppTheme.successColor, size: 54),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Rapor Başarıyla Kesinleştirildi!',
+              style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 20),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Text(
+              'Excel raporu orijinal şablon biçimlendirmesiyle üretildi ve Rapor Havuzuna kaydedildi.',
+              style: GoogleFonts.inter(color: AppTheme.textLight, fontSize: 13, height: 1.4),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundColor,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppTheme.borderLight),
+              ),
+              child: Text(
+                '$reportTitle.xlsx',
+                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // Native intents buttons
+            ElevatedButton.icon(
+              onPressed: () => _simulateIntent('Excel\'i Aç', 'Excel dosyası yerel ofis uygulaması ile açılıyor...'),
+              icon: const Icon(Icons.open_in_new_rounded),
+              label: const Text('Excel\'i Aç'),
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _simulateIntent('Paylaş', 'Rapor paylaşma seçenekleri hazırlanıyor...'),
+                    icon: const Icon(Icons.share_rounded),
+                    label: const Text('Paylaş'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _simulateIntent('Yazdır', 'Sistem yazdırma servisi aranıyor...'),
+                    icon: const Icon(Icons.print_rounded),
+                    label: const Text('Yazdır'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Pop FormScreen to go back to Home
+            },
+            child: Text(
+              'Kapat',
+              style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppTheme.textLight),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _simulateIntent(String label, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: <Widget>[
+            const Icon(Icons.android_rounded, color: Colors.white),
+            const SizedBox(width: 10),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: AppTheme.secondaryColor,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  // Camera capture simulation (PRD §10)
+  void _simulatePhotoCapture(String photoKey, String label) {
+    showModalBottomSheet<dynamic>(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (BuildContext context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Text(
+              '$label Ekle',
+              style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                _saveMockPhoto(photoKey, 'Kamera');
+              },
+              icon: const Icon(Icons.camera_alt_rounded),
+              label: const Text('Kamerayı Aç'),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                _saveMockPhoto(photoKey, 'Galeri');
+              },
+              icon: const Icon(Icons.photo_library_rounded),
+              label: const Text('Galeriden Seç'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _saveMockPhoto(String photoKey, String source) {
+    final ReportService service = Provider.of<ReportService>(context, listen: false);
+    // Write mock placeholder
+    service.updateField(photoKey, 'mock_photo_path_$photoKey');
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$source kullanılarak fotoğraf başarıyla eklendi.'),
+        backgroundColor: AppTheme.successColor,
+      ),
+    );
+  }
+
+  void _deletePhoto(String photoKey) {
+    final ReportService service = Provider.of<ReportService>(context, listen: false);
+    service.updateField(photoKey, null);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Fotoğraf kaldırıldı.'),
+        backgroundColor: AppTheme.errorColor,
+      ),
+    );
   }
 
   @override
@@ -345,6 +553,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       'Sargı Ölçümleri',
       'TTR & Toprak',
       if (isKesici) 'Kesici Testleri',
+      'Fotoğraflar', // Added Step (Phase 3)
       'Raporu Bitir',
     ];
 
@@ -511,7 +720,23 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
   // Render proper wizard step form
   Widget _getStepWidget(Report report) {
-    switch (_currentStepIndex) {
+    final bool isKesici = report.subType == 'kesici';
+    
+    // We adjust the step index map dynamically
+    final List<int> stepMapping = <int>[
+      0, // Genel Bilgiler
+      1, // Etiket Bilgileri
+      2, // Kontroller
+      3, // Sargı Ölçümleri
+      4, // TTR & Toprak
+      if (isKesici) 5, // Kesici Testleri
+      isKesici ? 6 : 5, // Fotoğraflar
+      isKesici ? 7 : 6, // Raporu Bitir
+    ];
+
+    final int activeStep = stepMapping[_currentStepIndex];
+
+    switch (activeStep) {
       case 0:
         return _buildGeneralStep(report);
       case 1:
@@ -523,11 +748,16 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       case 4:
         return _buildTtrStep(report);
       case 5:
-        if (report.subType == 'kesici') {
+        if (isKesici) {
           return _buildBreakerStep(report);
         }
-        return _buildFinalizeStep(report);
+        return _buildPhotosStep(report);
       case 6:
+        if (isKesici) {
+          return _buildPhotosStep(report);
+        }
+        return _buildFinalizeStep(report);
+      case 7:
         return _buildFinalizeStep(report);
       default:
         return _buildGeneralStep(report);
@@ -1007,6 +1237,132 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     );
   }
 
+  // Phase 3: Photos Management Step (PRD §10)
+  Widget _buildPhotosStep(Report report) {
+    final bool isTestOnly = report.reportType == 'test';
+    
+    final dynamic labelPhoto = report.dataJson['photo_label'];
+    final dynamic beforePhoto = report.dataJson['photo_before'];
+    final dynamic hasAfterPhoto = report.dataJson['photo_after'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _buildSectionHeader('Saha Fotoğrafları', 'Rapor tiplerine göre zorunlu fotoğrafların tablette çekilmesi veya galeriden eklenmesi gerekir.'),
+        const SizedBox(height: 24),
+
+        // 1. Etiket Fotoğrafı (Zorunlu - Hepsi için)
+        _buildPhotoCard(
+          title: 'Trafo Etiket / Plaka Fotoğrafı *',
+          desc: 'Trafonun marka, model ve seri numarasını gösteren plakanın net resmi.',
+          photoKey: 'photo_label',
+          photoPath: labelPhoto?.toString(),
+        ),
+        const SizedBox(height: 16),
+
+        // 2. Öncesi ve Sonrası Fotoğrafları (Bakım ise Zorunlu)
+        if (!isTestOnly) ...<Widget>[
+          _buildPhotoCard(
+            title: 'Bakım Öncesi Genel Görünüm *',
+            desc: 'Çalışmaya başlamadan önce trafonun ve şalt sahasının durum resmi.',
+            photoKey: 'photo_before',
+            photoPath: beforePhoto?.toString(),
+          ),
+          const SizedBox(height: 16),
+          _buildPhotoCard(
+            title: 'Bakım Sonrası Genel Görünüm *',
+            desc: 'Temizlik, sıkma ve klemens bakımları tamamlanmış trafonun bitiş resmi.',
+            photoKey: 'photo_after',
+            photoPath: hasAfterPhoto?.toString(),
+          ),
+        ] else
+          _buildAlertText('Yalnızca Test raporlarında Bakım Öncesi/Sonrası fotoğrafları zorunlu değildir.'),
+      ],
+    );
+  }
+
+  Widget _buildPhotoCard({
+    required String title,
+    required String desc,
+    required String photoKey,
+    required String? photoPath,
+  }) {
+    final bool isAttached = photoPath != null;
+
+    return Card(
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: <Widget>[
+            // Image Preview or Icon
+            Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                color: isAttached ? AppTheme.successColor.withOpacity(0.06) : AppTheme.backgroundColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: isAttached ? AppTheme.successColor : AppTheme.borderLight),
+              ),
+              child: isAttached
+                  ? const Icon(Icons.image_outlined, color: AppTheme.successColor, size: 36)
+                  : const Icon(Icons.add_a_photo_outlined, color: AppTheme.textLight, size: 32),
+            ),
+            const SizedBox(width: 16),
+            
+            // Description & Button
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Text(
+                        title,
+                        style: GoogleFonts.outfit(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: isAttached ? AppTheme.successColor : AppTheme.textDark,
+                        ),
+                      ),
+                      if (isAttached) ...<Widget>[
+                        const SizedBox(width: 6),
+                        const Icon(Icons.check_circle_rounded, color: AppTheme.successColor, size: 16),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(desc, style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textLight)),
+                  const SizedBox(height: 10),
+                  isAttached
+                      ? OutlinedButton.icon(
+                          onPressed: () => _deletePhoto(photoKey),
+                          icon: const Icon(Icons.delete_outline, size: 16, color: AppTheme.errorColor),
+                          label: const Text('Kaldır'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppTheme.errorColor,
+                            side: const BorderSide(color: AppTheme.errorColor),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          ),
+                        )
+                      : ElevatedButton.icon(
+                          onPressed: () => _simulatePhotoCapture(photoKey, title),
+                          icon: const Icon(Icons.add_a_photo, size: 14),
+                          label: const Text('Fotoğraf Ekle'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            textStyle: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // Step 6 / Finalize: Overview and submit
   Widget _buildFinalizeStep(Report report) {
     return Column(
@@ -1061,21 +1417,18 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     );
   }
 
-  // Helper UI Builders
-  Widget _buildSectionHeader(String title, String desc) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          title,
-          style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+  Widget _buildTableCell(String text, {bool isHeader = false, TextAlign align = TextAlign.left}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Text(
+        text,
+        style: GoogleFonts.inter(
+          fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+          color: isHeader ? AppTheme.textLight : AppTheme.textDark,
+          fontSize: isHeader ? 13 : 14,
         ),
-        const SizedBox(height: 4),
-        Text(
-          desc,
-          style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textLight, height: 1.4),
-        ),
-      ],
+        textAlign: align,
+      ),
     );
   }
 

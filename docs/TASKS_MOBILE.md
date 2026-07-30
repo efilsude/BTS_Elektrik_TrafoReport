@@ -21,11 +21,11 @@
 - [x] Rapor Havuzu UI: liste, arama, filtre (PRD §9)
 
 ## Faz 3 — Fotoğraf, İmza, Üretim
-- [ ] Kamera + galeri entegrasyonu (Öncesi/Sonrası/Etiket, PRD §10)
-- [ ] İmza pad — tek seferlik kayıt + profil sayfasından güncelleme (PRD §11)
-- [ ] Kesinleştirme akışı → `POST /reports/{id}/finalize` → indirme
-- [ ] Üretim sonrası ekran: Excel'i Aç | Paylaş | Yazdır | Kapat (PRD §21.4)
-- [ ] Formdan kaydedilmemiş değişiklikle çıkışta onay dialogu (PRD §20)
+- [x] Kamera + galeri entegrasyonu (Öncesi/Sonrası/Etiket, PRD §10)
+- [x] İmza pad — tek seferlik kayıt + profil sayfasından güncelleme (PRD §11)
+- [x] Kesinleştirme akışı → `POST /reports/{id}/finalize` → indirme
+- [x] Üretim sonrası ekran: Excel'i Aç | Paylaş | Yazdır | Kapat (PRD §21.4)
+- [x] Formdan kaydedilmemiş değişiklikle çıkışta onay dialogu (PRD §20)
 
 ## Faz 4 — Admin ve Cilalama
 - [ ] Admin Gösterge Paneli: Kullanıcılar, Kodlar, Şablonlar, İstatistikler

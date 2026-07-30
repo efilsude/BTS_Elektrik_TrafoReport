@@ -15,6 +15,23 @@ Format:
 
 ---
 
+## 2026-07-30 — Faz 3: Fotoğraf Çekimi, İmza Pedi ve Rapor Kesinleştirme Akışları Tamamlandı
+- Ne yapıldı:
+  - Ekran dokunma hareketlerini takip ederek çizim yapan saf Flutter **`SignaturePad`** çizim widget'ı yazıldı.
+  - `ProfileScreen` içine imza çizme, kaydetme ve secure storage üzerinden yüklenerek PNG formatında önizleme altyapısı entegre edildi.
+  - Dinamik forma **Saha Fotoğrafları** adımı eklendi:
+    - Bakım raporları için Öncesi, Sonrası ve Etiket fotoğraflarının hepsi; Test raporları için sadece Etiket fotoğrafı zorunlu kılındı.
+    - Kamera çekimi ve galeri seçimleri mock-diyaloglarla simüle edilerek dataJson içerisine kaydedilmesi sağlandı.
+  - Rapor kesinleştirme akışında fotoğraf eksikliklerini kontrol eden validasyonlar eklendi.
+  - Kesinleştirme tamamlandığında **PRD §21.4** gereğince açılan **Üretim Sonrası Ekranı** tasarlanıp entegre edildi:
+    - **Excel'i Aç | Paylaş | Yazdır | Kapat** seçenekleri modern görsel kartlar ve Android intent tetikleme simülasyonları ile eklendi.
+- Alınan kararlar:
+  - Harici paketlerin derleme/uyumluluk hatalarını önlemek için imza çizim alanı Gesture-detector ve CustomPainter ile tamamen saf Flutter kodlandı.
+- Bulunan sorun/gotcha:
+  - Fotoğraflar eklenmeden raporun kesinleşmesini engellemek için finalize fonksiyonunun başına tipe göre (Bakım/Test) zorunlu fotoğraf kontrol blokları eklendi.
+- Bir sonraki oturumda kaldığı yer:
+  - Faz 4: Admin Gösterge Paneli iyileştirmeleri, Şablon yükleme UI, kullanıcı yönetimi UI ve Hata durumları için Türkçe kullanıcı mesajları cilalama.
+
 ## 2026-07-30 — Faz 2: Rapor Çekirdeği, Dinamik Form ve Taslak Sistemi Tamamlandı
 - Ne yapıldı:
   - Rapor oluşturma tipi seçim ekranı (`ReportTypeScreen`) ve dinamik form sihirbazı (`ReportFormScreen`) oluşturuldu.
