@@ -38,6 +38,13 @@ Kurallar:
 - Neden: Mobil istemcinin rapor kesinleştirme sonrası Excel indirme/açma/paylaşma akışını bağlayabilmesi için.
 - Etiket: @mobile (DİKKAT mobile: `POST /reports/{id}/finalize` ve `GET /reports/{id}/download` v1.0 olarak eklendi).
 
+## 2026-07-30 — [backend] Faz 4 Şablon yönetimi, istatistikler ve hata yonetimi tamamlandı
+- Ne: `docs/API_CONTRACT.md` ve `docs/DB_SCHEMA.md` güncellenerek `/templates`, `POST /admin/templates` ve `GET /admin/stats` endpoint'leri ile `templates` tablo şeması tanımlandı.
+- Neden: Mobil istemcinin Admin gösterge paneli istatistiklerini görüntülemesi ve şablon yönetimi gerçekleştirebilmesi için.
+- Etiket: @mobile (DİKKAT mobile: `/templates`, `/admin/templates` ve `/admin/stats` v1.0 olarak eklendi).
+
+
+
 
 
 
