@@ -108,9 +108,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           'Saha bakım ve test ölçümlerinizi dijitalleştirin. İmzaya hazır Excel raporlarınızı anında üretin.',
                           style: GoogleFonts.inter(
                             fontSize: 18,
-                            color: Colors.white80,
+                            color: Colors.white70,
                             height: 1.5,
                           ),
+
                         ),
                         const SizedBox(height: 40),
                         // Mock Mode Info Banner

@@ -601,10 +601,13 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             // Form Progress Bar
             Container(
               height: 60,
-              color: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              border: const Border(bottom: BorderSide(color: AppTheme.borderLight)),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
+              ),
               child: ListView.builder(
+
                 scrollDirection: Axis.horizontal,
                 itemCount: stepsList.length,
                 itemBuilder: (BuildContext context, int index) {
@@ -1483,8 +1486,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.4), width: 1.5),
+        side: BorderSide(color: color.withOpacity(0.4), width: 1.5),
       ),
+
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -1560,7 +1564,33 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     );
   }
 
+  Widget _buildSectionHeader(String title, String subtitle) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          title,
+          style: GoogleFonts.outfit(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textDark,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            color: AppTheme.textLight,
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
   Widget _buildSummaryRow(String label, String value) {
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),
       child: Row(

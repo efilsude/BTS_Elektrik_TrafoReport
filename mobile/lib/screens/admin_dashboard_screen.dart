@@ -84,8 +84,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           'Sistem şablonlarını, kayıt kodlarını ve şirket kullanıcılarını buradan yönetebilirsiniz.',
                           style: GoogleFonts.inter(
                             fontSize: 13,
-                            color: Colors.white80,
+                            color: Colors.white70,
                           ),
+
                         ),
                       ],
                     ),
@@ -209,13 +210,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: CircleAvatar(
-                    backgroundColor: isUsed ? Colors.grey.shade200 : Colors.emerald.shade50,
+                    backgroundColor: isUsed ? Colors.grey.shade200 : Colors.green.shade50,
                     child: Icon(
                       isUsed ? Icons.key_off_outlined : Icons.vpn_key_outlined,
-                      color: isUsed ? Colors.grey : Colors.emerald,
+                      color: isUsed ? Colors.grey : Colors.green,
                       size: 20,
                     ),
                   ),
+
                   title: Text(
                     codeStr,
                     style: GoogleFonts.inter(

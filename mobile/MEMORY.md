@@ -15,6 +15,24 @@ Format:
 
 ---
 
+## 2026-07-30 — Headless Production Release APK Build Altyapısı Tamamlandı
+- **Ne yapıldı:**
+  1. Headless/CLI ortamlarında Android Studio IDE gereksinimi olmaksızın `flutter build apk --release` komutu ile imzalı üretim APK'sı üretilmesi sağlandı.
+  2. Ortam doğrulama betikleri (`validate_environment.ps1`, `validate_environment.sh`) yazıldı.
+  3. Üretim keystore & imza yapılandırması (`generate_keystore.ps1`, `generate_keystore.sh`, `android/key.properties.example`, `android/app/build.gradle.kts`) tamamlandı.
+  4. Otomatik derleme ve APK doğrulama betikleri (`build_release.ps1`, `build_release.sh`) yazıldı.
+  5. Derleme hataları veren Dart tip uyumsuzlukları giderildi ve `flutter build apk --release` başarıyla çalıştırıldı.
+  6. Üretilen İmzalı APK: `build/app/outputs/flutter-apk/app-release.apk` (52.94 MB, API 21+, `arm64-v8a`/`armeabi-v7a`/`x86_64`).
+  7. `mobile/BUILD_GUIDE.md` ayrıntılı rehberi güncellendi.
+- **Alınan kararlar:**
+  - Dahili şirket tabletleri için R8/minify çakışmalarını önlemek üzere `isMinifyEnabled = false` ile kararlı imzalı üretim APK'sı yapılandırıldı.
+- **Bulunan sorun/gotcha:**
+  - Flutter 3.41+ sürümlerinde `jni` ve `jni_flutter` eklentileri `compileSdk = 35` gerektirdiği için `android/app/build.gradle.kts` içinde 35 olarak sabitlendi.
+- **Bir sonraki oturumda kaldığı yer:**
+  - Mobil APK üretimi %100 doğrulandı ve teslimata hazır.
+
+---
+
 ## 2026-07-30 — Faz 3: Fotoğraf Çekimi, İmza Pedi ve Rapor Kesinleştirme Akışları Tamamlandı
 - Ne yapıldı:
   - Ekran dokunma hareketlerini takip ederek çizim yapan saf Flutter **`SignaturePad`** çizim widget'ı yazıldı.

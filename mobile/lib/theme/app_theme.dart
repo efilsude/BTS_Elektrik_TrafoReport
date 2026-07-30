@@ -46,7 +46,7 @@ class AppTheme {
         onSecondary: Colors.white,
       ),
       scaffoldBackgroundColor: backgroundColor,
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: cardColor,
         elevation: 2,
         shadowColor: Colors.black.withOpacity(0.05),
@@ -55,6 +55,7 @@ class AppTheme {
           side: const BorderSide(color: borderLight, width: 1),
         ),
       ),
+
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,

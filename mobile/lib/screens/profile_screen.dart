@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import 'package:provider/provider.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
@@ -49,7 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Standard key in API_CONTRACT is signature image
     final String? sig = await _storageService.getAccessToken(); // We can store signature in custom storage
     // Let's store signature under a specific key in StorageService
-    final String? signature = await const FlutterSecureStorage().read(key: 'user_signature_base64');
+    final String? signature = await FlutterSecureStorage().read(key: 'user_signature_base64');
     setState(() {
       _signatureBase64 = signature;
       _loadingSignature = false;
@@ -96,7 +98,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: SignaturePad(
             onSave: (String base64Png) async {
               // Save to secure storage
-              await const FlutterSecureStorage().write(key: 'user_signature_base64', value: base64Png);
+              await FlutterSecureStorage().write(key: 'user_signature_base64', value: base64Png);
+
               Navigator.pop(context);
               _loadSignature();
               
