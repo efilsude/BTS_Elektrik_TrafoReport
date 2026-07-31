@@ -13,6 +13,25 @@ Format:
 - Bir sonraki oturumda kaldığı yer:
 ```
 
+## 2026-07-31 — Release Harden: Sıfır-Mock + Splash Hata Ekranı
+- **Ne yapıldı:**
+  1. `AuthService.initAuth()` — `kReleaseMode` true ise `_isMockMode = false` zorla; release build'de mock mod hiçbir zaman aktif olamaz.
+  2. `AuthService.checkBootstrapStatus()` — network/timeout hatasını sessizce yutmak yerine `rethrow` ile iletir; `SplashScreen` hata ekranı gösterebilir.
+  3. `SplashScreen` — baştan yazıldı: hata state (`_hasError`, `_errorMessage`) eklendi. Network/timeout → sonsuz spinner yok; Türkçe hata + "Tekrar Dene" + "Giriş Ekranına Git" butonları gösterilir. `_checkAuthentication()` "Tekrar Dene" butonuyla yeniden çağrılabilir. Dev-only sunucu adresi bilgisi `kReleaseMode` ile gizlendi.
+  4. `LoginScreen` — Mock bilgi banner'ı ve Mock toggle `if (!kReleaseMode)` ile sarıldı; release'de UI'dan tamamen kaybolur.
+  5. `ProfileScreen` — Mock toggle card `if (!kReleaseMode)` ile sarıldı. Şifre değiştirme mock dalı `if (!kReleaseMode && authService.isMockMode)` olarak güncellendi; release'de mock dala hiç girilmez. İmza yükleme: `kReleaseMode || !authService.isMockMode` ile release'de her zaman API'ye yüklenir.
+  6. `ReportsPoolScreen` — Mock banner `if (!kReleaseMode && authService.isMockMode)` ile sarıldı.
+  7. `RegisterScreen` — `isAdminMode: _isAdminRegister` referansı `isAdminMode: false` olarak düzeltildi (`_isAdminRegister` önceki oturumda kaldırılmıştı).
+  8. `flutter analyze` — **0 error** (59 info/warning, hepsi önceden var olan deprecation uyarıları).
+- **Alınan kararlar:**
+  - Release'de mock toggle UI'dan sıfırlanır; `setMockMode()` no-op + `initAuth()` ek guard ile çift kilit.
+  - Splash hata ekranı sonsuz spinner'ı tamamen ortadan kaldırır.
+- **Bulunan sorun/gotcha:**
+  - `_isAdminRegister` değişkeni önceki oturumda state'den silindi ama `register()` çağrısındaki `isAdminMode:` parametresi referanssız kalmıştı → `undefined_identifier` hatası; `false` sabit değeriyle düzeltildi.
+- **Bir sonraki oturumda kaldığı yer:**
+  - Gerçek tablet testi: ağ kapalıyken uygulama açılışı → hata ekranı, "Tekrar Dene" işe yarıyor mu?
+  - Release APK build: `flutter build apk --release` → imzalama + tablet kurulum testi.
+
 ## 2026-07-31 — İlk Admin Bootstrap, Davet Kodu Rol Sistemi, Mock Koruma
 - **Ne yapıldı:**
   1. `AuthService` — `import 'package:flutter/foundation.dart'` eklendi; `setMockMode(bool)` içine `if (kReleaseMode) return;` guard konuldu (release build mock mod giremez).

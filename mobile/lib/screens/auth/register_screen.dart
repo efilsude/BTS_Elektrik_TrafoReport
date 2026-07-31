@@ -211,7 +211,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       inviteCode: _inviteCodeController.text.trim(),
       verificationCode: _verificationCodeController.text.trim(),
       password: _passwordController.text,
-      isAdminMode: _isAdminRegister,
+      isAdminMode: false, // Role is determined by invite code on the backend
     );
 
     if (success && mounted) {
