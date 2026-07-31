@@ -13,6 +13,31 @@ Format:
 - Bir sonraki oturumda kaldığı yer:
 ```
 
+## 2026-07-31 — Release APK Build v1.0.1 (build 2)
+- **Ne yapıldı:**
+  - `flutter build apk --release --build-name=1.0.1 --build-number=2` ile imzalı release APK üretildi.
+  - `API_BASE_URL`: `http://192.168.1.79:8000/api/v1` (Wi-Fi LAN IP — fiziksel tablet)
+  - APK yolu: `mobile/build/app/outputs/flutter-apk/app-release.apk`
+  - APK boyutu: **70.92 MB** (74 365 491 bytes) — 50–80 MB bant içinde ✅
+  - İmzalama: `android/app/upload-keystore.jks` + `android/key.properties` (alias: `traforeport_key`) ✅
+  - Build tipi: `app-release.apk` (debug değil) ✅
+  - Build süresi: ~101 sn (Gradle `assembleRelease`)
+  - Dart tree-shaking: MaterialIcons %99.1 küçültme uygulandı ✅
+- **Sorun & Çözüm:**
+  - İlk build `AccessDeniedException` ile başarısız oldu: OneDrive `build/` dizinini senkronize ederken kilitledi.
+  - Çözüm: OneDrive `/pause` ile durduruldu → `build/` tamamen silindi → build tekrar çalıştırıldı → başarılı.
+  - Kalıcı öneri: `mobile/build/` dizinini OneDrive dışında tutmak için `.onedriveignore` eklenmeli veya proje OneDrive dışına taşınmalı.
+- **Tablete kurulum:**
+  ```
+  adb install -r mobile\build\app\outputs\flutter-apk\app-release.apk
+  ```
+  Ya da USB ile tabletin `İndirilenler` klasörüne kopyala → Dosyalar → APK'ya dokun → Kur.
+  ⚠️ **Tablet ayarı**: Ayarlar → Güvenlik → Bilinmeyen Kaynaklar açık olmalı.
+  ⚠️ **Eski APK**: Aynı imzayla `adb install -r` ile güncellenebilir, veri kaybı yok.
+- **Bir sonraki adım:**
+  - Tablette gerçek bootstrap testi: ilk açılış → bootstrap ekranı → admin kaydı.
+  - Backend IP değişirse: `--dart-define=API_BASE_URL=http://<YENİ_IP>:8000/api/v1` ile yeniden build.
+
 ## 2026-07-31 — Release Harden: Sıfır-Mock + Splash Hata Ekranı
 - **Ne yapıldı:**
   1. `AuthService.initAuth()` — `kReleaseMode` true ise `_isMockMode = false` zorla; release build'de mock mod hiçbir zaman aktif olamaz.
