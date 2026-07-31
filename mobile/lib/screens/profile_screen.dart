@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -74,7 +75,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isSubmittingPassword = true);
 
     try {
-      if (authService.isMockMode) {
+      // Mock branch: DEV only — skipped entirely in release
+      if (!kReleaseMode && authService.isMockMode) {
         await Future<void>.delayed(const Duration(milliseconds: 600));
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -165,7 +167,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               final AuthService authService = Provider.of<AuthService>(context, listen: false);
               
               // 2. Real API upload if online: PUT /users/me/signature
-              if (!authService.isMockMode) {
+              //    In release mode, always attempt upload (mock mode is disabled in release)
+              if (kReleaseMode || !authService.isMockMode) {
                 try {
                   final List<int> imageBytes = base64Decode(base64Png);
                   final http.MultipartRequest request = http.MultipartRequest(
@@ -294,7 +297,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Debug / Developer Mode Card (Task A #6: Toggle for Mock Mode)
+            // Debug / Developer Mode Card — DEV only, hidden in release
+            if (!kReleaseMode)
             Card(
               color: Colors.blueGrey.shade50,
               shape: RoundedRectangleBorder(

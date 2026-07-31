@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -114,7 +115,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         ),
                         const SizedBox(height: 40),
-                        // Mock Mode Info Banner
+                        // Mock Mode Info Banner — DEV only, hidden in release
+                        if (!kReleaseMode)
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -363,7 +365,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           const Divider(color: AppTheme.borderLight),
                           const SizedBox(height: 16),
 
-                          // Mock Mode Selector for Testing & Phase 1
+                          // Mock Mode Selector — DEV only, hidden in release
+                          if (!kReleaseMode)
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(

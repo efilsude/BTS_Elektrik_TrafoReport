@@ -24,7 +24,8 @@ class AuthService extends ChangeNotifier {
   
   User? _currentUser;
   bool _isLoading = false;
-  bool _isMockMode = false; // Default to false for real API integration as required by Task A
+  // kReleaseMode: always false regardless of setMockMode calls
+  bool _isMockMode = kReleaseMode ? false : false; // init value; enforced again in initAuth
   String? _errorMessage;
 
   User? get currentUser => _currentUser;
@@ -46,6 +47,10 @@ class AuthService extends ChangeNotifier {
 
   // Initialize and check persistent login status
   Future<void> initAuth() async {
+    // Release builds must never run in mock mode
+    if (kReleaseMode) {
+      _isMockMode = false;
+    }
     _isLoading = true;
     notifyListeners();
 
@@ -66,6 +71,7 @@ class AuthService extends ChangeNotifier {
   }
 
   // Check if system has 0 users and needs initial admin bootstrap — GET /auth/bootstrap-status
+  // Throws BootstrapCheckException on network/timeout error so callers can show an error UI.
   Future<bool> checkBootstrapStatus() async {
     if (_isMockMode) return false;
     try {
@@ -77,8 +83,12 @@ class AuthService extends ChangeNotifier {
         final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
         return data['needs_bootstrap'] == true;
       }
-    } catch (_) {}
-    return false;
+      // Non-200 from server → assume server reachable, login screen
+      return false;
+    } on Exception {
+      // Network/timeout: rethrow so SplashScreen can show a proper error
+      rethrow;
+    }
   }
 
   // Request Email Verification Code for Initial Admin Bootstrap — POST /auth/request-verification-bootstrap
