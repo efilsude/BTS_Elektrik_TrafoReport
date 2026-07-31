@@ -13,6 +13,20 @@ Format:
 - Bir sonraki oturumda kaldığı yer:
 ```
 
+## 2026-07-31 — Release APK Build v1.0.2 (build 3 - Cleartext HTTP İzin Düzeltmesi)
+- **Ne yapıldı:**
+  - `AndroidManifest.xml` (`android:usesCleartextTraffic="true"` + `networkSecurityConfig`) düzeltmesi sonrası yeni imzalı release APK derlendi.
+  - Komut: `flutter build apk --release --build-name=1.0.2 --build-number=3 "--dart-define=API_BASE_URL=http://192.168.1.79:8000/api/v1"`
+  - APK Konumu: `mobile/build/app/outputs/flutter-apk/app-release.apk`
+  - APK Boyutu: **70.92 MB** (74 365 939 bytes) ✅
+  - Derleme Tipi: Signed Release APK (`traforeport_key`) ✅
+- **Düzeltilen Kritik Sorun:**
+  - Android 9+ varsayılan şifrelenmemiş HTTP trafiği engeli (`Cleartext HTTP traffic not permitted`) giderildi. Artık mobil cihaz LAN üzerindeki `http://192.168.1.79:8000` backend'ine engelsiz bağlanabilir.
+- **Kurulum Komutu:**
+  ```bash
+  adb install -r mobile/build/app/outputs/flutter-apk/app-release.apk
+  ```
+
 ## 2026-07-31 — Release APK Build v1.0.1 (build 2)
 - **Ne yapıldı:**
   - `flutter build apk --release --build-name=1.0.1 --build-number=2` ile imzalı release APK üretildi.
