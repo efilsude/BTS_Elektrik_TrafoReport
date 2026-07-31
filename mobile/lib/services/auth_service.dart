@@ -5,6 +5,20 @@ import '../core/config.dart';
 import '../models/user_model.dart';
 import 'storage_service.dart';
 
+class VerificationResult {
+  final bool success;
+  final String? debugCode;
+  final int? expiresInSeconds;
+  final String? errorMessage;
+
+  VerificationResult({
+    required this.success,
+    this.debugCode,
+    this.expiresInSeconds,
+    this.errorMessage,
+  });
+}
+
 class AuthService extends ChangeNotifier {
   final StorageService _storageService = StorageService();
   
@@ -66,7 +80,7 @@ class AuthService extends ChangeNotifier {
             case 'VERIFICATION_CODE_EXPIRED':
               return 'E-posta doğrulama kodunun süresi dolmuş. Lütfen yeni kod isteyin.';
             case 'EMAIL_SEND_FAILED':
-              return 'E-posta doğrulama kodu gönderilemedi. Lütfen e-posta adresinizi kontrol edin.';
+              return msg != null && msg.isNotEmpty ? msg : 'Doğrulama e-postası gönderilemedi. Sunucu e-posta ayarlarını kontrol edin.';
             case 'INVITE_CODE_INVALID':
               return 'Davet kodu geçersiz veya süresi dolmuş.';
             case 'USER_ALREADY_EXISTS':
@@ -88,7 +102,7 @@ class AuthService extends ChangeNotifier {
   }
 
   // Request Email Verification Code — POST /auth/request-verification
-  Future<bool> requestVerificationCode({
+  Future<VerificationResult> requestVerificationCode({
     required String email,
     required String inviteCode,
   }) async {
@@ -102,11 +116,18 @@ class AuthService extends ChangeNotifier {
         _errorMessage = 'Davet kodu geçersiz veya süresi dolmuş.';
         _isLoading = false;
         notifyListeners();
-        return false;
+        return VerificationResult(
+          success: false,
+          errorMessage: _errorMessage,
+        );
       }
       _isLoading = false;
       notifyListeners();
-      return true;
+      return VerificationResult(
+        success: true,
+        debugCode: '123456',
+        expiresInSeconds: 600,
+      );
     }
 
     try {
@@ -122,23 +143,40 @@ class AuthService extends ChangeNotifier {
       ).timeout(AppConfig.requestTimeout);
 
       if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
+        final String? debugCode = data['debug_code']?.toString();
+        final int? expiresInSeconds = data['expires_in_seconds'] as int?;
+
         _isLoading = false;
         notifyListeners();
-        return true;
+        return VerificationResult(
+          success: true,
+          debugCode: debugCode,
+          expiresInSeconds: expiresInSeconds ?? 600,
+        );
       } else {
         _errorMessage = _parseErrorMessage(
           response,
           'Doğrulama kodu gönderilemedi. Lütfen bilgilerinizi kontrol edin.',
         );
+        _isLoading = false;
+        notifyListeners();
+        return VerificationResult(
+          success: false,
+          errorMessage: _errorMessage,
+        );
       }
     } catch (e) {
       _errorMessage = 'Sunucuyla bağlantı kurulamadı (${AppConfig.apiBaseUrl}). İnternet bağlantınızı kontrol edin.';
-    } finally {
       _isLoading = false;
       notifyListeners();
+      return VerificationResult(
+        success: false,
+        errorMessage: _errorMessage,
+      );
     }
-    return false;
   }
+
 
   // Attempt to refresh access token using saved refresh token
   Future<bool> refreshAccessToken() async {

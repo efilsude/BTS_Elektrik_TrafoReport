@@ -10,6 +10,8 @@
 - [x] Başlangıç ekranı: Çalışan Girişi | Kayıt Ol | Admin Girişi (PRD §6)
 - [x] Giriş / Kayıt Ol ekranları (`docs/API_CONTRACT.md`'deki `/auth/*`'a bağlandı)
 - [x] 2 adımlı e-posta doğrulama (OTP) kayıt akışı (`POST /auth/request-verification` + `POST /auth/register` + 60 sn cooldown)
+- [x] Dev/Test `debug_code` otomatik doldurma, dev banner bildirimi ve gelişmiş Türkçe SMTP hata mesajları
+
 
 - [x] Ana Sayfa navigasyonu (Yeni Rapor | Rapor Havuzu | Taslaklar | Profil | Admin)
 

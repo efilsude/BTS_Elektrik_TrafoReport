@@ -30,6 +30,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isAdminRegister = false;
+  String? _activeDebugCode; // Received when EMAIL_ENABLED=false on backend
 
   Timer? _resendTimer;
   int _resendCountdown = 0;
@@ -90,30 +91,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final AuthService authService = Provider.of<AuthService>(context, listen: false);
 
-    final bool success = await authService.requestVerificationCode(
+    final VerificationResult result = await authService.requestVerificationCode(
       email: _emailController.text.trim(),
       inviteCode: _inviteCodeController.text.trim(),
     );
 
-    if (success && mounted) {
+    if (result.success && mounted) {
       _startResendTimer();
+      _activeDebugCode = result.debugCode;
+      if (_activeDebugCode != null && _activeDebugCode!.isNotEmpty) {
+        _verificationCodeController.text = _activeDebugCode!;
+      }
       setState(() {
         _currentStep = 2;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Doğrulama kodu e-posta adresinize gönderildi.',
-            style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+
+      if (_activeDebugCode != null && _activeDebugCode!.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Geliştirme modu: Kod $_activeDebugCode tanımlandı (Sunucu e-posta göndermiyor).',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+            ),
+            backgroundColor: Colors.amber.shade900,
+            duration: const Duration(seconds: 4),
           ),
-          backgroundColor: AppTheme.successColor,
-        ),
-      );
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Doğrulama kodu e-posta adresinize gönderildi.',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+            ),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            authService.errorMessage ?? 'Doğrulama kodu gönderilemedi.',
+            result.errorMessage ?? authService.errorMessage ?? 'Doğrulama kodu gönderilemedi.',
             style: GoogleFonts.inter(fontWeight: FontWeight.w500),
           ),
           backgroundColor: AppTheme.errorColor,
@@ -130,27 +149,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final AuthService authService = Provider.of<AuthService>(context, listen: false);
 
-    final bool success = await authService.requestVerificationCode(
+    final VerificationResult result = await authService.requestVerificationCode(
       email: _emailController.text.trim(),
       inviteCode: _inviteCodeController.text.trim(),
     );
 
-    if (success && mounted) {
+    if (result.success && mounted) {
       _startResendTimer();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Yeni doğrulama kodu e-posta adresinize gönderildi.',
-            style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+      _activeDebugCode = result.debugCode;
+      if (_activeDebugCode != null && _activeDebugCode!.isNotEmpty) {
+        _verificationCodeController.text = _activeDebugCode!;
+      }
+
+      if (_activeDebugCode != null && _activeDebugCode!.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Geliştirme modu: Yeni kod $_activeDebugCode tanımlandı.',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+            ),
+            backgroundColor: Colors.amber.shade900,
           ),
-          backgroundColor: AppTheme.successColor,
-        ),
-      );
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Yeni doğrulama kodu e-posta adresinize gönderildi.',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+            ),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            authService.errorMessage ?? 'Kod tekrar gönderilemedi.',
+            result.errorMessage ?? authService.errorMessage ?? 'Kod tekrar gönderilemedi.',
             style: GoogleFonts.inter(fontWeight: FontWeight.w500),
           ),
           backgroundColor: AppTheme.errorColor,
@@ -580,6 +616,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
+          // DEV MODE BANNER (When debug_code is present in response when EMAIL_ENABLED=false)
+          if (_activeDebugCode != null && _activeDebugCode!.isNotEmpty) ...<Widget>[
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.amber.shade400),
+              ),
+              child: Row(
+                children: <Widget>[
+                  Icon(Icons.developer_mode_rounded, color: Colors.amber.shade900, size: 24),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: RichText(
+                      text: TextSpan(
+                        style: GoogleFonts.inter(fontSize: 12, color: Colors.amber.shade900, height: 1.4),
+                        children: <TextSpan>[
+                          const TextSpan(
+                            text: 'Geliştirme / Test Modu: ',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const TextSpan(text: 'Kod '),
+                          TextSpan(
+                            text: _activeDebugCode,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          const TextSpan(
+                            text: ' (Sunucu e-posta göndermiyor, otomatik tanımlandı).',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
           // Verification Info Box
           Container(
             padding: const EdgeInsets.all(16),

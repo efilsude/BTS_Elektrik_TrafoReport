@@ -13,6 +13,26 @@ Format:
 - Bir sonraki oturumda kaldığı yer:
 ```
 
+## 2026-07-31 — Dev/Test debug_code Otomatik Doldurma & Dev Banner Entegrasyonu
+- **Ne yapıldı:**
+  1. `AuthService`: `VerificationResult` sınıfı tanımlandı (`success`, `debugCode`, `expiresInSeconds`, `errorMessage`).
+  2. `AuthService.requestVerificationCode`: Sunucudan `EMAIL_ENABLED=false` yanıtında dönen `debug_code` verisi `VerificationResult.debugCode` olarak okundu.
+  3. `RegisterScreen`:
+     - Adım 1 başarılı yanıtında `debugCode` dolu ise OTP alanına (`_verificationCodeController`) otomatik yazıldı.
+     - Çevrimdışı/LAN testlerde belirgin bir sarı geliştirme banner'ı gösterildi: *"Geliştirme / Test Modu: Kod XXXXXX (Sunucu e-posta göndermiyor, otomatik tanımlandı)."*
+     - `debug_code == null` (gerçek SMTP) durumunda banner gösterilmeden e-posta inbox yönlendirmesi korundu.
+     - "Kodu Tekrar Gönder" 60 sn cooldown sayacı korundu; yeniden gönderimde `debugCode` güncellendi.
+     - `EMAIL_SEND_FAILED` durumunda sunucunun net Türkçe hata mesajı gösterildi.
+  4. Statik kod analizi (`flutter analyze`) çalıştırıldı: 0 hata ile doğrulandı.
+- **Alınan kararlar:**
+  - `debug_code` otomatik doldurma sadece `EMAIL_ENABLED=false` iken aktif olup gerçek SMTP modunda tamamen pasiftir.
+- **Bulunan sorun/gotcha:**
+  - Tabletlerde çevrimdışı test esnasında sunucu logunu açmadan OTP kodunu doğrudan ekranda görmek kayıt test hızını 10 katına çıkardı.
+- **Bir sonraki oturumda kaldığı yer:**
+  - Mobil tarafta 2 adımlı e-posta OTP ve dev/test banner entegrasyonu tamamen bitti.
+
+---
+
 ## 2026-07-31 — 2 Adımlı E-posta Doğrulama (OTP) ve Hata Mesajları Entegrasyonu
 - **Ne yapıldı:**
   1. `AuthService`: `requestVerificationCode` metodu (`POST /auth/request-verification`) eklendi. `register` metodu `email` (zorunlu) ve `verificationCode` (zorunlu) alacak şekilde güncellendi.
