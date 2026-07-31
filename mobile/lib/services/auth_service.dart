@@ -54,8 +54,28 @@ class AuthService extends ChangeNotifier {
   String _parseErrorMessage(http.Response response, String defaultMsg) {
     try {
       final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
-      if (data.containsKey('error') && data['error'] is Map && data['error']['message'] != null) {
-        return data['error']['message'].toString();
+      if (data.containsKey('error') && data['error'] is Map) {
+        final Map errMap = data['error'] as Map;
+        final String? code = errMap['code']?.toString();
+        final String? msg = errMap['message']?.toString();
+
+        if (code != null) {
+          switch (code) {
+            case 'VERIFICATION_CODE_INVALID':
+              return 'E-posta doğrulama kodu geçersiz veya kullanılmış.';
+            case 'VERIFICATION_CODE_EXPIRED':
+              return 'E-posta doğrulama kodunun süresi dolmuş. Lütfen yeni kod isteyin.';
+            case 'EMAIL_SEND_FAILED':
+              return 'E-posta doğrulama kodu gönderilemedi. Lütfen e-posta adresinizi kontrol edin.';
+            case 'INVITE_CODE_INVALID':
+              return 'Davet kodu geçersiz veya süresi dolmuş.';
+            case 'USER_ALREADY_EXISTS':
+              return 'Bu telefon, e-posta veya sicil no ile kayıtlı kullanıcı zaten var.';
+            case 'RATE_LIMIT_EXCEEDED':
+              return 'Lütfen yeni doğrulama kodu istemeden önce 60 saniye bekleyin.';
+          }
+        }
+        if (msg != null && msg.isNotEmpty) return msg;
       } else if (data.containsKey('detail')) {
         if (data['detail'] is String) return data['detail'].toString();
         if (data['detail'] is List && (data['detail'] as List).isNotEmpty) {
@@ -65,6 +85,59 @@ class AuthService extends ChangeNotifier {
       }
     } catch (_) {}
     return defaultMsg;
+  }
+
+  // Request Email Verification Code — POST /auth/request-verification
+  Future<bool> requestVerificationCode({
+    required String email,
+    required String inviteCode,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    if (_isMockMode) {
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      if (inviteCode == 'INVALID' || inviteCode == 'EXPIRED') {
+        _errorMessage = 'Davet kodu geçersiz veya süresi dolmuş.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    }
+
+    try {
+      final Map<String, String> body = <String, String>{
+        'email': email.trim(),
+        'invite_code': inviteCode.trim(),
+      };
+
+      final http.Response response = await http.post(
+        Uri.parse('${AppConfig.apiBaseUrl}/auth/request-verification'),
+        headers: <String, String>{'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      ).timeout(AppConfig.requestTimeout);
+
+      if (response.statusCode == 200) {
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = _parseErrorMessage(
+          response,
+          'Doğrulama kodu gönderilemedi. Lütfen bilgilerinizi kontrol edin.',
+        );
+      }
+    } catch (e) {
+      _errorMessage = 'Sunucuyla bağlantı kurulamadı (${AppConfig.apiBaseUrl}). İnternet bağlantınızı kontrol edin.';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+    return false;
   }
 
   // Attempt to refresh access token using saved refresh token
@@ -234,14 +307,16 @@ class AuthService extends ChangeNotifier {
     return false;
   }
 
-  // Register — aligned with API_CONTRACT.md §2.1
+  // Register — POST /auth/register
   Future<bool> register({
     required String fullName,
-    required String? email,
+    required String email,
     required String phone,
     required String? sicilNo,
     required String inviteCode,
+    required String verificationCode,
     required String password,
+    bool isAdminMode = false,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -250,6 +325,18 @@ class AuthService extends ChangeNotifier {
     if (_isMockMode) {
       await Future<void>.delayed(const Duration(milliseconds: 600));
 
+      if (verificationCode == '000000' || verificationCode == 'WRONG') {
+        _errorMessage = 'E-posta doğrulama kodu geçersiz veya kullanılmış.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+      if (verificationCode == 'EXPIRED') {
+        _errorMessage = 'E-posta doğrulama kodunun süresi dolmuş.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
       if (inviteCode == 'EXPIRED' || inviteCode == 'INVALID') {
         _errorMessage = 'Davet kodu geçersiz veya süresi dolmuş.';
         _isLoading = false;
@@ -270,14 +357,14 @@ class AuthService extends ChangeNotifier {
         email: email,
         phone: phone,
         sicilNo: sicilNo,
-        role: 'employee',
+        role: isAdminMode ? 'admin' : 'employee',
         isActive: true,
         hasSignature: false,
       );
 
       await _storageService.saveTokens(
-        accessToken: 'mock_access_token_employee',
-        refreshToken: 'mock_refresh_token_employee',
+        accessToken: 'mock_access_token_${_currentUser!.role}',
+        refreshToken: 'mock_refresh_token_${_currentUser!.role}',
       );
       await _storageService.saveUser(_currentUser!);
 
@@ -291,13 +378,12 @@ class AuthService extends ChangeNotifier {
       final Map<String, dynamic> body = <String, dynamic>{
         'full_name': fullName.trim(),
         'phone': phone.trim(),
+        'email': email.trim(),
         'invite_code': inviteCode.trim(),
+        'verification_code': verificationCode.trim(),
         'password': password,
       };
 
-      if (email != null && email.trim().isNotEmpty) {
-        body['email'] = email.trim();
-      }
       if (sicilNo != null && sicilNo.trim().isNotEmpty) {
         body['sicil_no'] = sicilNo.trim();
       }
@@ -316,10 +402,13 @@ class AuthService extends ChangeNotifier {
         return await login(
           identifier: phone,
           password: password,
-          isAdminMode: false,
+          isAdminMode: isAdminMode,
         );
       } else {
-        _errorMessage = _parseErrorMessage(response, 'Kayıt başarısız oldu. Lütfen davet kodunu ve bilgilerinizi kontrol edin.');
+        _errorMessage = _parseErrorMessage(
+          response,
+          'Kayıt başarısız oldu. Lütfen davet kodunu ve bilgilerinizi kontrol edin.',
+        );
       }
     } catch (e) {
       _errorMessage = 'Sunucuyla bağlantı kurulamadı. Lütfen sunucu adresini ve internet bağlantınızı kontrol edin.';

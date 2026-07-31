@@ -13,6 +13,24 @@ Format:
 - Bir sonraki oturumda kaldığı yer:
 ```
 
+## 2026-07-31 — 2 Adımlı E-posta Doğrulama (OTP) ve Hata Mesajları Entegrasyonu
+- **Ne yapıldı:**
+  1. `AuthService`: `requestVerificationCode` metodu (`POST /auth/request-verification`) eklendi. `register` metodu `email` (zorunlu) ve `verificationCode` (zorunlu) alacak şekilde güncellendi.
+  2. `AuthService._parseErrorMessage`: Backend hata kodları (`VERIFICATION_CODE_INVALID`, `VERIFICATION_CODE_EXPIRED`, `EMAIL_SEND_FAILED`, `INVITE_CODE_INVALID`, `USER_ALREADY_EXISTS`, `RATE_LIMIT_EXCEEDED`) için kullanıcı dostu Türkçe hata mesajları eşleşmesi eklendi.
+  3. `RegisterScreen`: 2 adımlı UI akışına dönüştürüldü:
+     - Adım 1: Ad Soyad, E-posta (zorunlu), Telefon, Sicil No, Davet Kodu, Şifre, Admin kayıt seçeneği → "Doğrulama Kodu Gönder".
+     - Adım 2: 6 haneli OTP kodu girişi, "Hesabı Oluştur ve Giriş Yap" butonu, "Bilgileri Düzenle" geri dönme seçeneği.
+     - "Kodu Tekrar Gönder" butonu için 60 saniyelik geri sayım sayacı (`Timer.periodic`) uygulandı.
+  4. Statik kod analizi (`flutter analyze`) çalıştırıldı: 0 hata ile başarıyla doğrulandı.
+- **Alınan kararlar:**
+  - Admin kayıt seçeneğinde de e-posta zorunluluğu ve 2 adımlı OTP akışı aynen korundu.
+- **Bulunan sorun/gotcha:**
+  - `Timer.periodic` sayacının ekran kapatıldığında memory leak yapmaması için `dispose` bloğunda `_resendTimer?.cancel()` temizliği sağlandı.
+- **Bir sonraki oturumda kaldığı yer:**
+  - Mobil 2 adımlı kayıt entegrasyonu başarıyla tamamlandı.
+
+---
+
 ## 2026-07-30 — Gerçek API Entegrasyonu, QR Scanner, Kamera/Galeri & İmza Pedi Sertleştirme
 - **Ne yapıldı:**
   1. `AuthService`: Varsayılan `_isMockMode = false` yapıldı. `AppConfig.apiBaseUrl` (`http://10.0.2.2:8000/api/v1`) bağlandı. `/auth/login`, `/auth/register`, `/auth/refresh` entegre edildi. 401 refresh token interceptor ve Türkçe hata parser eklendi.

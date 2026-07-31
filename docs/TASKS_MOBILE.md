@@ -9,8 +9,10 @@
 - [x] JWT güvenli saklama (flutter secure storage)
 - [x] Başlangıç ekranı: Çalışan Girişi | Kayıt Ol | Admin Girişi (PRD §6)
 - [x] Giriş / Kayıt Ol ekranları (`docs/API_CONTRACT.md`'deki `/auth/*`'a bağlandı)
+- [x] 2 adımlı e-posta doğrulama (OTP) kayıt akışı (`POST /auth/request-verification` + `POST /auth/register` + 60 sn cooldown)
 
 - [x] Ana Sayfa navigasyonu (Yeni Rapor | Rapor Havuzu | Taslaklar | Profil | Admin)
+
 
 ## Faz 2 — Rapor Çekirdeği (PRD §22)
 - [x] Yeni Rapor akışı: tip seçimi (Bakım/Test → Normal/Kesici → Hermetik/Kuru/GT)
