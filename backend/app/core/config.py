@@ -23,7 +23,8 @@ class Settings(BaseSettings):
     SMTP_FROM: str = os.getenv("SMTP_FROM", "TrafoReport <noreply@btselektrik.com>")
     SMTP_USE_TLS: bool = os.getenv("SMTP_USE_TLS", "true").lower() in ("true", "1", "yes")
     ADMIN_NOTIFY_EMAILS: Optional[str] = os.getenv("ADMIN_NOTIFY_EMAILS", None)
-    EMAIL_ENABLED: bool = os.getenv("EMAIL_ENABLED", "true").lower() in ("true", "1", "yes")
+    EMAIL_ENABLED: bool = os.getenv("EMAIL_ENABLED", "false").lower() in ("true", "1", "yes")
+
 
     # SQLite fallback for local testing if DATABASE_URL is not provided
     DATABASE_URL: str = os.getenv(

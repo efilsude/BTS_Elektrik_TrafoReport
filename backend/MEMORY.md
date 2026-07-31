@@ -12,6 +12,23 @@ Format:
 - Bir sonraki oturumda kaldığı yer:
 ```
 
+## 2026-07-31 — EMAIL_ENABLED Güvenli Varsayılanlar ve Dev/Test debug_code Desteği
+- **Ne yapıldı:**
+  1. `app/core/config.py` içinde `EMAIL_ENABLED` varsayılan değeri `false` olarak güncellendi. `backend/.env.example` içinde açıklama notu eklendi.
+  2. `app/schemas/auth.py` içindeki `VerificationResponse` modeline `debug_code: Optional[str] = None` eklendi.
+  3. `app/api/v1/auth.py` `request_verification_code` endpoint'inde `EMAIL_ENABLED=false` iken `debug_code` alanı üretilen 6 haneli OTP kodu olarak döndürüldü; `EMAIL_ENABLED=true` iken `null` kalması sağlandı.
+  4. `app/services/email_service.py` içinde `EMAIL_ENABLED=true` fakat SMTP yapılandırılmamış/bağlantı kurulamamışsa `raise_on_error=True` durumunda net `EMAIL_SEND_FAILED` hatası vermesi sağlandı.
+  5. `docs/API_CONTRACT.md` ve `docs/DECISIONS.md` dokümanlarına `@mobile` etiketli notlar işlendi.
+  6. `tests/test_email_verification.py` dosyasına `debug_code` ve SMTP failure senaryo testleri eklendi. Tüm backend testleri (`pytest`) çalıştırıldı: **21/21 test %100 başarıyla geçti**.
+- **Alınan kararlar:**
+  - `raise_on_error=True` e-posta doğrulamasında korunarak kayıt öncesi hatalı mail/SMTP durumunda net hata dönmesi sağlandı. Admin bildirimlerinde `raise_on_error=False` korunarak background işlemlerinin ana yanıtı kesmesi engellendi.
+- **Bulunan sorun/gotcha:**
+  - `EMAIL_ENABLED`'in `true` kalması durumunda yerel testlerde ve SMTP erişimi olmayan cihazlarda kayıt bloklanıyordu; varsayılan `false` ile LAN/E2E testleri tamamen güvenli hale getirildi.
+- **Bir sonraki oturumda kaldığı yer:**
+  - Mobil ekibin isteğe bağlı olarak `debug_code` alanını yerel/LAN test modunda OTP alanına otoldoldurma desteği vermesi bekleniyor.
+
+---
+
 ## 2026-07-31 — E-posta Doğrulama Kodu (OTP) & Admin Bildirimleri Tamamlandı
 - **Ne yapıldı:**
   1. `app/core/config.py` içine SMTP (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM, SMTP_USE_TLS), EMAIL_ENABLED, ADMIN_NOTIFY_EMAILS ve VERIFICATION_CODE_TTL_MINUTES env ayarları eklendi. `backend/.env.example` oluşturuldu.

@@ -66,7 +66,8 @@ def test_request_verification_invalid_invite_code():
 
 def test_request_verification_success_and_rate_limit():
     invite_code = generate_invite_code("INV_RATE_1")
-    # 1. Request verification code for new user
+    settings.EMAIL_ENABLED = False
+    # 1. Request verification code for new user (EMAIL_ENABLED=false -> debug_code is present)
     res = client.post("/api/v1/auth/request-verification", json={
         "email": "rate_user@btselektrik.com",
         "invite_code": invite_code
@@ -75,14 +76,17 @@ def test_request_verification_success_and_rate_limit():
     data = res.json()
     assert "expires_in_seconds" in data
     assert data["expires_in_seconds"] == 600
+    assert "debug_code" in data
+    assert data["debug_code"] is not None
+    assert len(data["debug_code"]) == 6
 
-    # Verify code exists in DB
+    # Verify code matches DB
     db = SessionLocal()
     ver_rec = db.query(EmailVerificationCode).filter(
         EmailVerificationCode.email == "rate_user@btselektrik.com"
     ).order_by(EmailVerificationCode.created_at.desc()).first()
     assert ver_rec is not None
-    assert len(ver_rec.code) == 6
+    assert ver_rec.code == data["debug_code"]
     db.close()
 
     # 2. Try requesting again immediately (<60s rate limit)
@@ -92,6 +96,24 @@ def test_request_verification_success_and_rate_limit():
     })
     assert res_rate.status_code == 400
     assert res_rate.json()["error"]["code"] == "RATE_LIMIT_EXCEEDED"
+
+
+def test_request_verification_email_enabled_smtp_failure():
+    invite_code = generate_invite_code("INV_SMTP_FAIL")
+    settings.EMAIL_ENABLED = True
+    settings.SMTP_HOST = "invalid.smtp.domain.nonexistent"
+    settings.SMTP_PORT = 587
+
+    res = client.post("/api/v1/auth/request-verification", json={
+        "email": "smtp_fail_user@btselektrik.com",
+        "invite_code": invite_code
+    })
+    # Reset EMAIL_ENABLED to False for remaining tests
+    settings.EMAIL_ENABLED = False
+
+    assert res.status_code == 400
+    assert res.json()["error"]["code"] == "EMAIL_SEND_FAILED"
+
 
 
 def test_register_invalid_verification_code():

@@ -59,11 +59,16 @@ Kayıt öncesi e-posta adresine 6 haneli OTP doğrulama kodu gönderme.
 ```json
 {
   "message": "Doğrulama kodu e-posta adresinize gönderildi.",
-  "expires_in_seconds": 600
+  "expires_in_seconds": 600,
+  "debug_code": "123456"
 }
 ```
+*Not: `debug_code` alanı yalnızca `EMAIL_ENABLED=false` (geliştirme/test modu) iken dolu döner. `EMAIL_ENABLED=true` (üretim) ortamında `null` olarak döner.*
+
+> **DİKKAT @mobile:** `EMAIL_ENABLED=false` iken sunucu yanıtında `debug_code` alanı içinde 6 haneli OTP kodu gelir. Mobil uygulama test ekranlarında kolaylık sağlamak amacıyla `debug_code` `null` değilse doğrulama kodu kutucuğuna otomatik yazabilir.
 
 ---
+
 
 ### 2.2 POST `/auth/register`
 Davet kodu ve e-posta doğrulama kodu ile yeni çalışan kaydı.

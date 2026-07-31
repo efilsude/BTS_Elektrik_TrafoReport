@@ -62,8 +62,9 @@ def send_email(
     except Exception as e:
         logger.error(f"Failed to send email to {', '.join(recipients)}: {str(e)}", exc_info=True)
         if raise_on_error:
-            raise EmailSendFailedException(f"E-posta gönderimi başarısız: {str(e)}")
+            raise EmailSendFailedException(f"E-posta gönderimi başarısız: SMTP e-posta sunucu yapılandırması eksik veya bağlantı kurulamadı.")
         return False
+
 
 
 def notify_admins(db: Session, subject: str, html_body: str) -> None:

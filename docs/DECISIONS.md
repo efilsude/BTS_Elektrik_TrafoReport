@@ -46,7 +46,12 @@ Kurallar:
 ## 2026-07-31 — [backend] E-posta Doğrulama Kodu (OTP) ve Admin Bildirim Altyapısı Eklendi
 - Ne: `docs/API_CONTRACT.md` ve `docs/DB_SCHEMA.md` güncellenerek `POST /auth/request-verification` eklendi, `POST /auth/register` body'sine `verification_code` ve zorunlu `email` eklendi, `email_verification_codes` DB tablosu tanımlandı. Yeni kullanıcı kaydı ve rapor kesinleştirme (`POST /reports/{id}/finalize`) adımlarına Admin SMTP e-posta bildirimleri entegre edildi.
 - Neden: Hesap güvenliğini artırmak, sahte e-postalarla kaydı engellemek ve sistem yöneticilerini (admin) yeni üyelik ve tamamlanan saha raporlarından anında haberdar etmek için.
-- Etiket: @mobile (DİKKAT mobile: Kayıt akışı 2 adımlı oldu! Artık kayıt öncesi `POST /auth/request-verification` ile 6 haneli OTP kodu talep edilmeli ve `POST /auth/register` isteğine `email` ve `verification_code` zorunlu olarak eklenmelidir).
+
+## 2026-07-31 — [backend] EMAIL_ENABLED Güvenli Varsayılanlar ve Dev/Test debug_code Desteği Eklendi
+- Ne: `EMAIL_ENABLED` varsayılan değeri `false` olarak ayarlandı. `POST /auth/request-verification` yanıtına opsiyonel `debug_code` alanı eklendi (`EMAIL_ENABLED=false` iken 6 haneli OTP kodu döner, `EMAIL_ENABLED=true` iken `null` döner). SMTP yapılandırması eksik iken `EMAIL_ENABLED=true` seçilirse net `EMAIL_SEND_FAILED` hatası verilmesi sağlandı.
+- Neden: SMTP ayarı olmayan yerel/LAN/E2E test ortamlarında uygulamanın çökmesini önlemek, çevrimdışı ve test cihazlarında e-posta erişimi olmadan OTP kodunu istemciye sunmak.
+- Etiket: @mobile (DİKKAT mobile: `POST /auth/request-verification` yanıtında `EMAIL_ENABLED=false` ise `debug_code` alanı içinde 6 haneli OTP kodu okunabilir).
+
 
 
 

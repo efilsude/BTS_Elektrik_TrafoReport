@@ -9,6 +9,8 @@ class VerificationRequest(BaseModel):
 class VerificationResponse(BaseModel):
     message: str
     expires_in_seconds: int
+    debug_code: Optional[str] = None
+
 
 class LoginRequest(BaseModel):
     identifier: str

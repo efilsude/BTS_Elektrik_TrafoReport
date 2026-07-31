@@ -112,10 +112,14 @@ def request_verification_code(
 
     db.commit()
 
+    debug_code = generated_code if not settings.EMAIL_ENABLED else None
+
     return VerificationResponse(
         message="Doğrulama kodu e-posta adresinize gönderildi.",
-        expires_in_seconds=ttl_minutes * 60
+        expires_in_seconds=ttl_minutes * 60,
+        debug_code=debug_code
     )
+
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
