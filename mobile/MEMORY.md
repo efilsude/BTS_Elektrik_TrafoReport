@@ -13,6 +13,25 @@ Format:
 - Bir sonraki oturumda kaldığı yer:
 ```
 
+## 2026-07-31 — İlk Admin Bootstrap, Davet Kodu Rol Sistemi, Mock Koruma
+- **Ne yapıldı:**
+  1. `AuthService` — `import 'package:flutter/foundation.dart'` eklendi; `setMockMode(bool)` içine `if (kReleaseMode) return;` guard konuldu (release build mock mod giremez).
+  2. `AuthService` — `checkBootstrapStatus()` (`GET /auth/bootstrap-status`), `requestVerificationBootstrap()` (`POST /auth/request-verification-bootstrap`), `bootstrapAdmin()` (`POST /auth/bootstrap`) metotları eklendi.
+  3. `AuthService._parseErrorMessage` — `BOOTSTRAP_NOT_ALLOWED` hata kodu Türkçe mesajla eklendi.
+  4. `SplashScreen._checkAuthentication()` — giriş yapılmamışsa `checkBootstrapStatus()` çağrılır; `needs_bootstrap == true` ise `FirstAdminBootstrapScreen`'e, değilse `LoginScreen`'e yönlendirir.
+  5. `bootstrap_screen.dart` — `FirstAdminBootstrapScreen` oluşturuldu: 2 adımlı akış (bilgiler + e-posta OTP), `debug_code` varsa sarı dev banner + otomatik doldurma, 60 sn "Kodu Tekrar Gönder" sayacı, `BOOTSTRAP_NOT_ALLOWED` Türkçe hata mesajı.
+  6. `RegisterScreen` — `_isAdminRegister` checkbox'ı ve admin uyarı kutusu tamamen kaldırıldı. Başlık: "Yeni Hesap Oluştur". Alt yazı: "Davet kodunuz yönetici veya çalışan yetkisi tanımlar; kodu yöneticinizden alın." Mavi bilgi banner'ı eklendi.
+  7. `AdminDashboardScreen` — Davet kodu üretim dialogu `_generateInviteCode` async hale getirildi; Çalışan / Yönetici rol seçici eklendi. Kod kartlarında rol badge (turuncu=Yönetici, mavi=Çalışan) gösteriliyor.
+- **Alınan kararlar:**
+  - Rol yalnızca davet kodundan gelir; `RegisterScreen`'de admin checkbox artık yoktur.
+  - Bootstrap: sıfır kullanıcı durumunda otomatik yönlendirme; mevcut kullanıcı varsa `BOOTSTRAP_NOT_ALLOWED` hatası.
+  - `kReleaseMode` true iken `setMockMode(true)` no-op'tur.
+- **Bulunan sorun/gotcha:**
+  - `import 'package:flutter/material.dart'` yerine `import 'package:flutter/foundation.dart'` (+ `dart:convert`) kullanılmalıydı; `jsonDecode`/`jsonEncode` tanımsız hata vermemesi için `dart:convert` ayrıca eklenmelidir.
+- **Bir sonraki oturumda kaldığı yer:**
+  - Gerçek tablet testi: İlk açılış → Bootstrap → admin davet koduyla ikinci kullanıcı → employee davet kodu ile teknisyen.
+  - `AdminDashboardScreen` mock yerine gerçek `POST /admin/codes {role}` API entegrasyonu (Faz 3+).
+
 ## 2026-07-31 — Dev/Test debug_code Otomatik Doldurma & Dev Banner Entegrasyonu
 - **Ne yapıldı:**
   1. `AuthService`: `VerificationResult` sınıfı tanımlandı (`success`, `debugCode`, `expiresInSeconds`, `errorMessage`).

@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../core/config.dart';
 import '../models/user_model.dart';
@@ -34,6 +34,7 @@ class AuthService extends ChangeNotifier {
   bool get isAuthenticated => _currentUser != null;
 
   void setMockMode(bool value) {
+    if (kReleaseMode) return; // Prevent mock mode in production release builds
     _isMockMode = value;
     notifyListeners();
   }
@@ -64,6 +65,163 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  // Check if system has 0 users and needs initial admin bootstrap — GET /auth/bootstrap-status
+  Future<bool> checkBootstrapStatus() async {
+    if (_isMockMode) return false;
+    try {
+      final http.Response response = await http.get(
+        Uri.parse('${AppConfig.apiBaseUrl}/auth/bootstrap-status'),
+      ).timeout(AppConfig.requestTimeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['needs_bootstrap'] == true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  // Request Email Verification Code for Initial Admin Bootstrap — POST /auth/request-verification-bootstrap
+  Future<VerificationResult> requestVerificationBootstrap({
+    required String email,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    if (_isMockMode) {
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      _isLoading = false;
+      notifyListeners();
+      return VerificationResult(
+        success: true,
+        debugCode: '123456',
+        expiresInSeconds: 600,
+      );
+    }
+
+    try {
+      final Map<String, String> body = <String, String>{
+        'email': email.trim(),
+      };
+
+      final http.Response response = await http.post(
+        Uri.parse('${AppConfig.apiBaseUrl}/auth/request-verification-bootstrap'),
+        headers: <String, String>{'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      ).timeout(AppConfig.requestTimeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
+        final String? debugCode = data['debug_code']?.toString();
+        final int? expiresInSeconds = data['expires_in_seconds'] as int?;
+
+        _isLoading = false;
+        notifyListeners();
+        return VerificationResult(
+          success: true,
+          debugCode: debugCode,
+          expiresInSeconds: expiresInSeconds ?? 600,
+        );
+      } else {
+        _errorMessage = _parseErrorMessage(
+          response,
+          'İlk yönetici doğrulama kodu gönderilemedi.',
+        );
+        _isLoading = false;
+        notifyListeners();
+        return VerificationResult(
+          success: false,
+          errorMessage: _errorMessage,
+        );
+      }
+    } catch (e) {
+      _errorMessage = 'Sunucuyla bağlantı kurulamadı (${AppConfig.apiBaseUrl}). İnternet bağlantınızı kontrol edin.';
+      _isLoading = false;
+      notifyListeners();
+      return VerificationResult(
+        success: false,
+        errorMessage: _errorMessage,
+      );
+    }
+  }
+
+  // Register Initial Admin — POST /auth/bootstrap
+  Future<bool> bootstrapAdmin({
+    required String fullName,
+    required String email,
+    required String phone,
+    required String? sicilNo,
+    required String password,
+    required String verificationCode,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    if (_isMockMode) {
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      _currentUser = User(
+        id: '1',
+        fullName: fullName,
+        email: email,
+        phone: phone,
+        sicilNo: sicilNo,
+        role: 'admin',
+        isActive: true,
+        hasSignature: false,
+      );
+      await _storageService.saveTokens(
+        accessToken: 'mock_access_token_admin',
+        refreshToken: 'mock_refresh_token_admin',
+      );
+      await _storageService.saveUser(_currentUser!);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    }
+
+    try {
+      final Map<String, dynamic> body = <String, dynamic>{
+        'full_name': fullName.trim(),
+        'phone': phone.trim(),
+        'email': email.trim(),
+        'password': password,
+        'verification_code': verificationCode.trim(),
+      };
+
+      if (sicilNo != null && sicilNo.trim().isNotEmpty) {
+        body['sicil_no'] = sicilNo.trim();
+      }
+
+      final http.Response response = await http.post(
+        Uri.parse('${AppConfig.apiBaseUrl}/auth/bootstrap'),
+        headers: <String, String>{'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      ).timeout(AppConfig.requestTimeout);
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final Map<String, dynamic> userJson = jsonDecode(response.body) as Map<String, dynamic>;
+        _currentUser = User.fromJson(userJson);
+
+        // Automatically attempt login after bootstrap to obtain tokens
+        return await login(
+          identifier: phone,
+          password: password,
+          isAdminMode: true,
+        );
+      } else {
+        _errorMessage = _parseErrorMessage(response, 'İlk yönetici kaydı başarısız oldu.');
+      }
+    } catch (e) {
+      _errorMessage = 'Sunucuyla bağlantı kurulamadı (${AppConfig.apiBaseUrl}).';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+    return false;
+  }
+
   // Helper method to parse Turkish error message from API response
   String _parseErrorMessage(http.Response response, String defaultMsg) {
     try {
@@ -75,6 +233,8 @@ class AuthService extends ChangeNotifier {
 
         if (code != null) {
           switch (code) {
+            case 'BOOTSTRAP_NOT_ALLOWED':
+              return 'Sistemde zaten kayıtlı kullanıcı var. İlk yönetici kaydı gerçekleştirilemez.';
             case 'VERIFICATION_CODE_INVALID':
               return 'E-posta doğrulama kodu geçersiz veya kullanılmış.';
             case 'VERIFICATION_CODE_EXPIRED':
@@ -100,6 +260,7 @@ class AuthService extends ChangeNotifier {
     } catch (_) {}
     return defaultMsg;
   }
+
 
   // Request Email Verification Code — POST /auth/request-verification
   Future<VerificationResult> requestVerificationCode({

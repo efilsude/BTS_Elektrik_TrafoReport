@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
+import 'auth/bootstrap_screen.dart';
 import 'auth/login_screen.dart';
 import 'home_screen.dart';
 
@@ -72,18 +73,23 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           ),
         );
       } else {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder<dynamic>(
-            pageBuilder: (BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) => const LoginScreen(),
-            transitionsBuilder: (BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, Widget child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 600),
-          ),
-        );
+        final bool needsBootstrap = await authService.checkBootstrapStatus();
+        if (mounted) {
+          final Widget targetScreen = needsBootstrap ? const FirstAdminBootstrapScreen() : const LoginScreen();
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder<dynamic>(
+              pageBuilder: (BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) => targetScreen,
+              transitionsBuilder: (BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, Widget child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              transitionDuration: const Duration(milliseconds: 600),
+            ),
+          );
+        }
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
