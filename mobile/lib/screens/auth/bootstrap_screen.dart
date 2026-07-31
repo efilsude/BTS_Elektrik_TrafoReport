@@ -6,14 +6,14 @@ import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../home_screen.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class FirstAdminBootstrapScreen extends StatefulWidget {
+  const FirstAdminBootstrapScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<FirstAdminBootstrapScreen> createState() => _FirstAdminBootstrapScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
   final GlobalKey<FormState> _formKeyStep1 = GlobalKey<FormState>();
   final GlobalKey<FormState> _formKeyStep2 = GlobalKey<FormState>();
 
@@ -21,16 +21,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _sicilNoController = TextEditingController();
-  final TextEditingController _inviteCodeController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   final TextEditingController _verificationCodeController = TextEditingController();
 
-  int _currentStep = 1; // Step 1: Info & Request Code, Step 2: Enter Verification Code
+  int _currentStep = 1;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  String? _activeDebugCode; // Received when EMAIL_ENABLED=false on backend
-
+  String? _activeDebugCode;
 
   Timer? _resendTimer;
   int _resendCountdown = 0;
@@ -42,7 +40,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _phoneController.dispose();
     _sicilNoController.dispose();
-    _inviteCodeController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _verificationCodeController.dispose();
@@ -72,8 +69,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
   }
 
-  // Step 1: Validate form & request email verification code from backend
-  Future<void> _handleRequestVerification() async {
+  Future<void> _handleRequestBootstrapCode() async {
     if (!_formKeyStep1.currentState!.validate()) return;
 
     if (_passwordController.text != _confirmPasswordController.text) {
@@ -91,9 +87,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final AuthService authService = Provider.of<AuthService>(context, listen: false);
 
-    final VerificationResult result = await authService.requestVerificationCode(
+    final VerificationResult result = await authService.requestVerificationBootstrap(
       email: _emailController.text.trim(),
-      inviteCode: _inviteCodeController.text.trim(),
     );
 
     if (result.success && mounted) {
@@ -143,15 +138,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  // Resend verification code with 60-second cooldown check
-  Future<void> _handleResendVerification() async {
+  Future<void> _handleResendBootstrapCode() async {
     if (_resendCountdown > 0) return;
 
     final AuthService authService = Provider.of<AuthService>(context, listen: false);
 
-    final VerificationResult result = await authService.requestVerificationCode(
+    final VerificationResult result = await authService.requestVerificationBootstrap(
       email: _emailController.text.trim(),
-      inviteCode: _inviteCodeController.text.trim(),
     );
 
     if (result.success && mounted) {
@@ -197,21 +190,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  // Step 2: Validate verification code & finalize user registration
-  Future<void> _handleFinalRegister() async {
+  Future<void> _handleFinalBootstrap() async {
     if (!_formKeyStep2.currentState!.validate()) return;
 
     final AuthService authService = Provider.of<AuthService>(context, listen: false);
 
-    final bool success = await authService.register(
+    final bool success = await authService.bootstrapAdmin(
       fullName: _fullNameController.text.trim(),
       email: _emailController.text.trim(),
       phone: _phoneController.text.trim(),
       sicilNo: _sicilNoController.text.trim().isEmpty ? null : _sicilNoController.text.trim(),
-      inviteCode: _inviteCodeController.text.trim(),
-      verificationCode: _verificationCodeController.text.trim(),
       password: _passwordController.text,
-      isAdminMode: _isAdminRegister,
+      verificationCode: _verificationCodeController.text.trim(),
     );
 
     if (success && mounted) {
@@ -219,7 +209,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Kayıt başarıyla tamamlandı! Oturum açıldı.',
+            'İlk yönetici kaydı başarıyla tamamlandı! Hoş geldiniz.',
             style: GoogleFonts.inter(fontWeight: FontWeight.w500),
           ),
           backgroundColor: AppTheme.successColor,
@@ -233,7 +223,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            authService.errorMessage ?? 'Kayıt sırasında hata oluştu.',
+            authService.errorMessage ?? 'İlk yönetici kaydı sırasında hata oluştu.',
             style: GoogleFonts.inter(fontWeight: FontWeight.w500),
           ),
           backgroundColor: AppTheme.errorColor,
@@ -253,7 +243,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Yeni Hesap Oluştur',
+          'İlk Yönetici Kaydı (Bootstrap)',
           style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
         ),
         backgroundColor: Colors.transparent,
@@ -269,19 +259,62 @@ class _RegisterScreenState extends State<RegisterScreen> {
               elevation: 4,
               child: Padding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: isTablet ? 40 : 20, 
+                  horizontal: isTablet ? 40 : 20,
                   vertical: 30,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
+                    // System Setup Info Banner
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.blue.shade300),
+                      ),
+                      child: Row(
+                        children: <Widget>[
+                          Icon(Icons.admin_panel_settings_rounded, color: Colors.blue.shade900, size: 28),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                  'Sistem Kurulumu',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue.shade900,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Sistemde henüz kullanıcı yok. İlk yönetici (Admin) hesabını oluşturuyorsunuz.',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: Colors.blue.shade800,
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
                     // Step Indicator Bar
                     _buildStepIndicator(),
                     const SizedBox(height: 24),
 
                     // Header info
                     Text(
-                      'Yeni Hesap Oluştur',
+                      _currentStep == 1
+                        ? 'Yönetici Bilgilerini Giriniz'
+                        : 'E-posta Doğrulama Kodu',
                       style: GoogleFonts.outfit(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -292,8 +325,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 6),
                     Text(
                       _currentStep == 1
-                        ? 'Davet kodunuz yönetici veya çalışan yetkisi tanımlar; kodu yöneticinizden alın.'
-                        : 'E-postanıza gelen 6 haneli doğrulama kodunu girerek kaydı tamamlayın.',
+                        ? 'Davet koduna ihtiyaç duymadan ilk yönetici hesabınızı tanımlayın.'
+                        : 'E-postanıza gönderilen 6 haneli doğrulama kodunu giriniz.',
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         color: AppTheme.textLight,
@@ -334,7 +367,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const Icon(Icons.person_outline, color: Colors.white, size: 18),
                 const SizedBox(width: 6),
                 Text(
-                  '1. Bilgiler',
+                  '1. Admin Bilgileri',
                   style: GoogleFonts.inter(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -365,7 +398,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  '2. E-posta Doğrulama',
+                  '2. Doğrulama',
                   style: GoogleFonts.inter(
                     color: _currentStep == 2 ? Colors.white : AppTheme.textLight,
                     fontWeight: _currentStep == 2 ? FontWeight.bold : FontWeight.w500,
@@ -386,34 +419,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          // Info banner — role determined by invite code
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.07),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Icon(Icons.info_outline_rounded, color: AppTheme.primaryColor, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Davet kodunuz yönetici veya çalışan yetkisi tanımlar; kodu yöneticinizden alın.',
-                    style: GoogleFonts.inter(
-                      fontSize: 12.5,
-                      color: AppTheme.primaryColor,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
           // Full Name
           TextFormField(
             controller: _fullNameController,
@@ -438,8 +443,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             decoration: const InputDecoration(
               labelText: 'E-posta Adresi *',
               prefixIcon: Icon(Icons.email_outlined),
-              hintText: 'ahmet@btselektrik.com',
-              helperText: 'Doğrulama kodu bu e-postaya gönderilecektir.',
+              hintText: 'admin@btselektrik.com',
+              helperText: 'Doğrulama kodu bu e-posta adresine gönderilecektir.',
             ),
             validator: (String? value) {
               if (value == null || value.trim().isEmpty) {
@@ -477,27 +482,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             decoration: const InputDecoration(
               labelText: 'Sicil No (İsteğe Bağlı)',
               prefixIcon: Icon(Icons.assignment_ind_outlined),
-              hintText: '12345',
+              hintText: 'ADM001',
             ),
-          ),
-          const SizedBox(height: 16),
-
-          // Invite Code
-          TextFormField(
-            controller: _inviteCodeController,
-            decoration: InputDecoration(
-              labelText: 'Davet Kodu *',
-              prefixIcon: const Icon(Icons.vpn_key_outlined),
-              hintText: 'Örn: XYZ123',
-              helperText: 'Yöneticinizden temin ettiğiniz kod',
-              helperStyle: GoogleFonts.inter(color: AppTheme.primaryColor, fontWeight: FontWeight.w500),
-            ),
-            validator: (String? value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Davet kodu zorunludur';
-              }
-              return null;
-            },
           ),
           const SizedBox(height: 16),
 
@@ -555,7 +541,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
           // Request Code Button
           ElevatedButton(
-            onPressed: authService.isLoading ? null : _handleRequestVerification,
+            onPressed: authService.isLoading ? null : _handleRequestBootstrapCode,
             child: authService.isLoading
               ? const SizedBox(
                   height: 20,
@@ -585,7 +571,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          // DEV MODE BANNER (When debug_code is present in response when EMAIL_ENABLED=false)
+          // DEV MODE BANNER
           if (_activeDebugCode != null && _activeDebugCode!.isNotEmpty) ...<Widget>[
             Container(
               padding: const EdgeInsets.all(14),
@@ -651,7 +637,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   text: TextSpan(
                     style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textDark, height: 1.4),
                     children: <TextSpan>[
-                      const TextSpan(text: '6 haneli e-posta doğrulama kodu '),
+                      const TextSpan(text: '6 haneli doğrulama kodu '),
                       TextSpan(
                         text: _emailController.text.trim(),
                         style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
@@ -707,7 +693,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextButton(
                 onPressed: (_resendCountdown > 0 || authService.isLoading)
                   ? null
-                  : _handleResendVerification,
+                  : _handleResendBootstrapCode,
                 child: Text(
                   _resendCountdown > 0
                     ? 'Kodu Tekrar Gönder (${_resendCountdown}s)'
@@ -722,9 +708,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           const SizedBox(height: 24),
 
-          // Final Register Button
+          // Final Bootstrap Button
           ElevatedButton(
-            onPressed: authService.isLoading ? null : _handleFinalRegister,
+            onPressed: authService.isLoading ? null : _handleFinalBootstrap,
             child: authService.isLoading
               ? const SizedBox(
                   height: 20,
@@ -732,7 +718,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                 )
               : Text(
-                  'Hesabı Oluştur ve Giriş Yap',
+                  'İlk Yönetici Hesabını Oluştur',
                   style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                 ),
           ),

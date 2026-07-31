@@ -9,26 +9,147 @@ class AdminDashboardScreen extends StatefulWidget {
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
+class _InviteCodeItem {
+  final String code;
+  final String role; // 'employee' | 'admin'
+  final String status; // 'active' | 'used' | 'expired'
+  _InviteCodeItem({required this.code, required this.role, required this.status});
+}
+
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  final List<String> _generatedCodes = <String>['XYZ789 (Kullanılmadı)', 'ABC123 (Süresi Doldu)', 'KPT456 (Kullanıldı)'];
+  final List<_InviteCodeItem> _generatedCodes = <_InviteCodeItem>[
+    _InviteCodeItem(code: 'XYZ789', role: 'employee', status: 'active'),
+    _InviteCodeItem(code: 'ABC123', role: 'admin', status: 'expired'),
+    _InviteCodeItem(code: 'KPT456', role: 'employee', status: 'used'),
+  ];
   final List<String> _templates = <String>[
     'Hermetik Bakım Şablonu (v1.2)', 
     'Kuru Tip Bakım Şablonu (v1.0)', 
     'Genleşme Tanklı (GT) Bakım Şablonu (v2.1)'
   ];
+  String _selectedRole = 'employee'; // used in the invite code creation dialog
 
-  void _generateInviteCode() {
-    // Mock code generator
-    final String newCode = 'BTS${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
-    setState(() {
-      _generatedCodes.insert(0, '$newCode (Kullanılmadı - 15 dk geçerli)');
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Davet kodu oluşturuldu: $newCode'),
-        backgroundColor: AppTheme.successColor,
-      ),
+  Future<void> _generateInviteCode() async {
+    _selectedRole = 'employee'; // reset each time
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) {
+        return StatefulBuilder(
+          builder: (BuildContext ctx2, StateSetter setDialogState) {
+            return AlertDialog(
+              title: Text('Davet Kodu Üret', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'Yeni kullanıcının rolunu seçin:',
+                    style: GoogleFonts.inter(fontSize: 14, color: Colors.grey.shade700),
+                  ),
+                  const SizedBox(height: 16),
+                  // Role Picker Tiles
+                  InkWell(
+                    onTap: () => setDialogState(() => _selectedRole = 'employee'),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _selectedRole == 'employee' ? AppTheme.primaryColor.withOpacity(0.1) : Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _selectedRole == 'employee' ? AppTheme.primaryColor : Colors.grey.shade300,
+                          width: _selectedRole == 'employee' ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: <Widget>[
+                          Icon(
+                            Icons.engineering_outlined,
+                            color: _selectedRole == 'employee' ? AppTheme.primaryColor : Colors.grey,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text('Çalışan (Employee)', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
+                              Text('Teknisyen / Rapor İşleme Yetkisi', style: GoogleFonts.inter(fontSize: 11, color: Colors.grey)),
+                            ],
+                          ),
+                          const Spacer(),
+                          if (_selectedRole == 'employee')
+                            Icon(Icons.check_circle_rounded, color: AppTheme.primaryColor, size: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  InkWell(
+                    onTap: () => setDialogState(() => _selectedRole = 'admin'),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _selectedRole == 'admin' ? Colors.orange.withOpacity(0.1) : Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _selectedRole == 'admin' ? Colors.orange.shade700 : Colors.grey.shade300,
+                          width: _selectedRole == 'admin' ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: <Widget>[
+                          Icon(
+                            Icons.admin_panel_settings_outlined,
+                            color: _selectedRole == 'admin' ? Colors.orange.shade700 : Colors.grey,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text('Yönetici (Admin)', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
+                              Text('Tam Yönetim + Kullanıcı Yönetimi Yetkisi', style: GoogleFonts.inter(fontSize: 11, color: Colors.grey)),
+                            ],
+                          ),
+                          const Spacer(),
+                          if (_selectedRole == 'admin')
+                            Icon(Icons.check_circle_rounded, color: Colors.orange.shade700, size: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: Text('İptal', style: GoogleFonts.inter(color: AppTheme.textLight)),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: Text('Kod Üret', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
+
+    if (confirmed == true && mounted) {
+      // Mock: generate code locally (real API call would be POST /admin/codes with {role: _selectedRole})
+      final String newCode = 'BTS${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
+      setState(() {
+        _generatedCodes.insert(0, _InviteCodeItem(code: newCode, role: _selectedRole, status: 'active'));
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Davet kodu oluşturuldu: $newCode (${_selectedRole == 'admin' ? 'Yönetici' : 'Çalışan'})'),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
+    }
   }
 
   void _uploadTemplate() {
@@ -205,30 +326,64 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _generatedCodes.length,
               itemBuilder: (BuildContext context, int index) {
-                final String codeStr = _generatedCodes[index];
-                final bool isUsed = codeStr.contains('Kullanıldı') || codeStr.contains('Süresi Doldu');
+                final _InviteCodeItem item = _generatedCodes[index];
+                final bool isInactive = item.status == 'used' || item.status == 'expired';
+                final bool isAdmin = item.role == 'admin';
+
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: CircleAvatar(
-                    backgroundColor: isUsed ? Colors.grey.shade200 : Colors.green.shade50,
+                    backgroundColor: isInactive ? Colors.grey.shade200 : Colors.green.shade50,
                     child: Icon(
-                      isUsed ? Icons.key_off_outlined : Icons.vpn_key_outlined,
-                      color: isUsed ? Colors.grey : Colors.green,
+                      isInactive ? Icons.key_off_outlined : Icons.vpn_key_outlined,
+                      color: isInactive ? Colors.grey : Colors.green,
                       size: 20,
                     ),
                   ),
-
-                  title: Text(
-                    codeStr,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: isUsed ? AppTheme.textLight : AppTheme.textDark,
-                    ),
+                  title: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          item.code,
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: isInactive ? AppTheme.textLight : AppTheme.textDark,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Role Badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isAdmin ? Colors.orange.shade100 : AppTheme.primaryColor.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isAdmin ? Colors.orange.shade400 : AppTheme.primaryColor.withOpacity(0.4),
+                          ),
+                        ),
+                        child: Text(
+                          isAdmin ? 'Yönetici' : 'Çalışan',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: isAdmin ? Colors.orange.shade800 : AppTheme.primaryColor,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   subtitle: Text(
-                    isUsed ? 'Geçersiz' : 'Aktif (15 dk TTL)',
-                    style: TextStyle(fontSize: 11, color: isUsed ? Colors.red : Colors.green),
+                    item.status == 'used'
+                      ? 'Kullanıldı'
+                      : item.status == 'expired'
+                        ? 'Süresi Doldu'
+                        : 'Aktif (15 dk TTL)',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isInactive ? Colors.red : Colors.green,
+                    ),
                   ),
                 );
               },
