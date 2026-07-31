@@ -27,6 +27,18 @@ class InviteCodeInvalidException(APIException):
     def __init__(self, message: str = "Davet kodu geçersiz, kullanılmış veya süresi dolmuş."):
         super().__init__(status_code=status.HTTP_400_BAD_REQUEST, code="INVITE_CODE_INVALID", message=message)
 
+class VerificationCodeInvalidException(APIException):
+    def __init__(self, message: str = "Doğrulama kodu geçersiz veya kullanılmış."):
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, code="VERIFICATION_CODE_INVALID", message=message)
+
+class VerificationCodeExpiredException(APIException):
+    def __init__(self, message: str = "Doğrulama kodunun süresi dolmuş."):
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, code="VERIFICATION_CODE_EXPIRED", message=message)
+
+class EmailSendFailedException(APIException):
+    def __init__(self, message: str = "E-posta gönderilemedi. Lütfen adresi kontrol edin."):
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, code="EMAIL_SEND_FAILED", message=message)
+
 class UserAlreadyExistsException(APIException):
     def __init__(self, message: str = "Bu telefon, e-posta veya sicil no ile kayıtlı kullanıcı zaten var."):
         super().__init__(status_code=status.HTTP_400_BAD_REQUEST, code="USER_ALREADY_EXISTS", message=message)

@@ -10,7 +10,9 @@
 - [x] JWT auth (access + refresh), bcrypt şifre hash
 - [x] `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`
 - [x] Davet kodu sistemi (15 dk TTL, tek kullanımlık) + `POST/GET /admin/codes`
+- [x] E-posta doğrulama kodu (OTP 10 dk TTL, 60s rate-limit) + `POST /auth/request-verification`
 - [x] Kullanıcı CRUD (`GET /admin/users`, `DELETE /admin/users/{id}` — sahiplik korunarak)
+
 
 
 ## Faz 2 — Rapor Çekirdeği (PRD §22)

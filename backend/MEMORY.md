@@ -12,6 +12,25 @@ Format:
 - Bir sonraki oturumda kaldığı yer:
 ```
 
+## 2026-07-31 — E-posta Doğrulama Kodu (OTP) & Admin Bildirimleri Tamamlandı
+- **Ne yapıldı:**
+  1. `app/core/config.py` içine SMTP (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM, SMTP_USE_TLS), EMAIL_ENABLED, ADMIN_NOTIFY_EMAILS ve VERIFICATION_CODE_TTL_MINUTES env ayarları eklendi. `backend/.env.example` oluşturuldu.
+  2. `app/services/email_service.py` modülü yazıldı (`send_email` ile console sink fallback, `notify_admins`, `notify_admins_for_new_user`, `notify_admins_for_finalize`).
+  3. `email_verification_codes` tablosu (`app/models/email_verification.py`) tanımlandı ve `docs/DB_SCHEMA.md` güncellendi.
+  4. `POST /auth/request-verification` endpoint'i eklendi (davet kodu kontrolü + 6 haneli OTP kodu üretimi + 60s rate-limit + Türkçe HTML e-posta).
+  5. `POST /auth/register` endpoint'i güncellendi (zorunlu `email` + zorunlu `verification_code` doğrulama).
+  6. Yeni kullanıcı kaydında ve rapor kesinleştirmede (`POST /reports/{id}/finalize`) FastAPI `BackgroundTasks` üzerinden Admin e-posta bildirimleri entegre edildi.
+  7. `docs/API_CONTRACT.md` ve `docs/DECISIONS.md` dokümanlarına `@mobile` etiketli notlar düşüldü.
+  8. `tests/test_email_verification.py` entegrasyon testleri dahil tüm backend testleri (`test_phase1`, `test_phase2`, `test_phase3`, `test_phase4`, `test_e2e_full_workflow`) çalıştırıldı: **20/20 test %100 başarıyla geçti**.
+- **Alınan kararlar:**
+  - Mobil istemcinin kayıt ekranında e-posta doğrulama kodunun `POST /auth/request-verification` ile alınması zorunlu kılındı.
+- **Bulunan sorun/gotcha:**
+  - FastAPI background tasks signature uyuşmazlığını önlemek için `BackgroundTasks` parametre varsayılanı `BackgroundTasks()` olarak ayarlandı.
+- **Bir sonraki oturumda kaldığı yer:**
+  - Mobil tarafın güncellenen 2 adımlı kayıt sözleşmesini (`request-verification` + `register`) entegre etmesi bekleniyor.
+
+---
+
 ## 2026-07-30 — Faz 5 Test, Güvenlik ve Sürüm Tamamlandı (Backend Tamamlandı)
 - **Ne yapıldı:**
   1. Uçtan uca tüm senaryoyu test eden [tests/test_e2e_full_workflow.py](file:///C:/Users/User/OneDrive/Desktop/BTS_Elektrik/backend/tests/test_e2e_full_workflow.py) geliştirildi: Admin girişi -> davet kodu oluşturma -> çalışan kaydı -> imza ve fotoğraf yükleme -> taslak oluşturma -> Excel raporu kesinleştirme & indirme -> Admin istatistik kontrolü -> kullanıcı devre dışı bırakma ve geçmiş raporlarda oluşturan adının korunduğunun doğrulanması.

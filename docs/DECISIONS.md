@@ -43,10 +43,11 @@ Kurallar:
 - Neden: Mobil istemcinin Admin gösterge paneli istatistiklerini görüntülemesi ve şablon yönetimi gerçekleştirebilmesi için.
 - Etiket: @mobile (DİKKAT mobile: `/templates`, `/admin/templates` ve `/admin/stats` v1.0 olarak eklendi).
 
-## 2026-07-30 — [mobile] Admin Kaydı Davet Kodu ve Rol Desteği İsteği
-- Ne: `RegisterScreen` ekranına Yönetici Kaydı seçeneği eklendi.
-- İSTEK: backend — davet koduna role (admin|employee) eklensin veya `POST /auth/register` body’de `role` desteklensin; admin kodları sadece mevcut admin üretebilsin.
-- Neden: Sistemde yeni yöneticilerin de davet koduyla doğrudan admin rolüyle kayıt olabilmesi için.
+## 2026-07-31 — [backend] E-posta Doğrulama Kodu (OTP) ve Admin Bildirim Altyapısı Eklendi
+- Ne: `docs/API_CONTRACT.md` ve `docs/DB_SCHEMA.md` güncellenerek `POST /auth/request-verification` eklendi, `POST /auth/register` body'sine `verification_code` ve zorunlu `email` eklendi, `email_verification_codes` DB tablosu tanımlandı. Yeni kullanıcı kaydı ve rapor kesinleştirme (`POST /reports/{id}/finalize`) adımlarına Admin SMTP e-posta bildirimleri entegre edildi.
+- Neden: Hesap güvenliğini artırmak, sahte e-postalarla kaydı engellemek ve sistem yöneticilerini (admin) yeni üyelik ve tamamlanan saha raporlarından anında haberdar etmek için.
+- Etiket: @mobile (DİKKAT mobile: Kayıt akışı 2 adımlı oldu! Artık kayıt öncesi `POST /auth/request-verification` ile 6 haneli OTP kodu talep edilmeli ve `POST /auth/register` isteğine `email` ve `verification_code` zorunlu olarak eklenmelidir).
+
 
 
 

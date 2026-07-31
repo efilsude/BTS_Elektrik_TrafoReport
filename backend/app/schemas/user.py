@@ -5,11 +5,12 @@ from pydantic import BaseModel, Field, EmailStr, ConfigDict
 class UserBase(BaseModel):
     full_name: str = Field(..., min_length=2, max_length=150)
     phone: str = Field(..., min_length=5, max_length=30)
-    email: Optional[EmailStr] = None
+    email: EmailStr
     sicil_no: Optional[str] = None
 
 class UserCreate(UserBase):
     invite_code: str = Field(..., min_length=4, max_length=20)
+    verification_code: str = Field(..., min_length=6, max_length=6)
     password: str = Field(..., min_length=8)
 
 class UserResponse(BaseModel):

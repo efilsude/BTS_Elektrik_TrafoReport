@@ -1,6 +1,14 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
 from app.schemas.user import UserResponse
+
+class VerificationRequest(BaseModel):
+    email: EmailStr
+    invite_code: str = Field(..., min_length=4, max_length=20)
+
+class VerificationResponse(BaseModel):
+    message: str
+    expires_in_seconds: int
 
 class LoginRequest(BaseModel):
     identifier: str

@@ -32,6 +32,9 @@ Yaygın Hata Kodları:
 - `NOT_FOUND` (404): İstenen kaynak bulunamadı.
 - `VALIDATION_ERROR` (422): Eksik veya hatalı istek gövdesi.
 - `INVITE_CODE_INVALID` (400): Davet kodu geçersiz/kullanılmış/süresi dolmuş.
+- `VERIFICATION_CODE_INVALID` (400): E-posta doğrulama kodu geçersiz veya kullanılmış.
+- `VERIFICATION_CODE_EXPIRED` (400): E-posta doğrulama kodunun süresi dolmuş (10 dk TTL).
+- `EMAIL_SEND_FAILED` (400): E-posta doğrulama kodu gönderilemedi.
 - `USER_ALREADY_EXISTS` (400): Telefon, e-posta veya sicil no zaten kayıtlı.
 - `INVALID_CREDENTIALS` (400): Kullanıcı adı veya şifre hatalı.
 - `INTERNAL_SERVER_ERROR` (500): Sunucu içi beklenmeyen hata.
@@ -40,8 +43,30 @@ Yaygın Hata Kodları:
 
 ## 2. Auth Uç Noktaları
 
-### 2.1 POST `/auth/register`
-Davet kodu ile yeni çalışan kaydı.
+### 2.1 POST `/auth/request-verification`
+Kayıt öncesi e-posta adresine 6 haneli OTP doğrulama kodu gönderme.
+
+- **İstek (Body):**
+```json
+{
+  "email": "ahmet@btselektrik.com",
+  "invite_code": "BTS98765"
+}
+```
+*`email` ve `invite_code` zorunludur. `invite_code` geçerli olmalıdır.*
+
+- **Yanıt (200 OK):**
+```json
+{
+  "message": "Doğrulama kodu e-posta adresinize gönderildi.",
+  "expires_in_seconds": 600
+}
+```
+
+---
+
+### 2.2 POST `/auth/register`
+Davet kodu ve e-posta doğrulama kodu ile yeni çalışan kaydı.
 
 - **İstek (Body):**
 ```json
@@ -51,10 +76,11 @@ Davet kodu ile yeni çalışan kaydı.
   "email": "ahmet@btselektrik.com",
   "sicil_no": "12345",
   "invite_code": "BTS98765",
+  "verification_code": "123456",
   "password": "Password123"
 }
 ```
-*`email` ve `sicil_no` isteğe bağlıdır (`null` veya gönderilmeyebilir).*
+*`email`, `invite_code` ve `verification_code` zorunludur. `sicil_no` isteğe bağlıdır.*
 
 - **Yanıt (201 Created):**
 ```json
@@ -70,9 +96,10 @@ Davet kodu ile yeni çalışan kaydı.
 }
 ```
 
+
 ---
 
-### 2.2 POST `/auth/login`
+### 2.3 POST `/auth/login`
 Çalışan veya Admin girişi. `identifier` alanına Telefon, E-posta veya Sicil No girilebilir.
 
 - **İstek (Body):**
@@ -105,7 +132,8 @@ Davet kodu ile yeni çalışan kaydı.
 
 ---
 
-### 2.3 POST `/auth/refresh`
+### 2.4 POST `/auth/refresh`
+
 Access token süresi dolduğunda yenileme.
 
 - **İstek (Body):**

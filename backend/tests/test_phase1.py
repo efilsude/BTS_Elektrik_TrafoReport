@@ -36,12 +36,27 @@ def test_admin_login():
     assert data["user"]["role"] == "admin"
 
 def test_register_with_valid_invite_code():
+    # Request verification code first
+    req_ver = client.post("/api/v1/auth/request-verification", json={
+        "email": "mehmet@btselektrik.com",
+        "invite_code": "BTS2026"
+    })
+    assert req_ver.status_code == 200
+
+    from app.db.session import SessionLocal
+    from app.models.email_verification import EmailVerificationCode
+    db = SessionLocal()
+    ver_rec = db.query(EmailVerificationCode).filter(EmailVerificationCode.email == "mehmet@btselektrik.com").first()
+    ver_code = ver_rec.code
+    db.close()
+
     response = client.post("/api/v1/auth/register", json={
         "full_name": "Mehmet Teknisyen",
         "phone": "05559998877",
         "email": "mehmet@btselektrik.com",
         "sicil_no": "TEK001",
         "invite_code": "BTS2026",
+        "verification_code": ver_code,
         "password": "Teknisyen123!"
     })
     assert response.status_code == 201
@@ -50,15 +65,14 @@ def test_register_with_valid_invite_code():
     assert data["role"] == "employee"
 
 def test_register_with_used_invite_code_fails():
-    response = client.post("/api/v1/auth/register", json={
-        "full_name": "İkinci Teknisyen",
-        "phone": "05558887766",
-        "invite_code": "BTS2026",
-        "password": "Teknisyen123!"
+    req_ver = client.post("/api/v1/auth/request-verification", json={
+        "email": "ikinci@btselektrik.com",
+        "invite_code": "BTS2026"
     })
-    assert response.status_code == 400
-    data = response.json()
-    assert data["error"]["code"] == "INVITE_CODE_INVALID"
+    # invite_code BTS2026 was used by Mehmet Teknisyen, so request-verification fails with INVITE_CODE_INVALID
+    assert req_ver.status_code == 400
+    assert req_ver.json()["error"]["code"] == "INVITE_CODE_INVALID"
+
 
 def test_employee_login_and_refresh():
     # Login

@@ -1,7 +1,8 @@
 import os
 import uuid
 from typing import Optional, List
-from fastapi import APIRouter, Depends, Query, UploadFile, File, Form, status
+from fastapi import APIRouter, Depends, Query, UploadFile, File, Form, status, BackgroundTasks
+
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
@@ -203,14 +204,18 @@ async def upload_report_photo(
 
 from fastapi.responses import FileResponse
 from app.services.excel_engine import generate_report_excel
+from app.services.email_service import notify_admins_for_finalize
+
 
 
 @router.post("/{report_id}/finalize", response_model=ReportResponse)
 def finalize_report(
     report_id: int,
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+
     report = db.query(Report).filter(Report.id == report_id).first()
     if not report:
         raise NotFoundException("Rapor bulunamadı.")
@@ -232,7 +237,11 @@ def finalize_report(
         db.rollback()
         raise BadRequestException(code="EXCEL_GENERATION_FAILED", message=f"Excel raporu üretilirken hata oluştu: {str(e)}")
 
+    # Notify admins in background
+    background_tasks.add_task(notify_admins_for_finalize, report.id)
+
     return ReportResponse.model_validate(report)
+
 
 @router.get("/{report_id}/download")
 def download_report_excel(

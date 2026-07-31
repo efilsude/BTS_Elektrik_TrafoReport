@@ -28,17 +28,30 @@ def get_auth_token(identifier, password):
     resp = client.post("/api/v1/auth/login", json={"identifier": identifier, "password": password})
     return resp.json()["access_token"]
 
+def register_employee(client, full_name, phone, email, invite_code, password):
+    client.post("/api/v1/auth/request-verification", json={"email": email, "invite_code": invite_code})
+    from app.db.session import SessionLocal
+    from app.models.email_verification import EmailVerificationCode
+    db = SessionLocal()
+    ver_rec = db.query(EmailVerificationCode).filter(EmailVerificationCode.email == email).order_by(EmailVerificationCode.created_at.desc()).first()
+    ver_code = ver_rec.code
+    db.close()
+    return client.post("/api/v1/auth/register", json={
+        "full_name": full_name,
+        "phone": phone,
+        "email": email,
+        "invite_code": invite_code,
+        "verification_code": ver_code,
+        "password": password
+    })
+
 def test_report_lifecycle_and_drafts():
     # 1. Register employee
-    reg_resp = client.post("/api/v1/auth/register", json={
-        "full_name": "Ahmet Teknisyen",
-        "phone": "05321112233",
-        "invite_code": "BTS2026",
-        "password": "Password123"
-    })
+    reg_resp = register_employee(client, "Ahmet Teknisyen", "05321112233", "ahmet.tek@btselektrik.com", "BTS2026", "Password123")
     assert reg_resp.status_code == 201
 
     token = get_auth_token("05321112233", "Password123")
+
     headers = {"Authorization": f"Bearer {token}"}
 
     # 2. Create draft report

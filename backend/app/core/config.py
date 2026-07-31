@@ -13,7 +13,18 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # 7 days refresh token
     
     INVITE_CODE_TTL_MINUTES: int = 15
+    VERIFICATION_CODE_TTL_MINUTES: int = 10
     
+    # SMTP & Email settings
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "localhost")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER: Optional[str] = os.getenv("SMTP_USER", None)
+    SMTP_PASSWORD: Optional[str] = os.getenv("SMTP_PASSWORD", None)
+    SMTP_FROM: str = os.getenv("SMTP_FROM", "TrafoReport <noreply@btselektrik.com>")
+    SMTP_USE_TLS: bool = os.getenv("SMTP_USE_TLS", "true").lower() in ("true", "1", "yes")
+    ADMIN_NOTIFY_EMAILS: Optional[str] = os.getenv("ADMIN_NOTIFY_EMAILS", None)
+    EMAIL_ENABLED: bool = os.getenv("EMAIL_ENABLED", "true").lower() in ("true", "1", "yes")
+
     # SQLite fallback for local testing if DATABASE_URL is not provided
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL", "sqlite:///./traforeport.db"
@@ -26,4 +37,3 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(case_sensitive=True)
 
 settings = Settings()
-

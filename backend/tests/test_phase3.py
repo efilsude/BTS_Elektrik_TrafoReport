@@ -38,14 +38,29 @@ def test_excel_generation_and_download_all_templates(report_type):
 
     # 2. Register employee using fresh invite code
     emp_phone = f"0544{report_type[:4].ljust(7, '0')}"[:11]
+    emp_email = f"tek_{report_type.lower()}@btselektrik.com"
+    client.post("/api/v1/auth/request-verification", json={
+        "email": emp_email,
+        "invite_code": fresh_code
+    })
+    from app.db.session import SessionLocal
+    from app.models.email_verification import EmailVerificationCode
+    db = SessionLocal()
+    ver_rec = db.query(EmailVerificationCode).filter(EmailVerificationCode.email == emp_email).order_by(EmailVerificationCode.created_at.desc()).first()
+    ver_code = ver_rec.code
+    db.close()
+
     client.post("/api/v1/auth/register", json={
         "full_name": f"Teknisyen {report_type}",
         "phone": emp_phone,
+        "email": emp_email,
         "invite_code": fresh_code,
+        "verification_code": ver_code,
         "password": "Password123"
     })
 
     token = get_auth_token(emp_phone, "Password123")
+
     headers = {"Authorization": f"Bearer {token}"}
 
     # 3. Create report

@@ -109,5 +109,26 @@ Yüklenebilir Excel şablon dosyaları ve versiyonları.
 **İndeksler:**
 - `idx_templates_report_type`
 
+---
+
+## 6. `email_verification_codes` Tablosu
+
+Kullanıcı kaydı öncesi e-posta doğrulama için üretilen 6 haneli tek kullanımlık OTP doğrulama kodları.
+
+| Kolon Adı | Veri Tipi | Kısıtlar / Açıklama |
+|---|---|---|
+| `id` | `INTEGER` | `PRIMARY KEY`, `AUTOINCREMENT` / `SERIAL` |
+| `email` | `VARCHAR(150)` | `NOT NULL` (Doğrulanacak e-posta adresi) |
+| `code` | `VARCHAR(6)` | `NOT NULL` (6 haneli alfanümerik/sayısal OTP kodu) |
+| `purpose` | `VARCHAR(30)` | `NOT NULL`, Default: `'register'` (`register` doğrulama amacı) |
+| `expires_at` | `TIMESTAMP WITH TIME ZONE` | `NOT NULL` (Oluşturulma + 10 dakika) |
+| `used_at` | `TIMESTAMP WITH TIME ZONE` | `NULLABLE` (Kullanıldığı zaman) |
+| `created_at` | `TIMESTAMP WITH TIME ZONE` | `NOT NULL`, Default: `CURRENT_TIMESTAMP` |
+
+**İndeksler:**
+- `idx_email_verification_email`
+- `idx_email_verification_code`
+
+
 
 

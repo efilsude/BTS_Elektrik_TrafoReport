@@ -40,17 +40,32 @@ def test_full_end_to_end_workflow():
     assert code_resp.status_code == 201
     reg_code = code_resp.json()["code"]
 
-    # 3. Employee registers using invite code
+    # 3. Employee requests verification code and registers using invite code
+    ver_req_resp = client.post("/api/v1/auth/request-verification", json={
+        "email": "caner@btselektrik.com",
+        "invite_code": reg_code
+    })
+    assert ver_req_resp.status_code == 200
+
+    from app.db.session import SessionLocal
+    from app.models.email_verification import EmailVerificationCode
+    db = SessionLocal()
+    ver_rec = db.query(EmailVerificationCode).filter(EmailVerificationCode.email == "caner@btselektrik.com").first()
+    ver_code = ver_rec.code
+    db.close()
+
     register_resp = client.post("/api/v1/auth/register", json={
         "full_name": "Caner Teknisyen",
         "phone": "05557776655",
         "email": "caner@btselektrik.com",
         "sicil_no": "TEK777",
         "invite_code": reg_code,
+        "verification_code": ver_code,
         "password": "Password123!"
     })
     assert register_resp.status_code == 201
     emp_user_id = register_resp.json()["id"]
+
 
     # 4. Employee logs in & obtains JWT token
     emp_login_resp = client.post("/api/v1/auth/login", json={

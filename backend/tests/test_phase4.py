@@ -60,13 +60,27 @@ def test_templates_and_admin_stats():
 
 def test_non_admin_forbidden_access():
     # Register employee
+    client.post("/api/v1/auth/request-verification", json={
+        "email": "siradan@btselektrik.com",
+        "invite_code": "BTS2026"
+    })
+    from app.db.session import SessionLocal
+    from app.models.email_verification import EmailVerificationCode
+    db = SessionLocal()
+    ver_rec = db.query(EmailVerificationCode).filter(EmailVerificationCode.email == "siradan@btselektrik.com").order_by(EmailVerificationCode.created_at.desc()).first()
+    ver_code = ver_rec.code
+    db.close()
+
     client.post("/api/v1/auth/register", json={
         "full_name": "Sıradan Çalışan",
         "phone": "05330001122",
+        "email": "siradan@btselektrik.com",
         "invite_code": "BTS2026",
+        "verification_code": ver_code,
         "password": "Password123"
     })
     emp_token = get_auth_token("05330001122", "Password123")
+
     emp_headers = {"Authorization": f"Bearer {emp_token}"}
 
     # Non-admin attempting to access /admin/stats
