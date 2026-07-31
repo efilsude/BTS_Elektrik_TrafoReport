@@ -12,7 +12,9 @@
 - [x] Davet kodu sistemi (15 dk TTL, tek kullanımlık) + `POST/GET /admin/codes`
 - [x] E-posta doğrulama kodu (OTP 10 dk TTL, 60s rate-limit) + `POST /auth/request-verification`
 - [x] EMAIL_ENABLED güvenli varsayılanı (`false`) + dev/test `debug_code` desteği ve SMTP hata yönetimi
-- [x] Kullanıcı CRUD (`GET /admin/users`, `DELETE /admin/users/{id}` — sahiplik korunarak)
+- [x] İlk Admin Bootstrap (`GET /auth/bootstrap-status`, `POST /auth/request-verification-bootstrap`, `POST /auth/bootstrap`) ve rol yetkili davet kodları (`RegistrationCode.role`)
+- [x] Kullanıcı CRUD (`GET /admin/users`, `DELETE /admin/users/{id}` — sahiplik ve son aktif admin koruması)
+
 
 
 

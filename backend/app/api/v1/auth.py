@@ -32,11 +32,153 @@ from app.schemas.auth import (
     RefreshTokenRequest,
     RefreshTokenResponse,
     VerificationRequest,
-    VerificationResponse
+    VerificationResponse,
+    BootstrapStatusResponse,
+    VerificationRequestBootstrap,
+    BootstrapCreate
 )
 from app.services.email_service import send_email, notify_admins_for_new_user
 
 router = APIRouter()
+
+@router.get("/bootstrap-status", response_model=BootstrapStatusResponse)
+def get_bootstrap_status(db: Session = Depends(get_db)):
+    user_count = db.query(User).count()
+    return BootstrapStatusResponse(needs_bootstrap=(user_count == 0))
+
+
+@router.post("/request-verification-bootstrap", response_model=VerificationResponse)
+def request_verification_bootstrap(
+    ver_in: VerificationRequestBootstrap,
+    db: Session = Depends(get_db)
+):
+    if db.query(User).count() > 0:
+        raise BadRequestException(
+            code="BOOTSTRAP_NOT_ALLOWED",
+            message="Sistemde zaten kayıtlı kullanıcı var. İlk admin kaydı (bootstrap) gerçekleştirilemez."
+        )
+
+    email_clean = ver_in.email.strip().lower()
+
+    now = datetime.now(timezone.utc)
+    last_code = db.query(EmailVerificationCode).filter(
+        EmailVerificationCode.email == email_clean
+    ).order_by(EmailVerificationCode.created_at.desc()).first()
+
+    if last_code:
+        created = last_code.created_at
+        if created.tzinfo is None:
+            created = created.replace(tzinfo=timezone.utc)
+        if (now - created).total_seconds() < 60:
+            raise BadRequestException(
+                code="RATE_LIMIT_EXCEEDED",
+                message="Lütfen yeni doğrulama kodu istemeden önce 60 saniye bekleyin."
+            )
+
+    generated_code = f"{random.randint(100000, 999999)}"
+    ttl_minutes = settings.VERIFICATION_CODE_TTL_MINUTES
+    expires_at = now + timedelta(minutes=ttl_minutes)
+
+    ver_record = EmailVerificationCode(
+        email=email_clean,
+        code=generated_code,
+        purpose="bootstrap",
+        expires_at=expires_at,
+        created_at=now
+    )
+    db.add(ver_record)
+
+    subject = "[TrafoReport] İlk Yönetici Kaydı (Bootstrap) E-posta Doğrulama Kodu"
+    html_body = f"""
+    <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+      <h2 style="color: #1E3A8A;">TrafoReport İlk Yönetici Kaydı</h2>
+      <p>TrafoReport ilk yönetici hesabınızı (Admin) oluşturmak için doğrulama kodunuz:</p>
+      <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 15px; text-align: center; border-radius: 8px; margin: 20px 0;">
+        <span style="font-size: 28px; font-weight: bold; letter-spacing: 6px; color: #1E3A8A;">{generated_code}</span>
+      </div>
+      <p>Bu kod <b>{ttl_minutes} dakika</b> süreyle geçerlidir.</p>
+    </div>
+    """
+
+    send_email(
+        to=email_clean,
+        subject=subject,
+        html_body=html_body,
+        raise_on_error=True
+    )
+
+    db.commit()
+
+    debug_code = generated_code if not settings.EMAIL_ENABLED else None
+
+    return VerificationResponse(
+        message="Doğrulama kodu e-posta adresinize gönderildi.",
+        expires_in_seconds=ttl_minutes * 60,
+        debug_code=debug_code
+    )
+
+
+@router.post("/bootstrap", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+def bootstrap_admin(
+    boot_in: BootstrapCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    if db.query(User).count() > 0:
+        raise BadRequestException(
+            code="BOOTSTRAP_NOT_ALLOWED",
+            message="Sistemde zaten kayıtlı kullanıcı var. İlk admin kaydı (bootstrap) gerçekleştirilemez."
+        )
+
+    email_clean = boot_in.email.strip().lower()
+    ver_code_clean = boot_in.verification_code.strip()
+
+    ver_record = db.query(EmailVerificationCode).filter(
+        EmailVerificationCode.email == email_clean,
+        EmailVerificationCode.code == ver_code_clean,
+        or_(
+            EmailVerificationCode.purpose == "bootstrap",
+            EmailVerificationCode.purpose == "register"
+        )
+    ).order_by(EmailVerificationCode.created_at.desc()).first()
+
+    if not ver_record or ver_record.used_at is not None:
+        raise VerificationCodeInvalidException()
+
+    if not ver_record.is_valid:
+        raise VerificationCodeExpiredException()
+
+    conditions = [User.phone == boot_in.phone.strip(), User.email == email_clean]
+    if boot_in.sicil_no:
+        conditions.append(User.sicil_no == boot_in.sicil_no.strip())
+
+    existing_user = db.query(User).filter(or_(*conditions)).first()
+    if existing_user:
+        raise UserAlreadyExistsException()
+
+    new_admin = User(
+        full_name=boot_in.full_name.strip(),
+        phone=boot_in.phone.strip(),
+        email=email_clean,
+        sicil_no=boot_in.sicil_no.strip() if boot_in.sicil_no else None,
+        password_hash=get_password_hash(boot_in.password),
+        role="admin",
+        is_active=True
+    )
+    db.add(new_admin)
+    db.flush()
+
+    now = datetime.now(timezone.utc)
+    ver_record.used_at = now
+    db.commit()
+    db.refresh(new_admin)
+
+    background_tasks.add_task(notify_admins_for_new_user, new_admin.id)
+
+    user_resp = UserResponse.model_validate(new_admin)
+    user_resp.has_signature = bool(new_admin.signature_path)
+    return user_resp
+
 
 @router.post("/request-verification", response_model=VerificationResponse)
 def request_verification_code(
@@ -162,18 +304,21 @@ def register(
     if existing_user:
         raise UserAlreadyExistsException()
 
-    # 4. Create user
+    # 4. Create user with role defined by RegistrationCode
+    assigned_role = code_record.role if hasattr(code_record, 'role') and code_record.role in ["admin", "employee"] else "employee"
+
     new_user = User(
         full_name=user_in.full_name.strip(),
         phone=user_in.phone.strip(),
         email=email_clean,
         sicil_no=user_in.sicil_no.strip() if user_in.sicil_no else None,
         password_hash=get_password_hash(user_in.password),
-        role="employee",
+        role=assigned_role,
         is_active=True
     )
     db.add(new_user)
     db.flush()  # get new_user.id
+
 
     # 5. Mark verification code and invite code as used
     now = datetime.now(timezone.utc)

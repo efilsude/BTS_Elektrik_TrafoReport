@@ -1,7 +1,9 @@
 """
-Initial seed script for TrafoReport Backend.
-Creates a default Admin user and an initial Registration Code.
+DEV / TEST ONLY — Initial seed script for TrafoReport Backend.
+Prod ortamında seed script yerine uçtan uca güvenli 'GET /auth/bootstrap-status'
+ve 'POST /auth/bootstrap' akışı kullanılmalıdır.
 """
+
 from datetime import datetime, timezone, timedelta
 from app.db.session import SessionLocal, engine, Base
 from app.models.user import User

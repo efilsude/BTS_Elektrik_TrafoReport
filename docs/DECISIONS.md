@@ -47,10 +47,11 @@ Kurallar:
 - Ne: `docs/API_CONTRACT.md` ve `docs/DB_SCHEMA.md` güncellenerek `POST /auth/request-verification` eklendi, `POST /auth/register` body'sine `verification_code` ve zorunlu `email` eklendi, `email_verification_codes` DB tablosu tanımlandı. Yeni kullanıcı kaydı ve rapor kesinleştirme (`POST /reports/{id}/finalize`) adımlarına Admin SMTP e-posta bildirimleri entegre edildi.
 - Neden: Hesap güvenliğini artırmak, sahte e-postalarla kaydı engellemek ve sistem yöneticilerini (admin) yeni üyelik ve tamamlanan saha raporlarından anında haberdar etmek için.
 
-## 2026-07-31 — [backend] EMAIL_ENABLED Güvenli Varsayılanlar ve Dev/Test debug_code Desteği Eklendi
-- Ne: `EMAIL_ENABLED` varsayılan değeri `false` olarak ayarlandı. `POST /auth/request-verification` yanıtına opsiyonel `debug_code` alanı eklendi (`EMAIL_ENABLED=false` iken 6 haneli OTP kodu döner, `EMAIL_ENABLED=true` iken `null` döner). SMTP yapılandırması eksik iken `EMAIL_ENABLED=true` seçilirse net `EMAIL_SEND_FAILED` hatası verilmesi sağlandı.
-- Neden: SMTP ayarı olmayan yerel/LAN/E2E test ortamlarında uygulamanın çökmesini önlemek, çevrimdışı ve test cihazlarında e-posta erişimi olmadan OTP kodunu istemciye sunmak.
-- Etiket: @mobile (DİKKAT mobile: `POST /auth/request-verification` yanıtında `EMAIL_ENABLED=false` ise `debug_code` alanı içinde 6 haneli OTP kodu okunabilir).
+## 2026-07-31 — [backend] İlk Admin Bootstrap ve Davet Kodu Rol Yapılandırması Eklendi
+- Ne: Sistemde hiç kullanıcı yokken ilk yöneticinin kaydolması için `GET /auth/bootstrap-status`, `POST /auth/request-verification-bootstrap` ve `POST /auth/bootstrap` uç noktaları eklendi. Davet kodlarına `role` (`"employee"` veya `"admin"`) alanı eklendi (`POST/GET /admin/codes`). Kayıt esnasında kullanıcının rolü davet kodunun rolünden atanır.
+- Neden: Prod ortamında veritabanı seed script'ine bağımlı sahte admin kullanımını kaldırmak, gerçek yönetici bilgileriyle ilk kurulumu (bootstrap) sağlamak ve yeni admin/teknisyen davetlerini rol yetkili davet kodları üzerinden yönetmek.
+- Etiket: @mobile (DİKKAT mobile: `GET /auth/bootstrap-status` true ise ilk admin kayıt ekranına yönlendirin. Normal kayıtta `Yönetici olarak kayıt ol` seçeneğini kaldırın; rol davet kodundan gelir. `POST /admin/codes` isteğine `role: "admin"|"employee"` ekleyin).
+
 
 
 

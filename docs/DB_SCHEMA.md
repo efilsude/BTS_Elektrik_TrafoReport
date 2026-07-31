@@ -40,10 +40,12 @@ Admin tarafından oluşturulan tek kullanımlık kayıt davet kodları.
 | `id` | `INTEGER` | `PRIMARY KEY`, `AUTOINCREMENT` / `SERIAL` |
 | `code` | `VARCHAR(20)` | `NOT NULL`, `UNIQUE` (Büyük harf/rakam rastgele string) |
 | `created_by` | `INTEGER` | `NOT NULL`, `FOREIGN KEY (users.id)` |
+| `role` | `VARCHAR(20)` | `NOT NULL`, Default: `'employee'` (`admin` veya `employee`) |
 | `expires_at` | `TIMESTAMP WITH TIME ZONE` | `NOT NULL` (Oluşturulma + 15 dakika) |
 | `created_at` | `TIMESTAMP WITH TIME ZONE` | `NOT NULL`, Default: `CURRENT_TIMESTAMP` |
 | `used_at` | `TIMESTAMP WITH TIME ZONE` | `NULLABLE` (Kullanıldığı zaman) |
 | `used_by_user_id` | `INTEGER` | `NULLABLE`, `FOREIGN KEY (users.id)` |
+
 
 **İndeksler:**
 - `idx_registration_codes_code` (UNIQUE)

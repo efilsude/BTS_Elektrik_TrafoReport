@@ -34,7 +34,9 @@ Yaygın Hata Kodları:
 - `INVITE_CODE_INVALID` (400): Davet kodu geçersiz/kullanılmış/süresi dolmuş.
 - `VERIFICATION_CODE_INVALID` (400): E-posta doğrulama kodu geçersiz veya kullanılmış.
 - `VERIFICATION_CODE_EXPIRED` (400): E-posta doğrulama kodunun süresi dolmuş (10 dk TTL).
+- `BOOTSTRAP_NOT_ALLOWED` (400): Sistemde kayıtlı kullanıcı olduğu için ilk admin kaydı (bootstrap) yapılamaz.
 - `EMAIL_SEND_FAILED` (400): E-posta doğrulama kodu gönderilemedi.
+
 - `USER_ALREADY_EXISTS` (400): Telefon, e-posta veya sicil no zaten kayıtlı.
 - `INVALID_CREDENTIALS` (400): Kullanıcı adı veya şifre hatalı.
 - `INTERNAL_SERVER_ERROR` (500): Sunucu içi beklenmeyen hata.
@@ -43,7 +45,75 @@ Yaygın Hata Kodları:
 
 ## 2. Auth Uç Noktaları
 
+### 2.0.1 GET `/auth/bootstrap-status`
+Sistemde kayıtlı kullanıcı bulunup bulunmadığını ve ilk yönetici kaydı (bootstrap) gerekip gerekmediğini kontrol etme.
+
+- **Yanıt (200 OK):**
+```json
+{
+  "needs_bootstrap": true
+}
+```
+*Not: `needs_bootstrap` değeri yalnızca `User` tablosunda hiç kullanıcı yoksa `true` döner.*
+
+---
+
+### 2.0.2 POST `/auth/request-verification-bootstrap`
+İlk yönetici kaydı (bootstrap) öncesi e-posta adresine 6 haneli OTP doğrulama kodu gönderme (Davet kodu gerektirmez).
+
+- **İstek (Body):**
+```json
+{
+  "email": "admin@btselektrik.com"
+}
+```
+
+- **Yanıt (200 OK):**
+```json
+{
+  "message": "Doğrulama kodu e-posta adresinize gönderildi.",
+  "expires_in_seconds": 600,
+  "debug_code": "123456"
+}
+```
+*Not: Sadece `needs_bootstrap == true` iken çağrılabilir. Aksi takdirde `BOOTSTRAP_NOT_ALLOWED` (400) döner. `EMAIL_ENABLED=false` iken `debug_code` alanı dolu döner.*
+
+---
+
+### 2.0.3 POST `/auth/bootstrap`
+İlk yöneticinin (Admin) davet kodu olmadan e-posta OTP ile kaydolması.
+
+- **İstek (Body):**
+```json
+{
+  "full_name": "Sistem Yöneticisi",
+  "phone": "05551112233",
+  "email": "admin@btselektrik.com",
+  "sicil_no": null,
+  "password": "Password123!",
+  "verification_code": "123456"
+}
+```
+
+- **Yanıt (201 Created):**
+```json
+{
+  "id": 1,
+  "full_name": "Sistem Yöneticisi",
+  "phone": "05551112233",
+  "email": "admin@btselektrik.com",
+  "sicil_no": null,
+  "role": "admin",
+  "is_active": true,
+  "created_at": "2026-07-31T10:00:00Z"
+}
+```
+*Not: Yalnızca `needs_bootstrap == true` iken çağrılabilir. Oluşturulan kullanıcının rolü otomatik olarak `"admin"` olur.*
+
+---
+
 ### 2.1 POST `/auth/request-verification`
+
 Kayıt öncesi e-posta adresine 6 haneli OTP doğrulama kodu gönderme.
 
 - **İstek (Body):**
@@ -222,10 +292,11 @@ Tek kullanımlık 15 dk TTL'li davet kodu oluşturma.
 - **İstek (Body - Opsiyonel):**
 ```json
 {
-  "code": "BTS12345"
+  "code": "BTS12345",
+  "role": "employee"
 }
 ```
-*(Boş gönderilirse sistem otomatik 8 karakterlik rastgele alfanümerik kod üretir).*
+*(Boş gönderilirse sistem otomatik 8 karakterlik rastgele alfanümerik kod üretir; `role` varsayılan olarak `"employee"` olur (`"employee"` veya `"admin"`)).*
 
 - **Yanıt (201 Created):**
 ```json
@@ -233,6 +304,7 @@ Tek kullanımlık 15 dk TTL'li davet kodu oluşturma.
   "id": 1,
   "code": "BTS12345",
   "created_by": 1,
+  "role": "employee",
   "expires_at": "2026-07-30T16:15:00Z",
   "created_at": "2026-07-30T16:00:00Z",
   "used_at": null,
@@ -253,6 +325,7 @@ Son üretilen davet kodlarını listeleme.
     "id": 1,
     "code": "BTS12345",
     "created_by": 1,
+    "role": "employee",
     "expires_at": "2026-07-30T16:15:00Z",
     "created_at": "2026-07-30T16:00:00Z",
     "used_at": "2026-07-30T16:05:00Z",
@@ -261,6 +334,7 @@ Son üretilen davet kodlarını listeleme.
   }
 ]
 ```
+
 
 ---
 

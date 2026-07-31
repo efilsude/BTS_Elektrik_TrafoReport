@@ -12,6 +12,25 @@ Format:
 - Bir sonraki oturumda kaldığı yer:
 ```
 
+## 2026-07-31 — İlk Admin Bootstrap & Davet Kodu Rol Yapılandırması
+- **Ne yapıldı:**
+  1. `RegistrationCode` modeline ve `registration_codes` DB tablosuna `role` (`"employee"` | `"admin"`) kolonu eklendi (`docs/DB_SCHEMA.md` güncellendi).
+  2. İlk admin kaydı için `GET /auth/bootstrap-status`, `POST /auth/request-verification-bootstrap` ve `POST /auth/bootstrap` uç noktaları eklendi (`docs/API_CONTRACT.md` güncellendi).
+  3. `POST /auth/register` uç noktası kullanıcının rolünü davet kodundaki `role` alanından atayacak şekilde güncellendi.
+  4. `POST /admin/codes` ve `GET /admin/codes` uç noktalarına `role` parametresi ve yanıt alanı eklendi (varsayılan `"employee"`).
+  5. `DELETE /admin/users/{id}` endpoint'ine son aktif yönetici silinmesini engelleyen koruma eklendi (`CANNOT_DELETE_LAST_ADMIN`).
+  6. `create_initial_admin.py` dokümantasyon notu "DEV / TEST ONLY" olarak güncellendi.
+  7. `tests/test_bootstrap_and_roles.py` entegrasyon testleri eklendi. Tüm backend testleri çalıştırıldı: **24/24 test %100 başarıyla geçti**.
+- **Alınan kararlar:**
+  - Prod ortamında veritabanı seed bağımlılığı kaldırıldı; boş veritabanı durumunda ilk admin `bootstrap` akışı ile kaydolmalıdır.
+  - Rol seçimi kullanıcı tarafında değil, admin'in oluşturduğu davet kodu üzerinden belirlenir.
+- **Bulunan sorun/gotcha:**
+  - Seed admin veya önceden eklenmiş bir kullanıcı varsa `needs_bootstrap` `false` döner ve `bootstrap` istekleri 400 `BOOTSTRAP_NOT_ALLOWED` ile reddedilir.
+- **Bir sonraki oturumda kaldığı yer:**
+  - Mobil tarafta `bootstrap-status` kontrolü, `FirstAdminBootstrapScreen` ekranı ve davet kodu rol seçici arayüzünün yapılması bekleniyor.
+
+---
+
 ## 2026-07-31 — EMAIL_ENABLED Güvenli Varsayılanlar ve Dev/Test debug_code Desteği
 - **Ne yapıldı:**
   1. `app/core/config.py` içinde `EMAIL_ENABLED` varsayılan değeri `false` olarak güncellendi. `backend/.env.example` içinde açıklama notu eklendi.

@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict
 
 class CodeCreate(BaseModel):
     code: Optional[str] = None
+    role: Optional[str] = "employee"
 
 class CodeResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -11,9 +12,11 @@ class CodeResponse(BaseModel):
     id: int
     code: str
     created_by: int
+    role: str = "employee"
     expires_at: datetime
     created_at: datetime
     used_at: Optional[datetime] = None
     used_by_user_id: Optional[int] = None
     is_valid: bool
+
 

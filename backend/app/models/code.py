@@ -9,7 +9,9 @@ class RegistrationCode(Base):
     id = Column(Integer, primary_key=True, index=True)
     code = Column(String(20), unique=True, index=True, nullable=False)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    role = Column(String(20), default="employee", nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=False)
+
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     used_at = Column(DateTime(timezone=True), nullable=True)
     used_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)

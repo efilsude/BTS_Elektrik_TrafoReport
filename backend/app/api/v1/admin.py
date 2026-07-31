@@ -27,7 +27,10 @@ def create_registration_code(
     db: Session = Depends(get_db)
 ):
     code_str = code_in.code.strip().upper() if (code_in and code_in.code) else generate_random_code()
-    
+    target_role = code_in.role.strip().lower() if (code_in and code_in.role) else "employee"
+    if target_role not in ["employee", "admin"]:
+        raise BadRequestException(code="INVALID_ROLE", message="Geçersiz rol. 'employee' veya 'admin' olmalıdır.")
+
     # Check if code already exists
     existing = db.query(RegistrationCode).filter(RegistrationCode.code == code_str).first()
     if existing:
@@ -39,6 +42,7 @@ def create_registration_code(
     reg_code = RegistrationCode(
         code=code_str,
         created_by=current_admin.id,
+        role=target_role,
         expires_at=expires_at,
         created_at=now
     )
@@ -47,6 +51,7 @@ def create_registration_code(
     db.refresh(reg_code)
 
     resp = CodeResponse.model_validate(reg_code)
+    resp.role = reg_code.role
     resp.is_valid = reg_code.is_valid
     return resp
 
@@ -59,6 +64,7 @@ def list_registration_codes(
     results = []
     for c in codes:
         item = CodeResponse.model_validate(c)
+        item.role = c.role
         item.is_valid = c.is_valid
         results.append(item)
     return results
@@ -112,10 +118,16 @@ def deactivate_user(
     if user.id == current_admin.id:
         raise BadRequestException(code="CANNOT_DELETE_SELF", message="Kendi admin hesabınızı devre dışı bırakamazsınız.")
 
+    if user.role == "admin":
+        active_admins = db.query(User).filter(User.role == "admin", User.is_active == True).count()
+        if active_admins <= 1:
+            raise BadRequestException(code="CANNOT_DELETE_LAST_ADMIN", message="Sistemdeki son aktif yönetici hesabı devre dışı bırakılamaz.")
+
     user.is_active = False
     db.commit()
 
     return {"message": "Kullanıcı devre dışı bırakıldı.", "user_id": user_id}
+
 
 from sqlalchemy import func
 from app.models.report import Report
