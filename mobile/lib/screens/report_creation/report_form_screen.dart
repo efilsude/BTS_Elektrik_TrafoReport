@@ -303,9 +303,12 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
     // Check mandatory photos before finalization
     final bool isTestOnly = report.reportType == 'test';
-    final dynamic hasLabelPhoto = report.dataJson['photo_label'];
-    final dynamic hasBeforePhoto = report.dataJson['photo_before'];
-    final dynamic hasAfterPhoto = report.dataJson['photo_after'];
+    final dynamic hasLabelPhoto = report.dataJson['photo_label'] ??
+        (report.dataJson['photos'] is Map ? report.dataJson['photos']['photo_label'] : null);
+    final dynamic hasBeforePhoto = report.dataJson['photo_before'] ??
+        (report.dataJson['photos'] is Map ? report.dataJson['photos']['photo_before'] : null);
+    final dynamic hasAfterPhoto = report.dataJson['photo_after'] ??
+        (report.dataJson['photos'] is Map ? report.dataJson['photos']['photo_after'] : null);
 
     if (isTestOnly) {
       if (hasLabelPhoto == null) {
@@ -1236,9 +1239,12 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final bool isTestOnly = report.reportType == 'test';
     final ReportService service = Provider.of<ReportService>(context, listen: false);
     
-    final dynamic labelPhoto = report.dataJson['photo_label'];
-    final dynamic beforePhoto = report.dataJson['photo_before'];
-    final dynamic afterPhoto = report.dataJson['photo_after'];
+    final dynamic labelPhoto = report.dataJson['photo_label'] ??
+        (report.dataJson['photos'] is Map ? report.dataJson['photos']['photo_label'] : null);
+    final dynamic beforePhoto = report.dataJson['photo_before'] ??
+        (report.dataJson['photos'] is Map ? report.dataJson['photos']['photo_before'] : null);
+    final dynamic afterPhoto = report.dataJson['photo_after'] ??
+        (report.dataJson['photos'] is Map ? report.dataJson['photos']['photo_after'] : null);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1254,9 +1260,17 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           isRequired: true,
           onPhotoSelected: (String? path) async {
             if (path != null && File(path).existsSync()) {
-              await service.savePhotoLocally('photo_label', File(path));
+              final String? saved = await service.savePhotoLocally('photo_label', File(path));
+              if (saved == null && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Fotoğraf kaydedilemedi.'),
+                    backgroundColor: AppTheme.errorColor,
+                  ),
+                );
+              }
             } else {
-              service.updateField('photo_label', null);
+              await service.deletePhotoLocally('photo_label');
             }
           },
         ),
@@ -1270,9 +1284,17 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             isRequired: true,
             onPhotoSelected: (String? path) async {
               if (path != null && File(path).existsSync()) {
-                await service.savePhotoLocally('photo_before', File(path));
+                final String? saved = await service.savePhotoLocally('photo_before', File(path));
+                if (saved == null && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Fotoğraf kaydedilemedi.'),
+                      backgroundColor: AppTheme.errorColor,
+                    ),
+                  );
+                }
               } else {
-                service.updateField('photo_before', null);
+                await service.deletePhotoLocally('photo_before');
               }
             },
           ),
@@ -1283,9 +1305,17 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             isRequired: true,
             onPhotoSelected: (String? path) async {
               if (path != null && File(path).existsSync()) {
-                await service.savePhotoLocally('photo_after', File(path));
+                final String? saved = await service.savePhotoLocally('photo_after', File(path));
+                if (saved == null && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Fotoğraf kaydedilemedi.'),
+                      backgroundColor: AppTheme.errorColor,
+                    ),
+                  );
+                }
               } else {
-                service.updateField('photo_after', null);
+                await service.deletePhotoLocally('photo_after');
               }
             },
           ),
