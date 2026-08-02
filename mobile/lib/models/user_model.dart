@@ -22,16 +22,33 @@ class User {
   bool get isAdmin => role == 'admin';
   bool get isEmployee => role == 'employee';
 
+  static bool _parseBool(dynamic value, {bool defaultValue = true}) {
+    if (value == null) return defaultValue;
+    if (value is bool) return value;
+    if (value is int || value is double) return value != 0;
+    if (value is String) {
+      final String lower = value.trim().toLowerCase();
+      if (lower == 'true' || lower == '1') return true;
+      if (lower == 'false' || lower == '0') return false;
+    }
+    return defaultValue;
+  }
+
   factory User.fromJson(Map<String, dynamic> json) {
+    final dynamic sigPath = json['signature_path'];
+    final dynamic sigValue = json['has_signature'] ?? json['hasSignature'];
+    final bool hasSig = (sigPath is String && sigPath.trim().isNotEmpty) ||
+        _parseBool(sigValue, defaultValue: false);
+
     return User(
       id: json['id']?.toString() ?? '',
       fullName: json['full_name'] ?? json['fullName'] ?? '',
-      email: json['email'],
-      phone: json['phone'] ?? '',
-      sicilNo: json['sicil_no'] ?? json['sicilNo'],
-      role: json['role'] ?? 'employee',
-      isActive: json['is_active'] ?? json['isActive'] ?? true,
-      hasSignature: json['has_signature'] ?? json['hasSignature'] ?? false,
+      email: json['email']?.toString(),
+      phone: json['phone']?.toString() ?? '',
+      sicilNo: json['sicil_no']?.toString() ?? json['sicilNo']?.toString(),
+      role: json['role']?.toString() ?? 'employee',
+      isActive: _parseBool(json['is_active'] ?? json['isActive'], defaultValue: true),
+      hasSignature: hasSig,
     );
   }
 
