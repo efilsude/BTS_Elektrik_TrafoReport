@@ -11,9 +11,11 @@
 - [x] Giriş / Kayıt Ol ekranları (`docs/API_CONTRACT.md`'deki `/auth/*`'a bağlandı)
 - [x] 2 adımlı e-posta doğrulama (OTP) kayıt akışı (`POST /auth/request-verification` + `POST /auth/register` + 60 sn cooldown)
 - [x] Dev/Test `debug_code` otomatik doldurma, dev banner bildirimi ve gelişmiş Türkçe SMTP hata mesajları
-- [x] **Bootstrap akışı**: `SplashScreen` → `GET /auth/bootstrap-status` → sıfır kullanıcı varsa `FirstAdminBootstrapScreen`, yoksa `LoginScreen`
-- [x] **`FirstAdminBootstrapScreen`**: 2 adımlı (bilgiler + OTP), davet kodu yok, dev banner, 60 sn cooldown, `POST /auth/request-verification-bootstrap` + `POST /auth/bootstrap`
-- [x] **`kReleaseMode` mock guard**: `setMockMode(true)` release build'de no-op
+- [x] **Yerel SQLite Veri Katmanı (Phase 1 Offline-First)**: `sqflite` + `DatabaseHelper` ile `users`, `reports`, `report_photos` tabloları
+- [x] **Yerel Auth & Bootstrap**: `users` tablosu boşsa `FirstAdminBootstrapScreen` -> SQLite admin kaydı; doluysa SQLite giriş
+- [x] **Yerel Rapor Taslak ve Havuz**: Tüm CRUD işlemleri, otomatik kayıt ve fotoğraflar cihaz içi SQLite ve belgeler klasöründe saklanır
+- [x] **Sunucusuz Yönetici Paneli**: `AdminDashboardScreen` üzerinden doğrudan yerel çalışan/yönetici hesabı ekleme
+- [ ] **Faz 2 — Cihaz Üzerinde Excel Üretimi**: `excel` / `openpyxl` mantığı ile cihaz içi .xlsx dosya oluşturulması ve hücre şablon eşleşmesi
 
 
 - [x] Ana Sayfa navigasyonu (Yeni Rapor | Rapor Havuzu | Taslaklar | Profil | Admin)

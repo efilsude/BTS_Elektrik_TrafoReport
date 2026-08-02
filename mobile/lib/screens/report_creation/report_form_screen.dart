@@ -1272,8 +1272,12 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           description: 'Trafonun marka, model ve seri numarasını gösteren plakanın net resmi.',
           imagePath: labelPhoto?.toString(),
           isRequired: true,
-          onPhotoSelected: (String? path) {
-            service.updateField('photo_label', path);
+          onPhotoSelected: (String? path) async {
+            if (path != null && File(path).existsSync()) {
+              await service.savePhotoLocally('photo_label', File(path));
+            } else {
+              service.updateField('photo_label', null);
+            }
           },
         ),
 
@@ -1284,8 +1288,12 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             description: 'Çalışmaya başlamadan önce trafonun ve şalt sahasının durum resmi.',
             imagePath: beforePhoto?.toString(),
             isRequired: true,
-            onPhotoSelected: (String? path) {
-              service.updateField('photo_before', path);
+            onPhotoSelected: (String? path) async {
+              if (path != null && File(path).existsSync()) {
+                await service.savePhotoLocally('photo_before', File(path));
+              } else {
+                service.updateField('photo_before', null);
+              }
             },
           ),
           PhotoPickerWidget(
@@ -1293,8 +1301,12 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             description: 'Temizlik, sıkma ve klemens bakımları tamamlanmış trafonun bitiş resmi.',
             imagePath: afterPhoto?.toString(),
             isRequired: true,
-            onPhotoSelected: (String? path) {
-              service.updateField('photo_after', path);
+            onPhotoSelected: (String? path) async {
+              if (path != null && File(path).existsSync()) {
+                await service.savePhotoLocally('photo_after', File(path));
+              } else {
+                service.updateField('photo_after', null);
+              }
             },
           ),
         ] else

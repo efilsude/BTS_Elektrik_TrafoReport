@@ -9,6 +9,17 @@ Kurallar:
 
 ---
 
+## 2026-08-02 — [mobile] Ürün Kararı: Tek Tablet Sunucusuz (Offline-First) Faz 1
+- Ne: Mobil uygulama tek Android tablet üzerinde tamamen sunucusuz (offline-first) çalışacak şekilde yapılandırıldı. FastAPI, uzak HTTP, JWT, OTP ve davet kodu bağımlılıkları Faz 1 kapsamında mobil taraftan tamamen kaldırıldı veya yerel SQLite veritabanına devredildi.
+- Neden: Saha şartlarında internet/sunucu bağlantısı olmaksızın şirkete ait tek tablette tam bağımsız raporlama yapmak için.
+- Detaylar:
+  1. Yerel Veri Katmanı: `sqflite` veritabanı (`traforeport_local.db`) kullanılarak `users`, `reports` ve `report_photos` tabloları ile SHA-256 şifre hashleme katmanı oluşturuldu.
+  2. Yerel Auth & Bootstrap: Cihaz açılışında veritabanı kullanıcı sayısı kontrol edilir. İlk açılışta ilk yönetici kaydı (`role=admin`) doğrudan SQLite'a yazılır. Sonraki girişler yerel veritabanı üzerinden doğrulanır.
+  3. Cihaz Üzerinde Fotoğraf Depolama: Saha fotoğrafları uygulamanın yerel belgeler klasörüne (`documents/photos/<report_id>/`) kaydedilir.
+  4. Faz 2 Planı: Cihaz üzerinde native Excel (.xlsx) dosya üretimi ve hücre şablonu eşleştirmesi Faz 2 kapsamında geliştirilecektir.
+
+---
+
 ## 2026-07-28 — [ikisi] Proje başlangıcı
 - Ne: Repo iskeleti, kurallar (CLAUDE.md), görev listeleri ve doküman şablonları oluşturuldu.
 - Neden: PRD v1.1'e göre backend/mobile ayrımıyla paralel geliştirme başlatmak için.

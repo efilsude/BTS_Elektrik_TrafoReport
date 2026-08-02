@@ -1,8 +1,8 @@
 class AppConfig {
-  // Base URL configuration for API requests:
-  // - Android Emulator: http://10.0.2.2:8000/api/v1
-  // - Windows / Web / Desktop: http://localhost:8000/api/v1
-  // - Physical Device (LAN): http://<YOUR_PC_LAN_IP>:8000/api/v1
+  /// Standalone Single-Tablet Offline Mode (Phase 1)
+  static const bool isOfflineOnly = true;
+
+  // Legacy Base URL configuration for remote sync (Phase 2+)
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'http://10.0.2.2:8000/api/v1',

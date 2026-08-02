@@ -27,7 +27,38 @@ Format:
   adb install -r mobile/build/app/outputs/flutter-apk/app-release.apk
   ```
 
-## 2026-07-31 — Release APK Build v1.0.1 (build 2)
+## 2026-08-02 — Faz 1: Tek Tablet Sunucusuz (Offline-First) Yerel Veri Katmanı Entegrasyonu
+- **Ne yapıldı:**
+  1. Ürün Kararı: Uygulama tek Android tablet üzerinde tamamen sunucusuz (offline-first) çalışacak şekilde yapılandırıldı. FastAPI, uzak HTTP, JWT, OTP ve davet kodu bağımlılıkları ana akıştan kaldırıldı.
+  2. `sqflite` + `crypto` + `path` paketleri eklendi.
+  3. `DatabaseHelper` (`mobile/lib/database/database_helper.dart`) singleton sınıfı oluşturuldu: `users`, `reports`, `report_photos` SQLite tabloları ve SHA-256 şifre hashleme yardımcısı eklendi.
+  4. `AuthService`:
+     - Uzak HTTP/OTP/Davet kodu çağrıları kaldırıldı.
+     - `checkBootstrapStatus()`: SQLite `users` tablosundaki kullanıcı sayısını kontrol eder (`userCount == 0` ise ilk yönetici kurulumuna yönlendirir).
+     - `bootstrapAdmin()`: İlk yöneticiyi doğrudan yerel SQLite veritabanına kaydeder ve oturumu açar.
+     - `login()`: Yerel SQLite veritabanından kullanıcı doğrulamasını gerçekleştirir (`phone`/`email` + şifre hash).
+     - `createLocalUser()`: Yönetici panelinden doğrudan yeni çalışan/yönetici hesabı eklemeyi sağlar.
+     - `changePasswordLocally()` & `saveUserSignatureLocally()`: Şifre ve dijital imza güncellemesini SQLite + yerel dosya sistemine yazar.
+  5. `ReportService`:
+     - Uzak HTTP GET/POST/PUT/DELETE çağrıları kaldırıldı.
+     - `startNewReport()`, `updateField()`, `saveDraft()`, `getReports()`, `finalizeReport()` tüm CRUD işlemlerini yerel SQLite veritabanında gerçekleştirir.
+     - `savePhotoLocally()`: Saha fotoğraflarını uygulamanın `documents/photos/<report_id>/` dizinine kopyalar ve SQLite `report_photos` tablosuna kaydeder.
+  6. `SplashScreen`:
+     - Ağ zaman aşımı ve "sunucuya bağlanılamadı" ekranı kaldırıldı. Açılışta yerel SQLite veritabanını kontrol ederek ilk açılışta `FirstAdminBootstrapScreen`'e, sonraki açılışlarda `LoginScreen`'e veya mevcut oturuma yönlendirir.
+  7. `FirstAdminBootstrapScreen`:
+     - Tek adımlı yerel yönetici kayıt formuna dönüştürüldü (E-posta OTP ve sayac kaldırıldı).
+  8. `AdminDashboardScreen`:
+     - Davet kodu üretimi yerine doğrudan yerel cihaz kullanıcısı ekleme ("Kullanıcı Ekle" dialogu) ve kullanıcı listeleme ekranına dönüştürüldü.
+  9. `ProfileScreen` & `ReportFormScreen`:
+     - Fotoğraf çekimi `image_picker` ile gerçek cihaz kamerası/galerisine bağlandı ve `savePhotoLocally` ile saklandı.
+  10. `flutter analyze`: **0 Hata** ile doğrulandı.
+- **Bilinçli Olarak Bırakılanlar (Faz 2):**
+  - Cihaz üzerinde native Excel (.xlsx) dosya üretimi (Faz 2)
+  - Çoklu cihaz senkronizasyonu / Sunucu yedekleme (Faz 2+)
+- **Bir sonraki adım:**
+  - Tablette uçak modunda uçtan uca test (İlk admin -> çıkış -> giriş -> taslak rapor -> fotoğraf ekleme -> çıkış/açılış kontrolü).
+
+## 2026-07-31 — Release APK Build v1.0.2 (build 3 - Cleartext HTTP İzin Düzeltmesi)
 - **Ne yapıldı:**
   - `flutter build apk --release --build-name=1.0.1 --build-number=2` ile imzalı release APK üretildi.
   - `API_BASE_URL`: `http://192.168.1.79:8000/api/v1` (Wi-Fi LAN IP — fiziksel tablet)
