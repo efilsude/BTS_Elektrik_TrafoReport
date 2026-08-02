@@ -37,11 +37,13 @@ dependencies:
   open_filex: ^4.5.0
   share_plus: ^10.1.2
   permission_handler: ^11.3.1
+  permission_handler_windows: ^0.2.2
 
   # Windows Desktop — QR/Barcode scanning (pure Dart, all platforms)
   zxing_lib: ^1.1.4
   camera: ^0.11.1
   camera_windows: ^0.2.6+4
+  image: ^4.3.0       # Pure-Dart JPEG/PNG decoder used by Windows QR scanner
 
   # UI and Design Elements
   google_fonts: ^6.1.0

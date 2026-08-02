@@ -108,4 +108,45 @@ class ExcelCellMapping {
   static String sanitizeFilename(String filename) {
     return filename.replaceAll(RegExp(r'[\\/*?:"<>|]'), '_');
   }
+
+  /// Sanitizes formula string: translates Turkish names to English, converts ';' to ',', and fixes decimal separators
+  static String sanitizeFormula(String formula) {
+    if (formula.isEmpty) return formula;
+
+    String clean = formula;
+
+    // 1. Translate Turkish Formula Names to English (case-insensitive)
+    final Map<Pattern, String> translations = <Pattern, String>{
+      RegExp(r'\bEĞER\b', caseSensitive: false): 'IF',
+      RegExp(r'\bTOPLA\b', caseSensitive: false): 'SUM',
+      RegExp(r'\bORTALAMA\b', caseSensitive: false): 'AVERAGE',
+      RegExp(r'\bMAK\b', caseSensitive: false): 'MAX',
+      RegExp(r'\bMİN\b', caseSensitive: false): 'MIN',
+      RegExp(r'\bEĞERSAY\b', caseSensitive: false): 'COUNTIF',
+      RegExp(r'\bDÜŞEYARA\b', caseSensitive: false): 'VLOOKUP',
+      RegExp(r'\bEĞERHATA\b', caseSensitive: false): 'IFERROR',
+      RegExp(r'\bYADA\b', caseSensitive: false): 'OR',
+      RegExp(r'\bVE\b', caseSensitive: false): 'AND',
+      RegExp(r'\bYUVARLA\b', caseSensitive: false): 'ROUND',
+      RegExp(r'\bAŞAĞIYUVARLA\b', caseSensitive: false): 'ROUNDDOWN',
+      RegExp(r'\bYUKARIYUVARLA\b', caseSensitive: false): 'ROUNDUP',
+    };
+
+    translations.forEach((Pattern pattern, String replacement) {
+      clean = clean.replaceAll(pattern, replacement);
+    });
+
+    // 2. Replace parameter separator ';' with ','
+    clean = clean.replaceAll(';', ',');
+
+    // 3. Fix decimal comma separators inside numeric literals in formulas (e.g. 12,54 -> 12.54)
+    clean = clean.replaceAllMapped(RegExp(r'(\d+),(\d+)'), (Match m) => '${m[1]}.${m[2]}');
+
+    return clean;
+  }
+
+  /// Ensures double is formatted with dot (.) decimal separator
+  static String formatDouble(double val) {
+    return val.toString().replaceAll(',', '.');
+  }
 }

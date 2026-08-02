@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:archive/archive.dart';
 import 'package:excel/excel.dart';
 import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:path_provider/path_provider.dart';
@@ -6,6 +7,22 @@ import 'cell_mapping.dart';
 import '../models/report_model.dart';
 
 class ExcelGenerator {
+  /// Strips calcChain.xml from generated Excel archive to prevent MS Excel XML recovery errors
+  static List<int> _removeCalcChain(List<int> bytes) {
+    try {
+      final Archive archive = ZipDecoder().decodeBytes(bytes);
+      final Archive newArchive = Archive();
+      for (final ArchiveFile file in archive) {
+        if (file.name != 'xl/calcChain.xml' && !file.name.endsWith('calcChain.xml')) {
+          newArchive.addFile(file);
+        }
+      }
+      return ZipEncoder().encode(newArchive) ?? bytes;
+    } catch (_) {
+      return bytes;
+    }
+  }
+
   /// Generates a filled Excel (.xlsx) file on device using official templates
   static Future<File> generateReportExcel({
     required Report report,
@@ -49,18 +66,26 @@ class ExcelGenerator {
                   sheet.updateCell(cellIndex, TextCellValue(val.toString()));
                 }
               } else {
-                // Numeric or string cell value
+                // Numeric, formula, or string cell value
                 if (val is int) {
                   sheet.updateCell(cellIndex, IntCellValue(val));
                 } else if (val is double) {
                   sheet.updateCell(cellIndex, DoubleCellValue(val));
                 } else {
                   final String strVal = val.toString();
-                  final double? dblVal = double.tryParse(strVal);
-                  if (dblVal != null && !strVal.startsWith('0')) {
-                    sheet.updateCell(cellIndex, DoubleCellValue(dblVal));
+                  if (strVal.startsWith('=')) {
+                    // Formula cell: sanitize Turkish names, ';' separators, and decimal commas
+                    final String sanitizedFormula = ExcelCellMapping.sanitizeFormula(strVal);
+                    sheet.updateCell(cellIndex, FormulaCellValue(sanitizedFormula));
                   } else {
-                    sheet.updateCell(cellIndex, TextCellValue(strVal));
+                    // Parse numeric string safely using dot decimal separator
+                    final String cleanNumStr = strVal.replaceAll(',', '.');
+                    final double? dblVal = double.tryParse(cleanNumStr);
+                    if (dblVal != null && !strVal.startsWith('0')) {
+                      sheet.updateCell(cellIndex, DoubleCellValue(dblVal));
+                    } else {
+                      sheet.updateCell(cellIndex, TextCellValue(strVal));
+                    }
                   }
                 }
               }
@@ -90,8 +115,11 @@ class ExcelGenerator {
       throw Exception('Excel dosyası kaydedilemedi.');
     }
 
+    // Strip stale calcChain.xml to prevent Excel XML recovery errors on open
+    final List<int> cleanedFileBytes = _removeCalcChain(fileBytes);
+
     final File outputFile = File(outputPath);
-    await outputFile.writeAsBytes(fileBytes);
+    await outputFile.writeAsBytes(cleanedFileBytes);
     return outputFile;
   }
 }
