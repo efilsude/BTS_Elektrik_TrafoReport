@@ -27,6 +27,20 @@ Format:
   adb install -r mobile/build/app/outputs/flutter-apk/app-release.apk
   ```
 
+## 2026-08-02 — Yönetici Tarafından Yerel Kullanıcı Bilgilerini Düzenleme (Admin User Edit)
+- **Ne yapıldı:**
+  1. **Veri Katmanı (`DatabaseHelper.updateUser`)**:
+     - Kullanıcının Ad Soyad, Telefon, E-posta, Sicil No ve Rol bilgilerini parametreli SQL ile güncelleyen metot yazıldı.
+     - Telefon numarası başka bir kullanıcı tarafından kullanılıyorsa benzersizlik (unique) ihlal hatası verildi (*"Bu telefon numarası başka bir kullanıcı tarafından kullanılıyor."*).
+     - Şifre alanı girilmişse bcrypt ile re-hash edilerek güncellendi.
+  2. **İş Kuralları ve Güvenlik Kontrolleri (`AuthService.updateLocalUser`)**:
+     - Sistemdeki tek/son aktif yönetici hesabının rolü çalışan (employee) rolüne düşürülmeye çalışıldığında işlem engellendi (*"Sistemde en az bir yönetici bulunmalıdır. Son yöneticinin rolü değiştirilemez."*).
+     - Oturum açmış olan yönetici kendi bilgilerini güncellediğinde `_currentUser` durumu anında yenilendi.
+  3. **Arayüz (`AdminDashboardScreen`)**:
+     - Kullanıcı listesi satırlarına düzenle (kalem) ikonu eklendi.
+     - Açılan düzenleme diyalogunda tüm mevcut bilgiler pre-fill olarak dolduruldu; şifre alanı isteğe bağlı (opsiyonel) tutuldu.
+  4. `flutter analyze`: **0 Hata** ile doğrulandı.
+
 ## 2026-08-02 — Yönetici Paneli Görsel Cilası & Davet Kodu Uyarı Kartının Kaldırılması
 - **Ne yapıldı:**
   1. **Gereksiz Davet Kodu Uyarı Kartı Kaldırıldı (`AdminDashboardScreen`)**:
