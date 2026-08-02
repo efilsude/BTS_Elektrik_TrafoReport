@@ -18,7 +18,7 @@
 - [x] **bcrypt Şifre Güvenliği (Faz 1.1)**: `bcrypt` salting hash + legacy SHA-256 şeffaf göç entegrasyonu
 - [x] **Yerel Zip Veri Yedeği ve Geri Yükleme (Faz 1.1)**: `archive` + `file_picker` ile SQLite DB, fotoğraflar ve imzaları kapsayan `.zip` yedeği al/paylaş/geri yükle
 - [x] **Finalize UX Netleştirmesi (Faz 1.1)**: Excel henüz cihazda oluşturulmadığından sahte finalized durumu kaldırıldı, taslak koruma diyalogu bağlandı
-- [ ] **Faz 2 — Cihaz Üzerinde Excel Üretimi**: `excel` / `openpyxl` mantığı ile cihaz içi .xlsx dosya oluşturulması ve hücre şablon eşleşmesi
+- [x] **Faz 2 — Cihaz Üzerinde Excel Üretimi**: `excel: ^4.0.6` ile asset şablon baytları okunarak hücresel haritalama (`CELL_MAPPING`), tarih seri dönüştürme ve `{Müşteri} - {Trafo} - {Tarih}.xlsx` yerel Excel rapor üretimi, açma ve paylaşma entegrasyonu tamamlandı.
 
 
 - [x] Ana Sayfa navigasyonu (Yeni Rapor | Rapor Havuzu | Taslaklar | Profil | Admin)

@@ -27,6 +27,26 @@ Format:
   adb install -r mobile/build/app/outputs/flutter-apk/app-release.apk
   ```
 
+## 2026-08-02 — Faz 2: Cihaz Üzerinde Native Excel (.xlsx) Rapor Üretim Motoru
+- **Ne yapıldı:**
+  1. **Şablon Asset'leri**: `backend/templates/` altındaki 3 orijinal Excel şablonu `mobile/assets/templates/` altına kopyalandı ve `pubspec.yaml` dosyasına eklendi:
+     - `hermetik.xlsx` (Hermetik Trafo Bakım Raporu)
+     - `kuru_tip.xlsx` (Kuru Tip Trafo Bakım Raporu)
+     - `gt.xlsx` (Genleşme Tanklı Trafo Bakım Raporu)
+  2. **Hücre Haritalama Mimarisi (`ExcelCellMapping`)**:
+     - `backend/app/services/excel_engine.py` üzerindeki `CELL_MAPPING` mantığı `mobile/lib/excel/cell_mapping.dart` dosyasına taşındı.
+     - `KAPAK SAYFASI`, `ANA SAYFA`, `OG SARGI MEVCUT KADEME`, `AG SARGI` sayfalarındaki hücre eşleşmeleri ve `dateToExcelSerial` (epoch 1899-12-30) dönüştürücüsü tanımlandı.
+  3. **Dart Excel Üretim Motoru (`ExcelGenerator`)**:
+     - `excel: ^4.0.6` paketi ile Flutter asset baytları okunarak bellek üzerinde orijinal stiller, biçimlendirmeler ve formüller korunacak şekilde hücre değerleri (DoubleCellValue, IntCellValue, TextCellValue) yazıldı.
+     - Çıktı dosyaları `{Müşteri} - {Trafo Etiketi} - {GG.AA.YYYY}.xlsx` adıyla kalıcı `documents/reports/` klasörüne kaydedilir.
+  4. **Finalize & Native Intent Akışı Entegrasyonu**:
+     - "Raporu Tamamla" butonuna basıldığında yerel Excel üretilir, SQLite veritabanında `status = 'finalized'`, `finalized_at` ve `excel_path` güncellenir.
+     - Üretim sonrası diyalogunda **"Excel'i Aç"** (`open_filex`) ve **"Paylaş"** (`share_plus`) butonları bağlandı.
+  5. `flutter analyze`: **0 Hata** ile doğrulandı.
+- **Dart / Excel Ekosistem Sınırları Notu**:
+  - `excel` paketi hücre değerlerini şablon stilini ve hücre birleştirmelerini bozmadan doğrudan yazar.
+  - Şablonun orijinal sayfa yapısı korunur; yeni çalışma sayfası (worksheet) eklenmez.
+
 ## 2026-08-02 — Faz 1.1: bcrypt Şifre Hashleme, Yerel Zip Yedekleme & Geri Yükleme, SQL Denetimi
 - **Ne yapıldı:**
   1. **bcrypt Şifre Güvenliği & Şeffaf Göç (`DatabaseHelper`)**:
