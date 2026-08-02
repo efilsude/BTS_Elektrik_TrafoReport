@@ -9,6 +9,20 @@ Kurallar:
 
 ---
 
+## 2026-08-02 — [mobile] Faz 2: Cihaz Üzerinde Native Excel (.xlsx) Üretimi & Hücresel Haritalama
+- Ne: Cihaz üzerinde internet/sunucu bağlantısı olmaksızın orijinal şablon `.xlsx` dosyalarından hücresel haritalama (`CELL_MAPPING`) ile Excel rapor üretimi sağlandı.
+- Neden: Saha şartlarında teknisyenin hazırladığı raporların PRD §12 ve Kabul #1 standartlarına %100 uygun biçimde orijinal Excel şablonuna işlenebilmesi için.
+- Haritalama Kaynağı: `backend/app/services/excel_engine.py` üzerindeki `CELL_MAPPING` mantığı Dart diline aktarıldı (`lib/excel/cell_mapping.dart`).
+- Şablon Asset'leri: `assets/templates/` altına kopyalandı (`hermetik.xlsx`, `kuru_tip.xlsx`, `gt.xlsx`).
+- Çalışma Mantığı:
+  1. `excel: ^4.0.6` paketi ile asset şablon baytları okunarak bellek üzerinde orijinal stiller, birleşmiş hücreler ve formüller korunur.
+  2. Tarih alanları Excel seri numarasına (epoch: 1899-12-30) dönüştürülerek yazılır.
+  3. Sayısal ölçümler sayı formatında (int/double) hücrelere işlenir.
+  4. Çıktı dosyası `{Müşteri} - {Trafo Etiketi} - {GG.AA.YYYY}.xlsx` biçiminde `documents/reports/` altına kaydedilir.
+  5. Rapor kesinleştirildiğinde SQLite veritabanındaki durum `status = 'finalized'`, `finalized_at` ve `excel_path` olarak güncellenir.
+
+---
+
 ## 2026-08-02 — [mobile] Ürün Kararı: Tek Tablet Sunucusuz (Offline-First) Faz 1
 - Ne: Mobil uygulama tek Android tablet üzerinde tamamen sunucusuz (offline-first) çalışacak şekilde yapılandırıldı. FastAPI, uzak HTTP, JWT, OTP ve davet kodu bağımlılıkları Faz 1 kapsamında mobil taraftan tamamen kaldırıldı veya yerel SQLite veritabanına devredildi.
 - Neden: Saha şartlarında internet/sunucu bağlantısı olmaksızın şirkete ait tek tablette tam bağımsız raporlama yapmak için.

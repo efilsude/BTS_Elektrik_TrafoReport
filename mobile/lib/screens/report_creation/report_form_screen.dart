@@ -319,78 +319,26 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       }
     }
 
-    await service.saveDraft();
+    final File? excelFile = await service.finalizeReport(report.id);
 
-    if (mounted) {
-      showDialog<dynamic>(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
-            children: <Widget>[
-              const Icon(Icons.info_outline_rounded, color: AppTheme.primaryColor),
-              const SizedBox(width: 10),
-              Text('Rapor Kaydedildi', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                'Excel (.xlsx) rapor üretimi cihaz üzerinde bir sonraki sürümde (Faz 2) aktif olacaktır.',
-                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textDark),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Tüm saha ölçüm verileriniz ve fotoğraflarınız cihazınızın yerel SQLite veritabanında güvenle taslak olarak saklanmaktadır.',
-                style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textLight, height: 1.4),
-              ),
-            ],
-          ),
-          actions: <Widget>[
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx); // Close dialog
-                Navigator.pop(context); // Return to home
-              },
-              child: const Text('Ana Sayfaya Dön'),
-            ),
-          ],
+    if (mounted && excelFile != null) {
+      _showPostProductionDialog(report.title, report.id, excelFile);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Excel raporu üretilirken hata oluştu.'),
+          backgroundColor: AppTheme.errorColor,
         ),
       );
     }
   }
 
-  void _showPhotoWarningDialog(String message) {
+  // Post-Production Screen (PRD §21.4): Open | Share | Close
+  void _showPostProductionDialog(String reportTitle, String reportId, File excelFile) {
     showDialog<dynamic>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: Row(
-          children: <Widget>[
-            const Icon(Icons.warning_amber_rounded, color: AppTheme.errorColor),
-            const SizedBox(width: 10),
-            Text('Eksik Fotoğraflar', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: Text(message),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Kapat'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Post-Production Screen (PRD §21.4): Open | Share | Print | Close
-  void _showPostProductionDialog(String reportTitle, String reportId) {
-    showDialog<dynamic>(
-      context: context,
-      barrierDismissible: false, // Must select an action
-      builder: (BuildContext context) => AlertDialog(
+      barrierDismissible: false,
+      builder: (BuildContext ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Column(
           children: <Widget>[
@@ -415,7 +363,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Text(
-              'Excel raporu orijinal şablon biçimlendirmesiyle üretildi ve Rapor Havuzuna kaydedildi.',
+              'Excel (.xlsx) raporu orijinal şablon biçimlendirmesiyle üretildi ve cihazınızın yerel belgeler klasörüne kaydedildi.',
               style: GoogleFonts.inter(color: AppTheme.textLight, fontSize: 13, height: 1.4),
               textAlign: TextAlign.center,
             ),
@@ -428,59 +376,38 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                 border: Border.all(color: AppTheme.borderLight),
               ),
               child: Text(
-                '$reportTitle.xlsx',
+                excelFile.path.split(Platform.pathSeparator).last,
                 style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textDark),
                 textAlign: TextAlign.center,
               ),
             ),
             const SizedBox(height: 24),
             
-            // Native intents buttons
             ElevatedButton.icon(
               onPressed: () async {
                 final ReportService service = Provider.of<ReportService>(context, listen: false);
-                final File? file = await service.downloadExcelFile(reportId, reportTitle);
-                if (file != null) service.openExcelFile(file);
+                await service.openExcelFile(excelFile);
               },
               icon: const Icon(Icons.open_in_new_rounded),
               label: const Text('Excel\'i Aç'),
               style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
             ),
             const SizedBox(height: 8),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final ReportService service = Provider.of<ReportService>(context, listen: false);
-                      final File? file = await service.downloadExcelFile(reportId, reportTitle);
-                      if (file != null) service.shareExcelFile(file, reportTitle);
-                    },
-                    icon: const Icon(Icons.share_rounded),
-                    label: const Text('Paylaş'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final ReportService service = Provider.of<ReportService>(context, listen: false);
-                      final File? file = await service.downloadExcelFile(reportId, reportTitle);
-                      if (file != null) service.shareExcelFile(file, reportTitle);
-                    },
-                    icon: const Icon(Icons.print_rounded),
-                    label: const Text('Yazdır'),
-                  ),
-                ),
-              ],
+            OutlinedButton.icon(
+              onPressed: () async {
+                final ReportService service = Provider.of<ReportService>(context, listen: false);
+                await service.shareExcelFile(excelFile, reportTitle);
+              },
+              icon: const Icon(Icons.share_rounded),
+              label: const Text('Paylaş'),
             ),
           ],
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Pop FormScreen to go back to Home
+              Navigator.pop(ctx); // Close dialog
+              Navigator.pop(context); // Pop FormScreen to return to Home
             },
             child: Text(
               'Kapat',
@@ -491,6 +418,30 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       ),
     );
   }
+
+  void _showPhotoWarningDialog(String message) {
+    showDialog<dynamic>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: Row(
+          children: <Widget>[
+            const Icon(Icons.warning_amber_rounded, color: AppTheme.errorColor),
+            const SizedBox(width: 10),
+            Text('Eksik Fotoğraflar', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(message),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Kapat'),
+          ),
+        ],
+      ),
+    );
+  }
+
+
 
 
 

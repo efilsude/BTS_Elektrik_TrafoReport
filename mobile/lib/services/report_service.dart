@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../database/database_helper.dart';
+import '../excel/excel_generator.dart';
 import '../models/report_model.dart';
 
 class ReportService extends ChangeNotifier {
@@ -237,8 +238,8 @@ class ReportService extends ChangeNotifier {
     return await getReports(status: 'draft');
   }
 
-  /// Finalize report locally in SQLite
-  Future<bool> finalizeReport(String reportId) async {
+  /// Finalize report locally in SQLite and generate native Excel file
+  Future<File?> finalizeReport(String reportId) async {
     _isLoading = true;
     notifyListeners();
 
@@ -250,11 +251,18 @@ class ReportService extends ChangeNotifier {
       if (reportToFinalize == null) {
         _isLoading = false;
         notifyListeners();
-        return false;
+        return null;
       }
+
+      // Generate filled native Excel file from asset template
+      final File excelFile = await ExcelGenerator.generateReportExcel(report: reportToFinalize);
+
+      final Map<String, dynamic> updatedData = Map<String, dynamic>.from(reportToFinalize.dataJson);
+      updatedData['excel_path'] = excelFile.path;
 
       final Report finalizedReport = reportToFinalize.copyWith(
         status: 'finalized',
+        dataJson: updatedData,
         updatedAt: DateTime.now(),
       );
 
@@ -266,11 +274,12 @@ class ReportService extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
-      return true;
+      return excelFile;
     } catch (e) {
+      debugPrint('[TrafoReport] Rapor kesinleştirme/Excel üretme hatası: $e');
       _isLoading = false;
       notifyListeners();
-      return false;
+      return null;
     }
   }
 
@@ -284,18 +293,18 @@ class ReportService extends ChangeNotifier {
     return await _dbHelper.getReportById(reportId);
   }
 
-  /// Download / Generate Excel file on device
+  /// Download / Get generated Excel file on device
   Future<File?> downloadExcelFile(String reportId, String title) async {
-    final Directory appDocDir = await getApplicationDocumentsDirectory();
-    final String cleanFileName = title.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
-    final String filePath = '${appDocDir.path}/$cleanFileName.xlsx';
-    final File localFile = File(filePath);
-
     final Report? report = await getReportById(reportId);
-    final String content = 'TrafoReport Saha Raporu (Faz 1 Yerel Kayıt)\nRapor: $title\nRapor ID: $reportId\nMüşteri: ${report?.customerName}\nTrafo Etiket: ${report?.trafoLabel}\nTarih: ${report?.createdAt}';
+    if (report == null) return null;
 
-    await localFile.writeAsString(content);
-    return localFile;
+    final String? excelPath = report.dataJson['excel_path'] as String?;
+    if (excelPath != null && await File(excelPath).exists()) {
+      return File(excelPath);
+    }
+
+    // Re-generate if file missing
+    return await ExcelGenerator.generateReportExcel(report: report);
   }
 
   /// Open Excel file on device using native intent
