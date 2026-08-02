@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../database/database_helper.dart';
+import '../models/user_model.dart';
+import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -9,126 +13,138 @@ class AdminDashboardScreen extends StatefulWidget {
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
-class _InviteCodeItem {
-  final String code;
-  final String role; // 'employee' | 'admin'
-  final String status; // 'active' | 'used' | 'expired'
-  _InviteCodeItem({required this.code, required this.role, required this.status});
-}
-
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  final List<_InviteCodeItem> _generatedCodes = <_InviteCodeItem>[
-    _InviteCodeItem(code: 'XYZ789', role: 'employee', status: 'active'),
-    _InviteCodeItem(code: 'ABC123', role: 'admin', status: 'expired'),
-    _InviteCodeItem(code: 'KPT456', role: 'employee', status: 'used'),
-  ];
-  final List<String> _templates = <String>[
-    'Hermetik Bakım Şablonu (v1.2)', 
-    'Kuru Tip Bakım Şablonu (v1.0)', 
-    'Genleşme Tanklı (GT) Bakım Şablonu (v2.1)'
-  ];
-  String _selectedRole = 'employee'; // used in the invite code creation dialog
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  List<User> _users = <User>[];
+  bool _isLoadingUsers = true;
 
-  Future<void> _generateInviteCode() async {
-    _selectedRole = 'employee'; // reset each time
-    final bool? confirmed = await showDialog<bool>(
+  @override
+  void initState() {
+    super.initState();
+    _loadUsers();
+  }
+
+  Future<void> _loadUsers() async {
+    setState(() => _isLoadingUsers = true);
+    final List<User> list = await _dbHelper.getAllUsers();
+    if (mounted) {
+      setState(() {
+        _users = list;
+        _isLoadingUsers = false;
+      });
+    }
+  }
+
+  Future<void> _showAddUserDialog() async {
+    final GlobalKey<FormState> dialogFormKey = GlobalKey<FormState>();
+    final TextEditingController nameCtrl = TextEditingController();
+    final TextEditingController phoneCtrl = TextEditingController();
+    final TextEditingController emailCtrl = TextEditingController();
+    final TextEditingController sicilCtrl = TextEditingController();
+    final TextEditingController passCtrl = TextEditingController();
+    String selectedRole = 'employee';
+
+    final bool? created = await showDialog<bool>(
       context: context,
       builder: (BuildContext ctx) {
         return StatefulBuilder(
           builder: (BuildContext ctx2, StateSetter setDialogState) {
             return AlertDialog(
-              title: Text('Davet Kodu Üret', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    'Yeni kullanıcının rolunu seçin:',
-                    style: GoogleFonts.inter(fontSize: 14, color: Colors.grey.shade700),
-                  ),
-                  const SizedBox(height: 16),
-                  // Role Picker Tiles
-                  InkWell(
-                    onTap: () => setDialogState(() => _selectedRole = 'employee'),
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: _selectedRole == 'employee' ? AppTheme.primaryColor.withOpacity(0.1) : Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: _selectedRole == 'employee' ? AppTheme.primaryColor : Colors.grey.shade300,
-                          width: _selectedRole == 'employee' ? 2 : 1,
+              title: Text('Yeni Kullanıcı Ekle', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+              content: SingleChildScrollView(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  child: Form(
+                    key: dialogFormKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        TextFormField(
+                          controller: nameCtrl,
+                          decoration: const InputDecoration(labelText: 'Ad Soyad *'),
+                          validator: (String? v) => v == null || v.trim().isEmpty ? 'Zorunlu' : null,
                         ),
-                      ),
-                      child: Row(
-                        children: <Widget>[
-                          Icon(
-                            Icons.engineering_outlined,
-                            color: _selectedRole == 'employee' ? AppTheme.primaryColor : Colors.grey,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text('Çalışan (Employee)', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
-                              Text('Teknisyen / Rapor İşleme Yetkisi', style: GoogleFonts.inter(fontSize: 11, color: Colors.grey)),
-                            ],
-                          ),
-                          const Spacer(),
-                          if (_selectedRole == 'employee')
-                            Icon(Icons.check_circle_rounded, color: AppTheme.primaryColor, size: 20),
-                        ],
-                      ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: phoneCtrl,
+                          keyboardType: TextInputType.phone,
+                          decoration: const InputDecoration(labelText: 'Telefon Numarası *'),
+                          validator: (String? v) => v == null || v.trim().isEmpty ? 'Zorunlu' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: const InputDecoration(labelText: 'E-posta (Opsiyonel)'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: sicilCtrl,
+                          decoration: const InputDecoration(labelText: 'Sicil No (Opsiyonel)'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: passCtrl,
+                          obscureText: true,
+                          decoration: const InputDecoration(labelText: 'Şifre *'),
+                          validator: (String? v) => v == null || v.length < 4 ? 'En az 4 karakter' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        Text('Kullanıcı Rolü:', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13)),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: <Widget>[
+                            ChoiceChip(
+                              label: const Text('Çalışan'),
+                              selected: selectedRole == 'employee',
+                              onSelected: (bool sel) {
+                                if (sel) setDialogState(() => selectedRole = 'employee');
+                              },
+                            ),
+                            const SizedBox(width: 12),
+                            ChoiceChip(
+                              label: const Text('Yönetici'),
+                              selected: selectedRole == 'admin',
+                              selectedColor: Colors.orange.shade200,
+                              onSelected: (bool sel) {
+                                if (sel) setDialogState(() => selectedRole = 'admin');
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  InkWell(
-                    onTap: () => setDialogState(() => _selectedRole = 'admin'),
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: _selectedRole == 'admin' ? Colors.orange.withOpacity(0.1) : Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: _selectedRole == 'admin' ? Colors.orange.shade700 : Colors.grey.shade300,
-                          width: _selectedRole == 'admin' ? 2 : 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: <Widget>[
-                          Icon(
-                            Icons.admin_panel_settings_outlined,
-                            color: _selectedRole == 'admin' ? Colors.orange.shade700 : Colors.grey,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text('Yönetici (Admin)', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
-                              Text('Tam Yönetim + Kullanıcı Yönetimi Yetkisi', style: GoogleFonts.inter(fontSize: 11, color: Colors.grey)),
-                            ],
-                          ),
-                          const Spacer(),
-                          if (_selectedRole == 'admin')
-                            Icon(Icons.check_circle_rounded, color: Colors.orange.shade700, size: 20),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
               actions: <Widget>[
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(false),
-                  child: Text('İptal', style: GoogleFonts.inter(color: AppTheme.textLight)),
+                  child: const Text('İptal'),
                 ),
                 ElevatedButton(
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                  child: Text('Kod Üret', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                  onPressed: () async {
+                    if (dialogFormKey.currentState!.validate()) {
+                      final AuthService authService = Provider.of<AuthService>(context, listen: false);
+                      final bool ok = await authService.createLocalUser(
+                        fullName: nameCtrl.text.trim(),
+                        phone: phoneCtrl.text.trim(),
+                        email: emailCtrl.text.trim().isEmpty ? null : emailCtrl.text.trim(),
+                        sicilNo: sicilCtrl.text.trim().isEmpty ? null : sicilCtrl.text.trim(),
+                        password: passCtrl.text,
+                        role: selectedRole,
+                      );
+                      if (ok && ctx.mounted) {
+                        Navigator.of(ctx).pop(true);
+                      } else if (ctx.mounted && authService.errorMessage != null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(authService.errorMessage!), backgroundColor: AppTheme.errorColor),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Kaydet'),
                 ),
               ],
             );
@@ -137,28 +153,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       },
     );
 
-    if (confirmed == true && mounted) {
-      // Mock: generate code locally (real API call would be POST /admin/codes with {role: _selectedRole})
-      final String newCode = 'BTS${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
-      setState(() {
-        _generatedCodes.insert(0, _InviteCodeItem(code: newCode, role: _selectedRole, status: 'active'));
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Davet kodu oluşturuldu: $newCode (${_selectedRole == 'admin' ? 'Yönetici' : 'Çalışan'})'),
-          backgroundColor: AppTheme.successColor,
-        ),
-      );
+    if (created == true) {
+      await _loadUsers();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kullanıcı eklendi!'), backgroundColor: AppTheme.successColor),
+        );
+      }
     }
-  }
-
-  void _uploadTemplate() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Excel Şablonu Yükleme özelliği Faz 4\'te aktif olacaktır.'),
-        backgroundColor: AppTheme.primaryColor,
-      ),
-    );
   }
 
   @override
@@ -178,7 +180,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            // Admin Info Card
+            // Admin Banner
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -194,7 +196,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          'Hoş Geldiniz, Yönetici',
+                          'Yönetici Paneli (Yerel Cihaz)',
                           style: GoogleFonts.outfit(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -202,12 +204,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           ),
                         ),
                         Text(
-                          'Sistem şablonlarını, kayıt kodlarını ve şirket kullanıcılarını buradan yönetebilirsiniz.',
+                          'Cihazdaki kullanıcıları ve sistem ayarlarını doğrudan yönetin.',
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             color: Colors.white70,
                           ),
-
                         ),
                       ],
                     ),
@@ -217,7 +218,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Responsive Quick Stats Grid
+            // Quick Stats
             GridView.count(
               crossAxisCount: isTablet ? 3 : 1,
               shrinkWrap: true,
@@ -226,28 +227,85 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
               children: <Widget>[
-                _buildStatCard('Toplam Rapor', '24', Icons.article_outlined, AppTheme.primaryColor),
-                _buildStatCard('Aktif Kullanıcı', '8', Icons.people_alt_outlined, AppTheme.secondaryColor),
-                _buildStatCard('Aktif Şablon', '3', Icons.table_chart_outlined, AppTheme.accentColor),
+                _buildStatCard('Kayıtlı Kullanıcı', _users.length.toString(), Icons.people_alt_outlined, AppTheme.secondaryColor),
+                _buildStatCard('Yönetici Sayısı', _users.where((User u) => u.isAdmin).length.toString(), Icons.admin_panel_settings_outlined, Colors.orange),
+                _buildStatCard('Çalışan Sayısı', _users.where((User u) => u.isEmployee).length.toString(), Icons.engineering_outlined, AppTheme.primaryColor),
               ],
             ),
             const SizedBox(height: 24),
 
-            // Two-column details for tablet, single column for mobile
-            if (isTablet)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(child: _buildInviteCodeSection()),
-                  const SizedBox(width: 24),
-                  Expanded(child: _buildTemplateSection()),
-                ],
-              )
-            else ...<Widget>[
-              _buildInviteCodeSection(),
-              const SizedBox(height: 24),
-              _buildTemplateSection(),
-            ],
+            // User Management Section
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text(
+                          'Cihaz Kullanıcıları',
+                          style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: _showAddUserDialog,
+                          icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                          label: const Text('Kullanıcı Ekle'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (_isLoadingUsers)
+                      const Center(child: CircularProgressIndicator())
+                    else if (_users.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text('Kayıtlı kullanıcı yok.'),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _users.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final User u = _users[index];
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: CircleAvatar(
+                              backgroundColor: u.isAdmin ? Colors.orange.shade100 : AppTheme.primaryColor.withOpacity(0.1),
+                              child: Icon(
+                                u.isAdmin ? Icons.admin_panel_settings : Icons.person,
+                                color: u.isAdmin ? Colors.orange.shade800 : AppTheme.primaryColor,
+                              ),
+                            ),
+                            title: Text(
+                              u.fullName,
+                              style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15),
+                            ),
+                            subtitle: Text('Tel: ${u.phone} ${u.email != null ? "• ${u.email}" : ""}'),
+                            trailing: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: u.isAdmin ? Colors.orange.shade100 : AppTheme.primaryColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                u.isAdmin ? 'Yönetici' : 'Çalışan',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: u.isAdmin ? Colors.orange.shade800 : AppTheme.primaryColor,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -289,162 +347,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                 ),
               ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInviteCodeSection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Text(
-                  'Kayıt Davet Kodları',
-                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                ElevatedButton.icon(
-                  onPressed: _generateInviteCode,
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Kod Üret'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _generatedCodes.length,
-              itemBuilder: (BuildContext context, int index) {
-                final _InviteCodeItem item = _generatedCodes[index];
-                final bool isInactive = item.status == 'used' || item.status == 'expired';
-                final bool isAdmin = item.role == 'admin';
-
-                return ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: CircleAvatar(
-                    backgroundColor: isInactive ? Colors.grey.shade200 : Colors.green.shade50,
-                    child: Icon(
-                      isInactive ? Icons.key_off_outlined : Icons.vpn_key_outlined,
-                      color: isInactive ? Colors.grey : Colors.green,
-                      size: 20,
-                    ),
-                  ),
-                  title: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          item.code,
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: isInactive ? AppTheme.textLight : AppTheme.textDark,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Role Badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: isAdmin ? Colors.orange.shade100 : AppTheme.primaryColor.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isAdmin ? Colors.orange.shade400 : AppTheme.primaryColor.withOpacity(0.4),
-                          ),
-                        ),
-                        child: Text(
-                          isAdmin ? 'Yönetici' : 'Çalışan',
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: isAdmin ? Colors.orange.shade800 : AppTheme.primaryColor,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  subtitle: Text(
-                    item.status == 'used'
-                      ? 'Kullanıldı'
-                      : item.status == 'expired'
-                        ? 'Süresi Doldu'
-                        : 'Aktif (15 dk TTL)',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isInactive ? Colors.red : Colors.green,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTemplateSection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Text(
-                  'Rapor Şablonları (.xlsx)',
-                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                OutlinedButton.icon(
-                  onPressed: _uploadTemplate,
-                  icon: const Icon(Icons.upload_file_outlined, size: 18),
-                  label: const Text('Yükle'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _templates.length,
-              itemBuilder: (BuildContext context, int index) {
-                return ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.blue.shade50,
-                    child: const Icon(Icons.table_view_rounded, color: Colors.blue, size: 20),
-                  ),
-                  title: Text(
-                    _templates[index],
-                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                  subtitle: const Text('Aktif Kullanımda', style: TextStyle(fontSize: 11, color: Colors.blue)),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline, color: AppTheme.errorColor, size: 20),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Şablon silinemez - Aktif raporlarla ilişkili.')),
-                      );
-                    },
-                  ),
-                );
-              },
             ),
           ],
         ),

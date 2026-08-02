@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:google_fonts/google_fonts.dart';
@@ -298,29 +297,6 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            // Banner if in offline/mock mode — DEV only, hidden in release
-            if (!kReleaseMode && authService.isMockMode)
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.blue.shade200),
-                ),
-                child: Row(
-                  children: <Widget>[
-                    Icon(Icons.wifi_off_rounded, color: Colors.blue.shade800, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Çevrimdışı / Simülasyon Modu: Yerel cihaz kayıtları gösteriliyor.',
-                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.blue.shade900),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
 
             // Search and Filter Bar
             Card(

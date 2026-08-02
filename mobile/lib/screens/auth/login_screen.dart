@@ -115,31 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         ),
                         const SizedBox(height: 40),
-                        // Mock Mode Info Banner — DEV only, hidden in release
-                        if (!kReleaseMode)
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white24),
-                          ),
-                          child: Row(
-                            children: <Widget>[
-                              const Icon(Icons.info_outline, color: Colors.white),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Geliştirici Modu: Backend çevrimdışı olduğunda Mock Modu kullanabilirsiniz.',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+
                       ],
                     ),
                   ),
@@ -361,56 +337,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ],
 
-                          const SizedBox(height: 30),
-                          const Divider(color: AppTheme.borderLight),
-                          const SizedBox(height: 16),
 
-                          // Mock Mode Selector — DEV only, hidden in release
-                          if (!kReleaseMode)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.amber.shade50,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.amber.shade200),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                Row(
-                                  children: <Widget>[
-                                    Icon(Icons.wifi_off_rounded, color: Colors.amber.shade800),
-                                    const SizedBox(width: 10),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: <Widget>[
-                                        Text(
-                                          'Mock Modu (Offline)',
-                                          style: GoogleFonts.inter(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                            color: Colors.amber.shade900,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Sunucusuz test yapın',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 11,
-                                            color: Colors.amber.shade900,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                Switch(
-                                  value: authService.isMockMode,
-                                  onChanged: (bool val) => authService.setMockMode(val),
-                                  activeColor: AppTheme.accentColor,
-                                ),
-                              ],
-                            ),
-                          ),
                         ],
                       ),
                     ),
