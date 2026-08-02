@@ -27,6 +27,17 @@ Format:
   adb install -r mobile/build/app/outputs/flutter-apk/app-release.apk
   ```
 
+## 2026-08-02 — Yönetici Paneli Görsel Cilası & Davet Kodu Uyarı Kartının Kaldırılması
+- **Ne yapıldı:**
+  1. **Gereksiz Davet Kodu Uyarı Kartı Kaldırıldı (`AdminDashboardScreen`)**:
+     - Davet kodu/OTP kararı netleştiği için admin panelindeki kalabalık oluşturan *"Tek tablette davet kodu veya e-posta OTP yoktur..."* kartı tamamen silindi.
+  2. **Yönetici Paneli Görsel & Hiyerarşi Sadeleştirmesi**:
+     - Şişkin çift başlıklar kaldırılıp yerine sade, modern ve kompakt bir yönetici başlık kartı yerleştirildi (`Kullanıcı ve Sistem Yönetimi`).
+     - İstatistik kartları dikey/yatay taşmaları önleyecek dinamik esnek yerleşime (`LayoutBuilder` + `Column`/`Row`) kavuşturuldu.
+     - "Kullanıcı Ekle" butonu ve "Cihaz Kullanıcıları" başlığı `Wrap` ile sarmalanarak dar mobil ve geniş tablet ekranlarında üst üste binme riski ortadan kaldırıldı.
+     - `SafeArea` ve tutarlı dolgular eklendi.
+  3. `flutter analyze`: **0 Hata** ile doğrulandı.
+
 ## 2026-08-02 — Düzeltme: Saha Fotoğraf Yolları Kalıcılığı & İki Yönlü Anahtar Senkronizasyonu
 - **Ne yapıldı:**
   1. **Fotoğraf Anahtarı Senkronizasyonu (`ReportService.savePhotoLocally`)**:
