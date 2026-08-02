@@ -27,6 +27,23 @@ Format:
   adb install -r mobile/build/app/outputs/flutter-apk/app-release.apk
   ```
 
+## 2026-08-02 — Faz 2.1: Sunucusuz Hesap Modeli Cilası, Kullanıcı Silme & UI Taşma Düzeltmeleri
+- **Ne yapıldı:**
+  1. **"Kayıt Ol" (Self-Register) UI Kaldırıldı (`LoginScreen`)**:
+     - Sunucusuz tek tablet karar doğrultusunda `LoginScreen` üzerindeki tüm "Kayıt Ol" buton/linkleri kaldırıldı.
+     - Giriş ekranına net bilgilendirme eklendi: *"Hesabınız yoksa sistem yöneticiniz sizi Yönetici Panelinden eklemelidir."*
+  2. **Parametreli SQL ile Yönetici Tarafından Kullanıcı Silme (`DatabaseHelper` & `AuthService`)**:
+     - `DatabaseHelper.deleteUser(id)` metodu parametreli SQL sorgusu ile oluşturuldu.
+     - İş Kuralları:
+       - Oturum açmış aktif kullanıcı kendisini silemez.
+       - Sistemdeki son aktif yönetici hesabı silinemez (*"Sistemde en az bir yönetici bulunmalıdır. Son yönetici silinemez."*).
+       - Kullanıcı silindiğinde geçmişte ürettiği raporlar korunur (`creator_display_name`).
+     - `AdminDashboardScreen` kullanıcı listesine silme ikonu, onay diyalogu ve SnackBar bildirimleri eklendi.
+  3. **Yönetici Paneli Bilgilendirme Kartı & UI Cilası (`AdminDashboardScreen` & `ProfileScreen`)**:
+     - Admin paneline sunucusuz hesap modelini anlatan bilgi kartı eklendi: *"Tek tablette davet kodu veya e-posta OTP yoktur. Çalışan hesapları doğrudan buradan oluşturulur; çalışan telefon ve şifre ile Giriş yapar."*
+     - `ProfileScreen` üzerindeki yedek alma / geri yükleme butonları dar ekranlarda taşmayacak biçimde duyarlı hale getirildi.
+  4. `flutter analyze`: **0 Hata** ile doğrulandı.
+
 ## 2026-08-02 — Düzeltme: User.fromJson int->bool Dönüşüm Hataları & Duyarlı İlk Admin Kurulum Ekranı
 - **Ne yapıldı:**
   1. **`User.fromJson` Güvenli Bool Dönüştürme (`mobile/lib/models/user_model.dart`)**:

@@ -237,6 +237,57 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  /// Delete a local user from Admin Panel
+  Future<bool> deleteUser(String targetUserId) async {
+    _errorMessage = null;
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // Rule 1: Currently logged-in user cannot delete themselves
+      if (_currentUser?.id == targetUserId) {
+        _errorMessage = 'Kendi hesabınızı silemezsiniz.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // Check target user role
+      final User? targetUser = await _dbHelper.getUserById(targetUserId);
+      if (targetUser == null) {
+        _errorMessage = 'Silinecek kullanıcı bulunamadı.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // Rule 2: The last active admin cannot be deleted
+      if (targetUser.isAdmin) {
+        final int adminCount = await _dbHelper.getAdminCount();
+        if (adminCount <= 1) {
+          _errorMessage = 'Sistemde en az bir yönetici bulunmalıdır. Son yönetici silinemez.';
+          _isLoading = false;
+          notifyListeners();
+          return false;
+        }
+      }
+
+      final bool success = await _dbHelper.deleteUser(targetUserId);
+      if (!success) {
+        _errorMessage = 'Kullanıcı silinirken hata oluştu.';
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _errorMessage = 'Kullanıcı silme hatası: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Change Password locally
   Future<bool> changePasswordLocally({
     required String currentPassword,

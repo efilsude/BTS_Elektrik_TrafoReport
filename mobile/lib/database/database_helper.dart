@@ -230,6 +230,28 @@ class DatabaseHelper {
     );
   }
 
+  /// Delete user by ID (parameterized SQL).
+  /// Note: Past reports remain intact as creator_display_name is stored in reports table.
+  Future<bool> deleteUser(String userId) async {
+    final Database db = await instance.database;
+    final int count = await db.delete(
+      'users',
+      where: 'id = ?',
+      whereArgs: <dynamic>[userId],
+    );
+    return count > 0;
+  }
+
+  /// Get active admin count in system
+  Future<int> getAdminCount() async {
+    final Database db = await instance.database;
+    final List<Map<String, dynamic>> result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM users WHERE role = ? AND is_active = 1',
+      <dynamic>['admin'],
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
   Future<bool> updateUserPasswordHash(String userId, String newBcryptHash) async {
     final Database db = await instance.database;
     final int count = await db.update(
