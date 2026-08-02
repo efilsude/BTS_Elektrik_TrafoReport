@@ -106,7 +106,7 @@ class ReportService extends ChangeNotifier {
     _triggerAutoSaveDebounce();
   }
 
-  /// Copy picked photo to app documents directory and save path locally
+  /// Copy picked photo to app documents directory and save path locally in both top-level and photos map
   Future<String?> savePhotoLocally(String photoKey, File pickedFile) async {
     if (_activeReport == null) return null;
 
@@ -127,8 +127,10 @@ class ReportService extends ChangeNotifier {
       // Save photo entry in local DB report_photos table
       await _dbHelper.addReportPhoto(_activeReport!.id, photoKey, savedFile.path);
 
-      // Update dataJson['photos'][photoKey]
+      // Update dataJson: both top-level (e.g. photo_label) AND dataJson['photos'][photoKey]
       final Map<String, dynamic> updatedData = Map<String, dynamic>.from(_activeReport!.dataJson);
+      updatedData[photoKey] = savedFile.path;
+
       final Map<String, dynamic> photosMap = Map<String, dynamic>.from(updatedData['photos'] as Map? ?? <String, dynamic>{});
       photosMap[photoKey] = savedFile.path;
       updatedData['photos'] = photosMap;
@@ -141,6 +143,52 @@ class ReportService extends ChangeNotifier {
     } catch (e) {
       debugPrint('[TrafoReport] Fotoğraf kaydetme hatası: $e');
       return null;
+    }
+  }
+
+  /// Delete photo locally (clears top-level key, photos map, DB entry, and physical file)
+  Future<void> deletePhotoLocally(String photoKey) async {
+    if (_activeReport == null) return;
+
+    try {
+      final Map<String, dynamic> updatedData = Map<String, dynamic>.from(_activeReport!.dataJson);
+      final dynamic existingPath = updatedData[photoKey] ?? (updatedData['photos'] is Map ? updatedData['photos'][photoKey] : null);
+
+      // Clear top-level key
+      updatedData.remove(photoKey);
+
+      // Clear nested photos map
+      if (updatedData['photos'] is Map) {
+        final Map<String, dynamic> photosMap = Map<String, dynamic>.from(updatedData['photos'] as Map);
+        photosMap.remove(photoKey);
+        updatedData['photos'] = photosMap;
+      }
+
+      // Delete physical file if exists
+      if (existingPath is String && existingPath.isNotEmpty) {
+        final File file = File(existingPath);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      }
+
+      // Delete photo record from DB report_photos table if present
+      final List<Map<String, String>> dbPhotos = await _dbHelper.getReportPhotos(_activeReport!.id);
+      for (final Map<String, String> photoMap in dbPhotos) {
+        if (photoMap['kind'] == photoKey) {
+          final String? photoId = photoMap['id'];
+          if (photoId != null) {
+            await _dbHelper.deleteReportPhoto(photoId);
+          }
+        }
+      }
+
+      _activeReport = _activeReport!.copyWith(dataJson: updatedData);
+      notifyListeners();
+
+      await saveDraft();
+    } catch (e) {
+      debugPrint('[TrafoReport] Fotoğraf silme hatası: $e');
     }
   }
 

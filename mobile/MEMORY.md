@@ -27,6 +27,18 @@ Format:
   adb install -r mobile/build/app/outputs/flutter-apk/app-release.apk
   ```
 
+## 2026-08-02 — Düzeltme: Saha Fotoğraf Yolları Kalıcılığı & İki Yönlü Anahtar Senkronizasyonu
+- **Ne yapıldı:**
+  1. **Fotoğraf Anahtarı Senkronizasyonu (`ReportService.savePhotoLocally`)**:
+     - Seçilen fotoğraflar `documents/photos/{reportId}/` altına kopyalandıktan sonra hem üst seviye `dataJson['photo_label']` / `photo_before` / `photo_after` hem de iç içe harita `dataJson['photos'][photoKey]` anahtarlarına eş zamanlı yazıldı.
+     - `report_photos` SQLite tablosuna kayıt atılıp otomatik yerel taslak kaydı (`saveDraft()`) ve `notifyListeners()` çağrıldı.
+  2. **Gelişmiş Fotoğraf Silme (`ReportService.deletePhotoLocally`)**:
+     - Fotoğraf silindiğinde üst seviye anahtar, iç içe harita ve `report_photos` tablosundaki ilgili satır temizlenip cihazdaki fiziki `.jpg` dosyası silindi.
+  3. **Form ve Finalize Görüntüleme Güvenliği (`report_form_screen.dart`)**:
+     - `_buildPhotosStep` ve `_finalizeReport` içerisinde önizleme ve zorunluluk kontrolleri için önce üst seviye key, yoksa `photos` harita fallback'i okundu.
+     - Fotoğraf kaydetme sırasında hata oluşursa kullanıcıya SnackBar uyarısı verildi.
+  4. `flutter analyze`: **0 Hata** ile doğrulandı.
+
 ## 2026-08-02 — Faz 2.1: Sunucusuz Hesap Modeli Cilası, Kullanıcı Silme & UI Taşma Düzeltmeleri
 - **Ne yapıldı:**
   1. **"Kayıt Ol" (Self-Register) UI Kaldırıldı (`LoginScreen`)**:
