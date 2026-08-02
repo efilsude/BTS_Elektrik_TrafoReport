@@ -15,6 +15,9 @@
 - [x] **Yerel Auth & Bootstrap**: `users` tablosu boşsa `FirstAdminBootstrapScreen` -> SQLite admin kaydı; doluysa SQLite giriş
 - [x] **Yerel Rapor Taslak ve Havuz**: Tüm CRUD işlemleri, otomatik kayıt ve fotoğraflar cihaz içi SQLite ve belgeler klasöründe saklanır
 - [x] **Sunucusuz Yönetici Paneli**: `AdminDashboardScreen` üzerinden doğrudan yerel çalışan/yönetici hesabı ekleme
+- [x] **bcrypt Şifre Güvenliği (Faz 1.1)**: `bcrypt` salting hash + legacy SHA-256 şeffaf göç entegrasyonu
+- [x] **Yerel Zip Veri Yedeği ve Geri Yükleme (Faz 1.1)**: `archive` + `file_picker` ile SQLite DB, fotoğraflar ve imzaları kapsayan `.zip` yedeği al/paylaş/geri yükle
+- [x] **Finalize UX Netleştirmesi (Faz 1.1)**: Excel henüz cihazda oluşturulmadığından sahte finalized durumu kaldırıldı, taslak koruma diyalogu bağlandı
 - [ ] **Faz 2 — Cihaz Üzerinde Excel Üretimi**: `excel` / `openpyxl` mantığı ile cihaz içi .xlsx dosya oluşturulması ve hücre şablon eşleşmesi
 
 

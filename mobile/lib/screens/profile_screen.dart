@@ -1,10 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/backup_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/signature_pad.dart';
 import 'auth/login_screen.dart';
@@ -18,6 +21,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final BackupService _backupService = BackupService();
   final GlobalKey<FormState> _passwordFormKey = GlobalKey<FormState>();
 
   final TextEditingController _oldPasswordController = TextEditingController();
@@ -30,6 +34,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   String? _signatureBase64;
   bool _isSubmittingPassword = false;
+  bool _isBackingUp = false;
+  bool _isRestoring = false;
 
   @override
   void initState() {
@@ -51,6 +57,114 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _signatureBase64 = signature;
       });
+    }
+  }
+
+  Future<void> _handleCreateBackup() async {
+    setState(() => _isBackingUp = true);
+    try {
+      final File? zipFile = await _backupService.createBackupAndShare();
+      if (zipFile != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Yedek dosyası (${zipFile.path.split(Platform.pathSeparator).last}) oluşturuldu ve paylaşıma açıldı.', style: GoogleFonts.inter()),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Yedek oluşturma hatası: $e', style: GoogleFonts.inter()),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isBackingUp = false);
+    }
+  }
+
+  Future<void> _handleRestoreBackup() async {
+    try {
+      final FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: <String>['zip'],
+      );
+
+      if (result == null || result.files.single.path == null) return;
+
+      final String zipPath = result.files.single.path!;
+      final File zipFile = File(zipPath);
+
+      if (!mounted) return;
+
+      final bool? confirmed = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: <Widget>[
+              const Icon(Icons.warning_amber_rounded, color: AppTheme.errorColor),
+              const SizedBox(width: 10),
+              Text('Yedekten Geri Yükle', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Text(
+            'Seçilen yedek dosyası (${zipFile.path.split(Platform.pathSeparator).last}) cihazdaki veritabanını, fotoğrafları ve imzaları tamamen değiştirecektir.\n\nMevcut verilerin üzerine yazılacaktır. Devam etmek istiyor musunuz?',
+            style: GoogleFonts.inter(fontSize: 14, height: 1.4),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('İptal'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorColor),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Geri Yükle ve Yeniden Başlat'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+
+      setState(() => _isRestoring = true);
+
+      final bool success = await _backupService.restoreBackup(zipFile);
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Yedek başarıyla geri yüklendi! Lütfen yeniden giriş yapın.', style: GoogleFonts.inter()),
+            backgroundColor: AppTheme.successColor,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+
+        final AuthService authService = Provider.of<AuthService>(context, listen: false);
+        await authService.logout();
+
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute<dynamic>(builder: (_) => const LoginScreen()),
+            (Route<dynamic> route) => false,
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Geri yükleme hatası: $e', style: GoogleFonts.inter()),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRestoring = false);
     }
   }
 
@@ -221,6 +335,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 24),
 
+            // Backup and Restore Card (Task B)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        const Icon(Icons.backup_rounded, color: AppTheme.primaryColor),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Veri Yedeği ve Geri Yükleme',
+                          style: GoogleFonts.outfit(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Cihazınızdaki veritabanını, rapor fotoğraflarını ve dijital imzaları kapsayan .zip formatında tam veri yedeği oluşturabilir veya yedekten geri yükleyebilirsiniz.',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: AppTheme.textLight,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _isBackingUp ? null : _handleCreateBackup,
+                            icon: _isBackingUp
+                                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : const Icon(Icons.file_upload_outlined),
+                            label: const Text('Veri Yedeği Al (.zip)'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _isRestoring ? null : _handleRestoreBackup,
+                            icon: _isRestoring
+                                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                                : const Icon(Icons.file_download_outlined),
+                            label: const Text('Yedekten Geri Yükle'),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: AppTheme.primaryColor),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
             // Digital Signature Card
             Card(
               child: Padding(
@@ -238,7 +415,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Kesinleştirilen raporlarda yer alacak imzanız cihazınızda yerel olarak saklanır.',
+                      'Raporlarda yer alacak imzanız cihazınızda yerel olarak saklanır.',
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         color: AppTheme.textLight,
@@ -280,7 +457,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Password Change Card
+            // Password Change Card (bcrypt)
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
