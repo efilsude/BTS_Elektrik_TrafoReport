@@ -230,6 +230,49 @@ class DatabaseHelper {
     );
   }
 
+  /// Update user details by Admin (parameterized SQL)
+  Future<bool> updateUser({
+    required String id,
+    required String fullName,
+    required String phone,
+    String? email,
+    String? sicilNo,
+    required String role,
+    String? newPassword,
+  }) async {
+    final Database db = await instance.database;
+
+    // Check phone uniqueness against other users
+    final List<Map<String, dynamic>> phoneConflict = await db.query(
+      'users',
+      where: 'phone = ? AND id != ?',
+      whereArgs: <dynamic>[phone.trim(), id],
+    );
+    if (phoneConflict.isNotEmpty) {
+      throw Exception('Bu telefon numarası başka bir kullanıcı tarafından kullanılıyor.');
+    }
+
+    final Map<String, dynamic> row = <String, dynamic>{
+      'full_name': fullName.trim(),
+      'phone': phone.trim(),
+      'email': email?.trim().isEmpty == true ? null : email?.trim(),
+      'sicil_no': sicilNo?.trim().isEmpty == true ? null : sicilNo?.trim(),
+      'role': role,
+    };
+
+    if (newPassword != null && newPassword.isNotEmpty) {
+      row['password_hash'] = hashPassword(newPassword);
+    }
+
+    final int count = await db.update(
+      'users',
+      row,
+      where: 'id = ?',
+      whereArgs: <dynamic>[id],
+    );
+    return count > 0;
+  }
+
   /// Delete user by ID (parameterized SQL).
   /// Note: Past reports remain intact as creator_display_name is stored in reports table.
   Future<bool> deleteUser(String userId) async {

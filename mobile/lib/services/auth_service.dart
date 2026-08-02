@@ -237,6 +237,70 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  /// Update an existing local user from Admin Panel
+  Future<bool> updateLocalUser({
+    required String id,
+    required String fullName,
+    required String phone,
+    String? email,
+    String? sicilNo,
+    required String role,
+    String? newPassword,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final User? currentUserToUpdate = await _dbHelper.getUserById(id);
+      if (currentUserToUpdate == null) {
+        _errorMessage = 'Düzenlenecek kullanıcı bulunamadı.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // Check last admin demotion rule: if current role is admin and new role is employee
+      if (currentUserToUpdate.isAdmin && role == 'employee') {
+        final int adminCount = await _dbHelper.getAdminCount();
+        if (adminCount <= 1) {
+          _errorMessage = 'Sistemde en az bir yönetici bulunmalıdır. Son yöneticinin rolü değiştirilemez.';
+          _isLoading = false;
+          notifyListeners();
+          return false;
+        }
+      }
+
+      final bool success = await _dbHelper.updateUser(
+        id: id,
+        fullName: fullName,
+        phone: phone,
+        email: email,
+        sicilNo: sicilNo,
+        role: role,
+        newPassword: newPassword,
+      );
+
+      // If updating currently logged-in user, refresh _currentUser state
+      if (success && _currentUser?.id == id) {
+        final User? updated = await _dbHelper.getUserById(id);
+        if (updated != null) {
+          _currentUser = updated;
+        }
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      final String msg = e.toString().replaceAll('Exception: ', '');
+      _errorMessage = msg;
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Delete a local user from Admin Panel
   Future<bool> deleteUser(String targetUserId) async {
     _errorMessage = null;

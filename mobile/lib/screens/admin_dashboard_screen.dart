@@ -164,6 +164,144 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
+  Future<void> _showEditUserDialog(User targetUser) async {
+    final GlobalKey<FormState> dialogFormKey = GlobalKey<FormState>();
+    final TextEditingController nameCtrl = TextEditingController(text: targetUser.fullName);
+    final TextEditingController phoneCtrl = TextEditingController(text: targetUser.phone);
+    final TextEditingController emailCtrl = TextEditingController(text: targetUser.email ?? '');
+    final TextEditingController sicilCtrl = TextEditingController(text: targetUser.sicilNo ?? '');
+    final TextEditingController passCtrl = TextEditingController();
+    String selectedRole = targetUser.role;
+
+    final bool? updated = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) {
+        return StatefulBuilder(
+          builder: (BuildContext ctx2, StateSetter setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text('Kullanıcıyı Düzenle', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+              content: SingleChildScrollView(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  child: Form(
+                    key: dialogFormKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        TextFormField(
+                          controller: nameCtrl,
+                          decoration: const InputDecoration(labelText: 'Ad Soyad *'),
+                          validator: (String? v) => v == null || v.trim().isEmpty ? 'Zorunlu' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: phoneCtrl,
+                          keyboardType: TextInputType.phone,
+                          decoration: const InputDecoration(labelText: 'Telefon Numarası *', hintText: '05XXXXXXXXX'),
+                          validator: (String? v) => v == null || v.trim().isEmpty ? 'Zorunlu' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: const InputDecoration(labelText: 'E-posta (Opsiyonel)'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: sicilCtrl,
+                          decoration: const InputDecoration(labelText: 'Sicil No (Opsiyonel)'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: passCtrl,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Yeni Şifre (Opsiyonel)',
+                            hintText: 'Değiştirmek istemiyorsanız boş bırakın',
+                          ),
+                          validator: (String? v) {
+                            if (v != null && v.isNotEmpty && v.length < 4) {
+                              return 'Şifre en az 4 karakter olmalıdır';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        Text('Kullanıcı Rolü:', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13)),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: <Widget>[
+                            ChoiceChip(
+                              label: const Text('Çalışan'),
+                              selected: selectedRole == 'employee',
+                              onSelected: (bool sel) {
+                                if (sel) setDialogState(() => selectedRole = 'employee');
+                              },
+                            ),
+                            const SizedBox(width: 12),
+                            ChoiceChip(
+                              label: const Text('Yönetici'),
+                              selected: selectedRole == 'admin',
+                              selectedColor: Colors.orange.shade200,
+                              onSelected: (bool sel) {
+                                if (sel) setDialogState(() => selectedRole = 'admin');
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('İptal'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (dialogFormKey.currentState!.validate()) {
+                      final AuthService authService = Provider.of<AuthService>(context, listen: false);
+                      final bool ok = await authService.updateLocalUser(
+                        id: targetUser.id,
+                        fullName: nameCtrl.text.trim(),
+                        phone: phoneCtrl.text.trim(),
+                        email: emailCtrl.text.trim().isEmpty ? null : emailCtrl.text.trim(),
+                        sicilNo: sicilCtrl.text.trim().isEmpty ? null : sicilCtrl.text.trim(),
+                        role: selectedRole,
+                        newPassword: passCtrl.text.isEmpty ? null : passCtrl.text,
+                      );
+                      if (ok && ctx.mounted) {
+                        Navigator.of(ctx).pop(true);
+                      } else if (ctx.mounted && authService.errorMessage != null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(authService.errorMessage!), backgroundColor: AppTheme.errorColor),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Güncelle'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (updated == true) {
+      await _loadUsers();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kullanıcı bilgileri güncellendi!'), backgroundColor: AppTheme.successColor),
+        );
+      }
+    }
+  }
+
   Future<void> _handleDeleteUser(User targetUser) async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
@@ -420,6 +558,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                             color: u.isAdmin ? Colors.orange.shade800 : AppTheme.primaryColor,
                                           ),
                                         ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryColor, size: 20),
+                                        tooltip: 'Kullanıcıyı Düzenle',
+                                        onPressed: () => _showEditUserDialog(u),
                                       ),
                                       IconButton(
                                         icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.errorColor, size: 20),
