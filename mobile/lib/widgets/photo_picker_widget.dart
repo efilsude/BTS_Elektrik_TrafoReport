@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../theme/app_theme.dart';
 
@@ -28,7 +30,35 @@ class PhotoPickerWidget extends StatefulWidget {
 class _PhotoPickerWidgetState extends State<PhotoPickerWidget> {
   final ImagePicker _picker = ImagePicker();
 
+  /// Windows: use file_picker to open an image file dialog.
+  Future<void> _pickImageWindows() async {
+    try {
+      final FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+      if (result != null && result.files.single.path != null) {
+        widget.onPhotoSelected(result.files.single.path);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Fotoğraf seçilirken hata oluştu: $e'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _pickImage(ImageSource source) async {
+    // On Windows Desktop: bypass camera/permission, use file_picker instead
+    if (!kIsWeb && Platform.isWindows) {
+      await _pickImageWindows();
+      return;
+    }
+
     try {
       if (source == ImageSource.camera) {
         final PermissionStatus cameraStatus = await Permission.camera.request();
@@ -73,6 +103,12 @@ class _PhotoPickerWidgetState extends State<PhotoPickerWidget> {
   }
 
   void _showSelectionModal() {
+    // Windows Desktop: directly open file picker (no camera bottom sheet needed)
+    if (!kIsWeb && Platform.isWindows) {
+      _pickImage(ImageSource.gallery); // routes to _pickImageWindows internally
+      return;
+    }
+
     showModalBottomSheet<void>(
       context: context,
       shape: const RoundedRectangleBorder(

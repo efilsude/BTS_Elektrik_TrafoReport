@@ -20,6 +20,7 @@ dependencies:
 
   # Local Database, Security, Backup, and Utilities
   sqflite: ^2.4.1
+  sqflite_common_ffi: ^2.3.4
   bcrypt: ^1.1.3
   archive: ^3.6.1
   file_picker: ^8.1.4
@@ -36,6 +37,11 @@ dependencies:
   open_filex: ^4.5.0
   share_plus: ^10.1.2
   permission_handler: ^11.3.1
+
+  # Windows Desktop — QR/Barcode scanning (pure Dart, all platforms)
+  zxing_lib: ^1.1.4
+  camera: ^0.11.1
+  camera_windows: ^0.2.6+4
 
   # UI and Design Elements
   google_fonts: ^6.1.0

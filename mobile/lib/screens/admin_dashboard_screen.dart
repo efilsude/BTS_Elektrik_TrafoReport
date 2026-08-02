@@ -467,7 +467,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       // User List Header Row
                       Wrap(
                         alignment: WrapAlignment.spaceBetween,
-                        cross: WrapCrossAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         spacing: 12,
                         runSpacing: 10,
                         children: <Widget>[

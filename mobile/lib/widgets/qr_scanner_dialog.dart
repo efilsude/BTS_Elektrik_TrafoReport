@@ -1,13 +1,25 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../theme/app_theme.dart';
 
+// Conditionally import Windows-only scanner widget
+import 'qr_scanner_windows.dart'
+    if (dart.library.html) 'qr_scanner_stub.dart'
+    as windows_scanner;
+
 class QrScannerDialog extends StatefulWidget {
   const QrScannerDialog({super.key});
 
   static Future<String?> scan(BuildContext context) async {
+    // Windows desktop: show the dedicated Windows camera/zxing scanner
+    if (!kIsWeb && Platform.isWindows) {
+      return windows_scanner.showWindowsQrScanner(context);
+    }
+    // Mobile (Android/iOS/etc.): use existing MobileScanner dialog
     return showDialog<String>(
       context: context,
       barrierDismissible: false,

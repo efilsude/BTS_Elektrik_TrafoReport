@@ -7,6 +7,9 @@ import 'package:sqflite/sqflite.dart';
 import '../models/user_model.dart';
 import '../models/report_model.dart';
 
+import 'dart:io' show Platform;
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
@@ -20,6 +23,11 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDB(String filePath) async {
+    if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
+
     final String dbPath = await getDatabasesPath();
     final String path = join(dbPath, filePath);
 
