@@ -366,31 +366,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _isBackingUp ? null : _handleCreateBackup,
-                            icon: _isBackingUp
-                                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : const Icon(Icons.file_upload_outlined),
-                            label: const Text('Veri Yedeği Al (.zip)'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _isRestoring ? null : _handleRestoreBackup,
-                            icon: _isRestoring
-                                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                                : const Icon(Icons.file_download_outlined),
-                            label: const Text('Yedekten Geri Yükle'),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: AppTheme.primaryColor),
-                            ),
-                          ),
-                        ),
-                      ],
+                    LayoutBuilder(
+                      builder: (BuildContext ctx, BoxConstraints constraints) {
+                        final bool isWideButtons = constraints.maxWidth > 500;
+                        if (isWideButtons) {
+                          return Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: _isBackingUp ? null : _handleCreateBackup,
+                                  icon: _isBackingUp
+                                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                      : const Icon(Icons.file_upload_outlined),
+                                  label: const Text('Veri Yedeği Al (.zip)'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _isRestoring ? null : _handleRestoreBackup,
+                                  icon: _isRestoring
+                                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                                      : const Icon(Icons.file_download_outlined),
+                                  label: const Text('Yedekten Geri Yükle'),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: AppTheme.primaryColor),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        } else {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: <Widget>[
+                              ElevatedButton.icon(
+                                onPressed: _isBackingUp ? null : _handleCreateBackup,
+                                icon: _isBackingUp
+                                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                    : const Icon(Icons.file_upload_outlined),
+                                label: const Text('Veri Yedeği Al (.zip)'),
+                              ),
+                              const SizedBox(height: 10),
+                              OutlinedButton.icon(
+                                onPressed: _isRestoring ? null : _handleRestoreBackup,
+                                icon: _isRestoring
+                                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                                    : const Icon(Icons.file_download_outlined),
+                                label: const Text('Yedekten Geri Yükle'),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: AppTheme.primaryColor),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                      },
                     ),
                   ],
                 ),

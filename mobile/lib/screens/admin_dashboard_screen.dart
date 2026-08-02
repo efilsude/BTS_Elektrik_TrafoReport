@@ -50,6 +50,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return StatefulBuilder(
           builder: (BuildContext ctx2, StateSetter setDialogState) {
             return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               title: Text('Yeni Kullanıcı Ekle', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
               content: SingleChildScrollView(
                 child: Container(
@@ -69,7 +70,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         TextFormField(
                           controller: phoneCtrl,
                           keyboardType: TextInputType.phone,
-                          decoration: const InputDecoration(labelText: 'Telefon Numarası *'),
+                          decoration: const InputDecoration(labelText: 'Telefon Numarası *', hintText: '05XXXXXXXXX'),
                           validator: (String? v) => v == null || v.trim().isEmpty ? 'Zorunlu' : null,
                         ),
                         const SizedBox(height: 12),
@@ -157,16 +158,69 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       await _loadUsers();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kullanıcı eklendi!'), backgroundColor: AppTheme.successColor),
+          const SnackBar(content: Text('Kullanıcı başarıyla eklendi!'), backgroundColor: AppTheme.successColor),
         );
       }
+    }
+  }
+
+  Future<void> _handleDeleteUser(User targetUser) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: <Widget>[
+            const Icon(Icons.warning_amber_rounded, color: AppTheme.errorColor),
+            const SizedBox(width: 10),
+            Text('Kullanıcıyı Sil', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(
+          '"${targetUser.fullName}" kullanıcısını cihazdan silmek istediğinizden emin misiniz?\n\nBu işlem geri alınamaz ancak geçmişte oluşturduğu raporlar silinmez.',
+          style: GoogleFonts.inter(fontSize: 14, height: 1.4),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorColor),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final AuthService authService = Provider.of<AuthService>(context, listen: false);
+    final bool success = await authService.deleteUser(targetUser.id);
+
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${targetUser.fullName} kullanıcısı silindi.', style: GoogleFonts.inter()),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
+      await _loadUsers();
+    } else if (mounted && authService.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authService.errorMessage!, style: GoogleFonts.inter()),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final Size size = MediaQuery.of(context).size;
-    final bool isTablet = size.width > 800;
+    final bool isTablet = size.width > 700;
 
     return Scaffold(
       appBar: AppBar(
@@ -203,6 +257,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             color: Colors.white,
                           ),
                         ),
+                        const SizedBox(height: 4),
                         Text(
                           'Cihazdaki kullanıcıları ve sistem ayarlarını doğrudan yönetin.',
                           style: GoogleFonts.inter(
@@ -216,21 +271,49 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+
+            // Serverless Account Model Info Card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.primaryColor.withOpacity(0.15)),
+              ),
+              child: Row(
+                children: <Widget>[
+                  const Icon(Icons.info_outline_rounded, color: AppTheme.primaryColor, size: 22),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Tek tablette davet kodu veya e-posta OTP yoktur. Çalışan hesapları doğrudan buradan oluşturulur; çalışan telefon ve şifre ile Giriş yapar.',
+                      style: GoogleFonts.inter(fontSize: 13, color: AppTheme.primaryColor, height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
 
             // Quick Stats
-            GridView.count(
-              crossAxisCount: isTablet ? 3 : 1,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: isTablet ? 2.5 : 3.5,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              children: <Widget>[
-                _buildStatCard('Kayıtlı Kullanıcı', _users.length.toString(), Icons.people_alt_outlined, AppTheme.secondaryColor),
-                _buildStatCard('Yönetici Sayısı', _users.where((User u) => u.isAdmin).length.toString(), Icons.admin_panel_settings_outlined, Colors.orange),
-                _buildStatCard('Çalışan Sayısı', _users.where((User u) => u.isEmployee).length.toString(), Icons.engineering_outlined, AppTheme.primaryColor),
-              ],
+            LayoutBuilder(
+              builder: (BuildContext ctx, BoxConstraints constraints) {
+                final bool wideStats = constraints.maxWidth > 600;
+                return GridView.count(
+                  crossAxisCount: wideStats ? 3 : 1,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  childAspectRatio: wideStats ? 2.5 : 4.0,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  children: <Widget>[
+                    _buildStatCard('Kayıtlı Kullanıcı', _users.length.toString(), Icons.people_alt_outlined, AppTheme.secondaryColor),
+                    _buildStatCard('Yönetici Sayısı', _users.where((User u) => u.isAdmin).length.toString(), Icons.admin_panel_settings_outlined, Colors.orange),
+                    _buildStatCard('Çalışan Sayısı', _users.where((User u) => u.isEmployee).length.toString(), Icons.engineering_outlined, AppTheme.primaryColor),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 24),
 
@@ -264,14 +347,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         child: Text('Kayıtlı kullanıcı yok.'),
                       )
                     else
-                      ListView.builder(
+                      ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: _users.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
                         itemBuilder: (BuildContext context, int index) {
                           final User u = _users[index];
                           return ListTile(
-                            contentPadding: EdgeInsets.zero,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
                             leading: CircleAvatar(
                               backgroundColor: u.isAdmin ? Colors.orange.shade100 : AppTheme.primaryColor.withOpacity(0.1),
                               child: Icon(
@@ -284,20 +368,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15),
                             ),
                             subtitle: Text('Tel: ${u.phone} ${u.email != null ? "• ${u.email}" : ""}'),
-                            trailing: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: u.isAdmin ? Colors.orange.shade100 : AppTheme.primaryColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                u.isAdmin ? 'Yönetici' : 'Çalışan',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: u.isAdmin ? Colors.orange.shade800 : AppTheme.primaryColor,
+                            trailing: Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
+                              children: <Widget>[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: u.isAdmin ? Colors.orange.shade100 : AppTheme.primaryColor.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    u.isAdmin ? 'Yönetici' : 'Çalışan',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: u.isAdmin ? Colors.orange.shade800 : AppTheme.primaryColor,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.errorColor, size: 20),
+                                  tooltip: 'Kullanıcıyı Sil',
+                                  onPressed: () => _handleDeleteUser(u),
+                                ),
+                              ],
                             ),
                           );
                         },
@@ -315,38 +410,42 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget _buildStatCard(String label, String value, IconData icon, Color color) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: <Widget>[
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: color, size: 28),
+              child: Icon(icon, color: color, size: 24),
             ),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  value,
-                  style: GoogleFonts.outfit(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textDark,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    value,
+                    style: GoogleFonts.outfit(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textDark,
+                    ),
                   ),
-                ),
-                Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppTheme.textLight,
+                  Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: AppTheme.textLight,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
