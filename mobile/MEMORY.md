@@ -27,6 +27,16 @@ Format:
   adb install -r mobile/build/app/outputs/flutter-apk/app-release.apk
   ```
 
+## 2026-08-02 — Düzeltme: User.fromJson int->bool Dönüşüm Hataları & Duyarlı İlk Admin Kurulum Ekranı
+- **Ne yapıldı:**
+  1. **`User.fromJson` Güvenli Bool Dönüştürme (`mobile/lib/models/user_model.dart`)**:
+     - SQLite veritabanından gelen `is_active` / `has_signature` değerlerinin integer (0 / 1) olması nedeniyle çıkış yapıp tekrar girişte yaşanan `type 'int' is not a subtype of type 'bool'` tür dönüşüm hatası giderildi.
+     - `_parseBool` dâhili fonksiyonu ile int, bool ve String veri tipleri güvenli bir şekilde `bool` değerlere dönüştürüldü. `signature_path` dolu olduğunda `hasSignature` otomatik olarak `true` kabul edildi.
+  2. **Duyarlı `FirstAdminBootstrapScreen` UI (`mobile/lib/screens/auth/bootstrap_screen.dart`)**:
+     - Genişlik (width < 700) küçük olan cihazlarda (dikey tablet / telefon) daralan iki kolonlu yan yana düzen yerine tek kolonlu, üstü kompakt gradyan banner'lı ve altı dikey kaydırılabilir form düzenine geçildi.
+     - Genişlik >= 700 olan tabletlerde sol banner ve sağ form şeklinde iki kolonlu düzen korundu.
+  3. `flutter analyze`: **0 Hata** ile doğrulandı.
+
 ## 2026-08-02 — Faz 2: Cihaz Üzerinde Native Excel (.xlsx) Rapor Üretim Motoru
 - **Ne yapıldı:**
   1. **Şablon Asset'leri**: `backend/templates/` altındaki 3 orijinal Excel şablonu `mobile/assets/templates/` altına kopyalandı ve `pubspec.yaml` dosyasına eklendi:
