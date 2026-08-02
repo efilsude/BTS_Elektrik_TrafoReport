@@ -27,6 +27,28 @@ Format:
   adb install -r mobile/build/app/outputs/flutter-apk/app-release.apk
   ```
 
+## 2026-08-02 — Faz 1.1: bcrypt Şifre Hashleme, Yerel Zip Yedekleme & Geri Yükleme, SQL Denetimi
+- **Ne yapıldı:**
+  1. **bcrypt Şifre Güvenliği & Şeffaf Göç (`DatabaseHelper`)**:
+     - `bcrypt: ^1.1.3` paketi eklendi.
+     - Yeni kayıt, ilk admin kurulumu, kullanıcı ekleme ve şifre değiştirmede tüm şifreler bcrypt salting hash (`BCrypt.hashpw`) ile saklanır.
+     - Şeffaf Göç (Transparent Migration): Giriş yapılırken önce bcrypt doğrulaması denenir; uymuyorsa legacy SHA-256 doğrulanır. SHA-256 eşleşirse şifre bcrypt ile yeniden hashlenip SQLite veritabanında şeffaf olarak güncellenir.
+  2. **Yerel Veri Yedeği Al & Paylaş (`BackupService` + `ProfileScreen`)**:
+     - `archive: ^3.6.1` paketi eklendi.
+     - `traforeport_local.db` veritabanı, saha fotoğrafları (`documents/photos/`) ve dijital imzalar `.zip` arşivinde toplanır (`traforeport_backup_YYYYMMDD_HHMMSS.zip`).
+     - Android yerel paylaşım menüsü (`Share.shareXFiles`) ile dışa aktarılır.
+  3. **Yedekten Geri Yükle (`file_picker` + `BackupService`)**:
+     - `file_picker: ^8.1.4` ile `.zip` dosya seçici bağlandı.
+     - Onay diyalogu ("Mevcut verilerin üzerine yazılacaktır. Devam etmek istiyor musunuz?") eklendi.
+     - `DatabaseHelper.instance.closeDatabase()` ile veritabanı kilidi güvenle kapatılır, veritabanı ve fotoğraflar üzerine yazılır, veritabanı yeniden başlatılır ve oturum güvenle kapatılır (`LoginScreen`'e yönlendirilir).
+  4. **Finalize UX Netleştirmesi**:
+     - Cihaz üzerinde Excel üretimi olmayan Faz 1.1 aşamasında sahte `finalized` durumu oluşturmak yerine kullanıcı bilgilendirme diyalogu bağlandı: *"Excel (.xlsx) rapor üretimi cihaz üzerinde bir sonraki sürümde (Faz 2) aktif olacaktır. Raporunuz yerel SQLite veritabanına taslak olarak kaydedildi."*
+  5. **SQL Denetimi (SQL Injection Protection)**:
+     - SQLite sorgularındaki tüm `where` koşulları parametreli `whereArgs` dizisine dönüştürüldü.
+  6. `flutter analyze`: **0 Hata** ile doğrulandı.
+- **Bir sonraki adım (Faz 2):**
+  - Cihaz üzerinde native Excel (.xlsx) dosya üretimi (openpyxl / dart excel builder ile hücresel haritalama).
+
 ## 2026-08-02 — Faz 1: Tek Tablet Sunucusuz (Offline-First) Yerel Veri Katmanı Entegrasyonu
 - **Ne yapıldı:**
   1. Ürün Kararı: Uygulama tek Android tablet üzerinde tamamen sunucusuz (offline-first) çalışacak şekilde yapılandırıldı. FastAPI, uzak HTTP, JWT, OTP ve davet kodu bağımlılıkları ana akıştan kaldırıldı.

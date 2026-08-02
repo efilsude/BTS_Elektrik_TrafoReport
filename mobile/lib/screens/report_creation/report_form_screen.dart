@@ -294,7 +294,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     };
   }
 
-  // Finalize report and show Post-Production dialog (PRD §21.4)
+  // Save report draft and inform user about Phase 2 Excel generation
   Future<void> _finalizeReport() async {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
     final Report? report = service.activeReport;
@@ -319,16 +319,45 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       }
     }
 
-    final bool success = await service.finalizeReport(report.id);
+    await service.saveDraft();
 
-    if (mounted && success) {
-      _showPostProductionDialog(report.title, report.id);
-    } else if (mounted) {
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Rapor kesinleştirilirken hata oluştu.'),
-          backgroundColor: AppTheme.errorColor,
+    if (mounted) {
+      showDialog<dynamic>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: <Widget>[
+              const Icon(Icons.info_outline_rounded, color: AppTheme.primaryColor),
+              const SizedBox(width: 10),
+              Text('Rapor Kaydedildi', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Excel (.xlsx) rapor üretimi cihaz üzerinde bir sonraki sürümde (Faz 2) aktif olacaktır.',
+                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Tüm saha ölçüm verileriniz ve fotoğraflarınız cihazınızın yerel SQLite veritabanında güvenle taslak olarak saklanmaktadır.',
+                style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textLight, height: 1.4),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx); // Close dialog
+                Navigator.pop(context); // Return to home
+              },
+              child: const Text('Ana Sayfaya Dön'),
+            ),
+          ],
         ),
       );
     }

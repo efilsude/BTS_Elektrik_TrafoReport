@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:bcrypt/bcrypt.dart';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models/user_model.dart';
@@ -12,7 +14,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
 
   Future<Database> get database async {
-    if (_database != null) return _database!;
+    if (_database != null && _database!.isOpen) return _database!;
     _database = await _initDB('traforeport_local.db');
     return _database!;
   }
@@ -26,6 +28,13 @@ class DatabaseHelper {
       version: 1,
       onCreate: _createDB,
     );
+  }
+
+  Future<void> closeDatabase() async {
+    if (_database != null && _database!.isOpen) {
+      await _database!.close();
+      _database = null;
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -80,12 +89,41 @@ class DatabaseHelper {
     await db.execute(photoTable);
   }
 
-  // Password hashing utility
+  // ---------------- PASSWORD HASHING (BCRYPT + SHA-256 LEGACY MIGRATION) ----------------
+
+  /// Hash password using bcrypt
   static String hashPassword(String password) {
+    return BCrypt.hashpw(password, BCrypt.gensalt());
+  }
+
+  /// Legacy SHA-256 hash calculation (for Phase 1 transparent migration)
+  static String _hashLegacySha256(String password) {
     const String salt = 'TrafoReport_Local_Salt_2026';
     final List<int> bytes = utf8.encode(password + salt);
     final Digest digest = sha256.convert(bytes);
     return digest.toString();
+  }
+
+  /// Verify password: try bcrypt first; if legacy SHA-256 matches, transparently re-hash with bcrypt
+  Future<bool> verifyAndUpdatePassword(String userId, String password, String storedHash) async {
+    try {
+      // 1. Check if storedHash is bcrypt ($2a$, $2b$, $2y$)
+      if (storedHash.startsWith('\$2')) {
+        return BCrypt.checkpw(password, storedHash);
+      }
+    } catch (_) {}
+
+    // 2. Legacy SHA-256 fallback
+    final String legacyHash = _hashLegacySha256(password);
+    if (legacyHash == storedHash) {
+      // Transparent migration: update user's hash in SQLite to bcrypt
+      final String newBcryptHash = hashPassword(password);
+      await updateUserPasswordHash(userId, newBcryptHash);
+      debugPrint('[TrafoReport] Kullanici (ID: $userId) şifre hash\'i SHA-256 -> bcrypt olarak şeffaf güncellendi.');
+      return true;
+    }
+
+    return false;
   }
 
   // ---------------- USER OPERATIONS ----------------
@@ -99,7 +137,7 @@ class DatabaseHelper {
   Future<User?> getUserByPhoneOrEmail(String identifier) async {
     final Database db = await instance.database;
     final String cleanIdentifier = identifier.trim().toLowerCase();
-    
+
     final List<Map<String, dynamic>> maps = await db.query(
       'users',
       where: 'LOWER(phone) = ? OR LOWER(email) = ?',
@@ -126,20 +164,29 @@ class DatabaseHelper {
     return null;
   }
 
+  /// Parameterized SQL query for authentication with bcrypt + legacy transparent migration
   Future<User?> authenticateUser(String identifier, String password) async {
     final Database db = await instance.database;
     final String cleanIdentifier = identifier.trim().toLowerCase();
-    final String passwordHash = hashPassword(password);
 
     final List<Map<String, dynamic>> maps = await db.query(
       'users',
-      where: '(LOWER(phone) = ? OR LOWER(email) = ?) AND password_hash = ? AND is_active = 1',
-      whereArgs: <dynamic>[cleanIdentifier, cleanIdentifier, passwordHash],
+      where: '(LOWER(phone) = ? OR LOWER(email) = ?) AND is_active = 1',
+      whereArgs: <dynamic>[cleanIdentifier, cleanIdentifier],
     );
 
-    if (maps.isNotEmpty) {
-      return User.fromJson(maps.first);
+    if (maps.isEmpty) return null;
+
+    for (final Map<String, dynamic> map in maps) {
+      final String storedHash = map['password_hash'] as String;
+      final String userId = map['id'] as String;
+
+      final bool isValid = await verifyAndUpdatePassword(userId, password, storedHash);
+      if (isValid) {
+        return User.fromJson(map);
+      }
     }
+
     return null;
   }
 
@@ -183,18 +230,20 @@ class DatabaseHelper {
     );
   }
 
-  Future<bool> updateUserPassword(String userId, String newPassword) async {
+  Future<bool> updateUserPasswordHash(String userId, String newBcryptHash) async {
     final Database db = await instance.database;
-    final String newHash = hashPassword(newPassword);
-
     final int count = await db.update(
       'users',
-      <String, dynamic>{'password_hash': newHash},
+      <String, dynamic>{'password_hash': newBcryptHash},
       where: 'id = ?',
       whereArgs: <dynamic>[userId],
     );
-
     return count > 0;
+  }
+
+  Future<bool> updateUserPassword(String userId, String newPassword) async {
+    final String newBcryptHash = hashPassword(newPassword);
+    return await updateUserPasswordHash(userId, newBcryptHash);
   }
 
   Future<bool> updateUserSignature(String userId, String signaturePath) async {
@@ -229,7 +278,7 @@ class DatabaseHelper {
     return maps.map((Map<String, dynamic> m) => User.fromJson(m)).toList();
   }
 
-  // ---------------- REPORT OPERATIONS ----------------
+  // ---------------- REPORT OPERATIONS (PARAMETERIZED SQL) ----------------
 
   Future<List<Report>> getReports({String? statusFilter}) async {
     final Database db = await instance.database;
@@ -245,7 +294,6 @@ class DatabaseHelper {
 
     return maps.map((Map<String, dynamic> map) {
       final Map<String, dynamic> mutableMap = Map<String, dynamic>.from(map);
-      // parse data_json
       if (mutableMap['data_json'] is String) {
         try {
           mutableMap['data_json'] = jsonDecode(mutableMap['data_json'] as String);
@@ -319,12 +367,12 @@ class DatabaseHelper {
     return count > 0;
   }
 
-  // ---------------- PHOTO OPERATIONS ----------------
+  // ---------------- PHOTO OPERATIONS (PARAMETERIZED SQL) ----------------
 
   Future<void> addReportPhoto(String reportId, String kind, String filePath) async {
     final Database db = await instance.database;
     final String id = 'pho_${DateTime.now().millisecondsSinceEpoch}_${kind}';
-    
+
     await db.insert(
       'report_photos',
       <String, dynamic>{
