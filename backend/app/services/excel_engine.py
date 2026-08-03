@@ -1,7 +1,7 @@
 import os
 import re
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict
 import openpyxl
 from openpyxl.drawing.image import Image as OpenPyXLImage
 
@@ -16,58 +16,433 @@ TEMPLATE_PATHS = {
     "GT": os.path.join("templates", "TR BAKIM RAPORU GT HİLMİ.xlsx")
 }
 
-# Cell mappings per sheet
-CELL_MAPPING = {
-    "KAPAK SAYFASI": {
-        "D9": "customer_name",
-        "D10": "trafo_label",
-        "D11": "address",
-        "D12": "report_date",
-        "D14": "test_date",
-        "D54": "test_date",
-        "D55": "report_date",
-        "D56": "operator_title",
-        "D57": "sicil_no",
-        "D58": "ekipnet_no",
-        "B31": "summary_text"
+# Type-specific cell mappings per sheet
+TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
+    "HERMETIK": {
+        "KAPAK SAYFASI": {
+            "D9": "customer_name",
+            "D10": "trafo_label",
+            "D11": "address",
+            "D12": "report_date",
+            "D14": "test_date",
+            "A31": "summary_text",
+            "D56": "creator_display_name",
+            "D57": "sicil_no",
+            "D58": "ekipnet_no",
+        },
+        "ANA SAYFA": {
+            "G11": "brand",
+            "O11": "tap_info_1",
+            "Q11": "tap_info_2",
+            "S11": "tap_info_3",
+            "G13": "power_kva",
+            "O13": "manufacture_year",
+            "G15": "voltage",
+            "O15": "serial_no",
+            "G17": "oil_brand",
+            "O17": "oil_weight",
+            "G19": "connection_group",
+            "O19": "short_circuit_imp_pct",
+            "G21": "tank_type",
+            "I21": "tank_mark_hermetik",
+            "P21": "tank_mark_gt",
+            "U21": "tank_mark_kuru",
+            "J27": "checklist_1",
+            "J28": "checklist_2",
+            "J29": "checklist_3",
+            "J30": "checklist_4",
+            "J31": "checklist_5",
+            "J32": "checklist_6",
+            "J33": "checklist_7",
+            "J34": "checklist_8",
+            "J35": "checklist_9",
+            "J36": "checklist_10",
+            "J37": "checklist_11",
+            "J38": "checklist_12",
+            "J39": "checklist_13",
+            "J40": "checklist_14",
+            "J41": "checklist_15",
+            "J42": "checklist_16",
+            "U27": "checklist_17",
+            "U28": "checklist_18",
+            "U29": "checklist_19",
+            "U30": "checklist_20",
+            "U31": "checklist_21",
+            "U32": "checklist_22",
+            "U33": "checklist_23",
+            "U34": "checklist_24",
+            "U35": "checklist_25",
+            "U36": "checklist_26",
+            "U37": "checklist_27",
+            "U38": "checklist_28",
+            "U39": "checklist_29",
+            "U40": "checklist_30",
+            "U41": "checklist_31",
+            "U42": "checklist_32",
+            "C55": "og_rab",
+            "C57": "og_rbc",
+            "C59": "og_rca",
+            "J55": "ag_ran",
+            "J57": "ag_rbn",
+            "J59": "ag_rcn",
+            "O55": "ag_rab",
+            "O57": "ag_rbc",
+            "O59": "ag_rca",
+            "C61": "ground_trafo_body",
+            "F61": "ground_neutral",
+            "J61": "ground_tank",
+            "C63": "ground_og_lightning",
+            "F63": "ground_panel",
+            "J63": "ground_fence",
+        },
+        "İZOLASYON ": {
+            "D16": "iso_og_gnd",
+            "D17": "iso_ag_gnd",
+            "D30": "iso_temp",
+            "D31": "iso_humidity",
+        },
+        "Ç.O 34500": {
+            "B16": "ttr_tap1_a",
+            "C16": "ttr_tap1_b",
+            "D16": "ttr_tap1_c",
+            "B17": "ttr_tap2_a",
+            "C17": "ttr_tap2_b",
+            "D17": "ttr_tap2_c",
+            "B18": "ttr_tap3_a",
+            "C18": "ttr_tap3_b",
+            "D18": "ttr_tap3_c",
+            "B19": "ttr_tap4_a",
+            "C19": "ttr_tap4_b",
+            "D19": "ttr_tap4_c",
+            "B20": "ttr_tap5_a",
+            "C20": "ttr_tap5_b",
+            "D20": "ttr_tap5_c",
+        },
+        "TOPRAKLAMALAR": {
+            "D17": "ground_r_trafo_body",
+            "D18": "ground_r_neutral",
+            "D19": "ground_r_tank",
+            "D32": "ground_r_og_lightning",
+            "D33": "ground_r_panel",
+            "D34": "ground_r_fence",
+        },
+        "HV PF": {
+            "P17": "pf_hv_humidity",
+        },
+        "LV PF": {
+            "P17": "pf_lv_humidity",
+        },
+        "ANA SAYFA KESİCİ": {
+            "G11": "breaker_brand",
+            "O11": "breaker_serial_no",
+            "G13": "breaker_model",
+            "O13": "breaker_year",
+        },
+        "KESİCİ İZOLASYON": {
+            "D10": "breaker_iso_r_gnd",
+        },
+        "KESİCİ KONTAK": {
+            "D10": "breaker_contact_r",
+        },
+        "AÇMA-KAPAMA": {
+            "D10": "breaker_timing_open",
+        },
+        "DİĞER": {
+            "D16": "device_model",
+            "D17": "device_serial",
+        },
+        "AKIM TRAFOLARI": {
+            "D16": "ct_ratio",
+        },
+        "HERMETİK YAĞ DİLEKÇESİ": {
+            "D16": "oil_test_breakdown_voltage",
+            "D18": "oil_test_water_content",
+        }
     },
-    "ANA SAYFA": {
-        "K2": "customer_name",
-        "K5": "trafo_label",
-        "G11": "brand",
-        "O11": "tap_info",
-        "G13": "power_kva",
-        "O13": "manufacture_year",
-        "G15": "voltage",
-        "O15": "serial_no",
-        "G17": "oil_brand",
-        "O17": "oil_weight",
-        "G19": "connection_group",
-        "O19": "short_circuit_imp_pct",
-        "G21": "tank_type"
+    "KURU_TIP": {
+        "KAPAK SAYFASI": {
+            "D9": "customer_name",
+            "D10": "trafo_label",
+            "D11": "address",
+            "D12": "report_date",
+            "D14": "test_date",
+            "A31": "summary_text",
+            "D56": "creator_display_name",
+            "D57": "sicil_no",
+            "D58": "ekipnet_no",
+        },
+        "ANA SAYFA": {
+            "G11": "brand",
+            "O11": "tap_info_1",
+            "Q11": "tap_info_2",
+            "S11": "tap_info_3",
+            "G13": "power_kva",
+            "O13": "manufacture_year",
+            "G15": "voltage",
+            "O15": "serial_no",
+            "G17": "connection_group",
+            "O17": "short_circuit_imp_pct",
+            "G19": "tank_type",
+            "I19": "tank_mark_hermetik",
+            "P19": "tank_mark_gt",
+            "U19": "tank_mark_kuru",
+            "J24": "checklist_1",
+            "J25": "checklist_2",
+            "J26": "checklist_3",
+            "J27": "checklist_4",
+            "J28": "checklist_5",
+            "J29": "checklist_6",
+            "J30": "checklist_7",
+            "J31": "checklist_8",
+            "J32": "checklist_9",
+            "J33": "checklist_10",
+            "J34": "checklist_11",
+            "J35": "checklist_12",
+            "J36": "checklist_13",
+            "J37": "checklist_14",
+            "J38": "checklist_15",
+            "J39": "checklist_16",
+            "U24": "checklist_17",
+            "U25": "checklist_18",
+            "U26": "checklist_19",
+            "U27": "checklist_20",
+            "U28": "checklist_21",
+            "U29": "checklist_22",
+            "U30": "checklist_23",
+            "U31": "checklist_24",
+            "U32": "checklist_25",
+            "U33": "checklist_26",
+            "U34": "checklist_27",
+            "U35": "checklist_28",
+            "U36": "checklist_29",
+            "U37": "checklist_30",
+            "U38": "checklist_31",
+            "U39": "checklist_32",
+            "C49": "og_rab",
+            "C51": "og_rbc",
+            "C53": "og_rca",
+            "J49": "ag_ran",
+            "J51": "ag_rbn",
+            "J53": "ag_rcn",
+            "O49": "ag_rab",
+            "O51": "ag_rbc",
+            "O53": "ag_rca",
+            "C55": "ground_trafo_body",
+            "F55": "ground_neutral",
+            "J55": "ground_tank",
+            "C57": "ground_og_lightning",
+            "F57": "ground_panel",
+            "J57": "ground_fence",
+        },
+        "İZOLASYON ": {
+            "D16": "iso_og_gnd",
+            "D17": "iso_ag_gnd",
+            "D30": "iso_temp",
+            "D31": "iso_humidity",
+        },
+        "Ç.O 34500": {
+            "B16": "ttr_tap1_a",
+            "C16": "ttr_tap1_b",
+            "D16": "ttr_tap1_c",
+            "B17": "ttr_tap2_a",
+            "C17": "ttr_tap2_b",
+            "D17": "ttr_tap2_c",
+            "B18": "ttr_tap3_a",
+            "C18": "ttr_tap3_b",
+            "D18": "ttr_tap3_c",
+            "B19": "ttr_tap4_a",
+            "C19": "ttr_tap4_b",
+            "D19": "ttr_tap4_c",
+            "B20": "ttr_tap5_a",
+            "C20": "ttr_tap5_b",
+            "D20": "ttr_tap5_c",
+        },
+        "TOPRAKLAMALAR": {
+            "D17": "ground_r_trafo_body",
+            "D18": "ground_r_neutral",
+            "D19": "ground_r_tank",
+            "D32": "ground_r_og_lightning",
+            "D33": "ground_r_panel",
+            "D34": "ground_r_fence",
+        },
+        "HV PF": {
+            "P17": "pf_hv_humidity",
+        },
+        "LV PF": {
+            "P17": "pf_lv_humidity",
+        },
+        "ANA SAYFA KESİCİ": {
+            "G11": "breaker_brand",
+            "O11": "breaker_serial_no",
+            "G13": "breaker_model",
+            "O13": "breaker_year",
+        },
+        "KESİCİ İZOLASYON": {
+            "D10": "breaker_iso_r_gnd",
+        },
+        "KESİCİ KONTAK": {
+            "D10": "breaker_contact_r",
+        },
+        "AÇMA-KAPAMA": {
+            "D10": "breaker_timing_open",
+        },
+        "DİĞER": {
+            "D16": "device_model",
+            "D17": "device_serial",
+        },
+        "AKIM TRAFOLARI": {
+            "D16": "ct_ratio",
+        }
     },
-    "OG SARGI MEVCUT KADEME": {
-        "K24": "og_r_a",
-        "K25": "og_r_b",
-        "K26": "og_r_c"
-    },
-    "AG SARGI": {
-        "K24": "ag_r_a",
-        "K25": "ag_r_b",
-        "K26": "ag_r_c"
+    "GT": {
+        "KAPAK SAYFASI": {
+            "D9": "customer_name",
+            "D10": "trafo_label",
+            "D11": "address",
+            "D12": "report_date",
+            "D14": "test_date",
+            "A31": "summary_text",
+            "D56": "creator_display_name",
+            "D57": "sicil_no",
+            "D58": "ekipnet_no",
+        },
+        "ANA SAYFA": {
+            "G11": "brand",
+            "O11": "tap_info_1",
+            "Q11": "tap_info_2",
+            "S11": "tap_info_3",
+            "G13": "power_kva",
+            "O13": "manufacture_year",
+            "G15": "voltage",
+            "O15": "serial_no",
+            "G17": "oil_brand",
+            "O17": "oil_weight",
+            "G19": "connection_group",
+            "O19": "short_circuit_imp_pct",
+            "G21": "tank_type",
+            "I21": "tank_mark_hermetik",
+            "P21": "tank_mark_gt",
+            "U21": "tank_mark_kuru",
+            "J27": "checklist_1",
+            "J28": "checklist_2",
+            "J29": "checklist_3",
+            "J30": "checklist_4",
+            "J31": "checklist_5",
+            "J32": "checklist_6",
+            "J33": "checklist_7",
+            "J34": "checklist_8",
+            "J35": "checklist_9",
+            "J36": "checklist_10",
+            "J37": "checklist_11",
+            "J38": "checklist_12",
+            "J39": "checklist_13",
+            "J40": "checklist_14",
+            "J41": "checklist_15",
+            "J42": "checklist_16",
+            "U27": "checklist_17",
+            "U28": "checklist_18",
+            "U29": "checklist_19",
+            "U30": "checklist_20",
+            "U31": "checklist_21",
+            "U32": "checklist_22",
+            "U33": "checklist_23",
+            "U34": "checklist_24",
+            "U35": "checklist_25",
+            "U36": "checklist_26",
+            "U37": "checklist_27",
+            "U38": "checklist_28",
+            "U39": "checklist_29",
+            "U40": "checklist_30",
+            "U41": "checklist_31",
+            "U42": "checklist_32",
+            "C55": "og_rab",
+            "C57": "og_rbc",
+            "C59": "og_rca",
+            "J55": "ag_ran",
+            "J57": "ag_rbn",
+            "J59": "ag_rcn",
+            "O55": "ag_rab",
+            "O57": "ag_rbc",
+            "O59": "ag_rca",
+            "C61": "ground_trafo_body",
+            "F61": "ground_neutral",
+            "J61": "ground_tank",
+            "C63": "ground_og_lightning",
+            "F63": "ground_panel",
+            "J63": "ground_fence",
+        },
+        "İZOLASYON ": {
+            "D16": "iso_og_gnd",
+            "D17": "iso_ag_gnd",
+            "D30": "iso_temp",
+            "D31": "iso_humidity",
+        },
+        "Ç.O 34500": {
+            "B16": "ttr_tap1_a",
+            "C16": "ttr_tap1_b",
+            "D16": "ttr_tap1_c",
+            "B17": "ttr_tap2_a",
+            "C17": "ttr_tap2_b",
+            "D17": "ttr_tap2_c",
+            "B18": "ttr_tap3_a",
+            "C18": "ttr_tap3_b",
+            "D18": "ttr_tap3_c",
+            "B19": "ttr_tap4_a",
+            "C19": "ttr_tap4_b",
+            "D19": "ttr_tap4_c",
+            "B20": "ttr_tap5_a",
+            "C20": "ttr_tap5_b",
+            "D20": "ttr_tap5_c",
+        },
+        "TOPRAKLAMALAR": {
+            "D17": "ground_r_trafo_body",
+            "D18": "ground_r_neutral",
+            "D19": "ground_r_tank",
+            "D32": "ground_r_og_lightning",
+            "D33": "ground_r_panel",
+            "D34": "ground_r_fence",
+        },
+        "ANA SAYFA KESİCİ": {
+            "G11": "breaker_brand",
+            "O11": "breaker_serial_no",
+            "G13": "breaker_model",
+            "O13": "breaker_year",
+        },
+        "KESİCİ İZOLASYON": {
+            "D10": "breaker_iso_r_gnd",
+        },
+        "KESİCİ KONTAK": {
+            "D10": "breaker_contact_r",
+        },
+        "AÇMA-KAPAMA": {
+            "D10": "breaker_timing_open",
+        },
+        "YAĞ RAPORU": {
+            "D16": "oil_test_breakdown_voltage",
+            "D18": "oil_test_water_content",
+        },
+        "HERMETİK YAĞ DİLEKÇESİ": {
+            "D16": "oil_test_breakdown_voltage",
+            "D18": "oil_test_water_content",
+        }
     }
 }
+
+# Global fallback mapping
+CELL_MAPPING = TYPE_CELL_MAPPINGS["HERMETIK"]
+
 
 def date_to_excel_serial(date_input: Optional[str]) -> Optional[float]:
     """Converts a date string (YYYY-MM-DD or DD.MM.YYYY) into an Excel serial date number (epoch: 1899-12-30)."""
     if not date_input:
         return None
     try:
-        if "." in str(date_input):
-            parts = str(date_input).split(".")
+        s_date = str(date_input).strip()
+        if "." in s_date:
+            parts = s_date.split(".")
             d_obj = datetime(int(parts[2]), int(parts[1]), int(parts[0])).date()
-        elif "-" in str(date_input):
-            parts = str(date_input).split("-")
+        elif "-" in s_date:
+            parts = s_date.split("-")
             d_obj = datetime(int(parts[0]), int(parts[1]), int(parts[2])).date()
         else:
             return None
@@ -76,31 +451,43 @@ def date_to_excel_serial(date_input: Optional[str]) -> Optional[float]:
     except Exception:
         return None
 
+
 def sanitize_filename(filename: str) -> str:
     """Removes invalid OS filename characters."""
     return re.sub(r'[\\/*?:"<>|]', '_', filename)
+
 
 def format_date_display(date_input: Optional[str]) -> str:
     """Formats date to DD.MM.YYYY for filenames."""
     if not date_input:
         return datetime.now().strftime("%d.%m.%Y")
     try:
-        if "." in str(date_input):
-            parts = str(date_input).split(".")
+        s_date = str(date_input).strip()
+        if "." in s_date:
+            parts = s_date.split(".")
             return f"{int(parts[0]):02d}.{int(parts[1]):02d}.{parts[2]}"
-        elif "-" in str(date_input):
-            parts = str(date_input).split("-")
+        elif "-" in s_date:
+            parts = s_date.split("-")
             return f"{int(parts[2]):02d}.{int(parts[1]):02d}.{parts[0]}"
     except Exception:
         pass
     return datetime.now().strftime("%d.%m.%Y")
+
 
 def generate_report_excel(
     report: Report,
     photos: List[Photo],
     signature_path: Optional[str] = None
 ) -> str:
-    report_type = report.report_type.upper()
+    report_type = report.report_type.upper().strip()
+    if report_type not in TYPE_CELL_MAPPINGS:
+        if "KURU" in report_type:
+            report_type = "KURU_TIP"
+        elif "GT" in report_type or "TANK" in report_type:
+            report_type = "GT"
+        else:
+            report_type = "HERMETIK"
+
     template_rel_path = TEMPLATE_PATHS.get(report_type, TEMPLATE_PATHS["HERMETIK"])
     
     # Try finding template relative to backend directory or project root
@@ -125,10 +512,19 @@ def generate_report_excel(
     data_dict["report_date"] = report.report_date
     data_dict["test_date"] = report.test_date
 
+    cell_mapping_to_use = TYPE_CELL_MAPPINGS.get(report_type, TYPE_CELL_MAPPINGS["HERMETIK"])
+
     # Fill mapped cells across sheets
-    for sheet_name, cell_map in CELL_MAPPING.items():
-        if sheet_name in wb.sheetnames:
-            ws = wb[sheet_name]
+    for target_sheet_name, cell_map in cell_mapping_to_use.items():
+        # Match sheet name preserving trailing space
+        matched_sheet = None
+        for sname in wb.sheetnames:
+            if sname.strip() == target_sheet_name.strip():
+                matched_sheet = sname
+                break
+        
+        if matched_sheet:
+            ws = wb[matched_sheet]
             for cell_ref, field_key in cell_map.items():
                 if field_key in data_dict:
                     val = data_dict[field_key]
@@ -152,7 +548,7 @@ def generate_report_excel(
                             except Exception:
                                 ws[cell_ref] = str(val)
 
-    # Insert signature image if present
+    # Insert signature image if present (Anchor G56)
     if signature_path and os.path.exists(signature_path) and "KAPAK SAYFASI" in wb.sheetnames:
         ws_kapak = wb["KAPAK SAYFASI"]
         try:

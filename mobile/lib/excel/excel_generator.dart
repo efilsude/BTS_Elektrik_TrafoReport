@@ -1,28 +1,11 @@
 import 'dart:io';
-import 'package:archive/archive.dart';
-import 'package:excel/excel.dart';
+import 'package:excel_plus/excel_plus.dart';
 import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:path_provider/path_provider.dart';
 import 'cell_mapping.dart';
 import '../models/report_model.dart';
 
 class ExcelGenerator {
-  /// Strips calcChain.xml from generated Excel archive to prevent MS Excel XML recovery errors
-  static List<int> _removeCalcChain(List<int> bytes) {
-    try {
-      final Archive archive = ZipDecoder().decodeBytes(bytes);
-      final Archive newArchive = Archive();
-      for (final ArchiveFile file in archive) {
-        if (file.name != 'xl/calcChain.xml' && !file.name.endsWith('calcChain.xml')) {
-          newArchive.addFile(file);
-        }
-      }
-      return ZipEncoder().encode(newArchive) ?? bytes;
-    } catch (_) {
-      return bytes;
-    }
-  }
-
   /// Generates a filled Excel (.xlsx) file on device using official templates
   static Future<File> generateReportExcel({
     required Report report,
@@ -115,11 +98,8 @@ class ExcelGenerator {
       throw Exception('Excel dosyası kaydedilemedi.');
     }
 
-    // Strip stale calcChain.xml to prevent Excel XML recovery errors on open
-    final List<int> cleanedFileBytes = _removeCalcChain(fileBytes);
-
     final File outputFile = File(outputPath);
-    await outputFile.writeAsBytes(cleanedFileBytes);
+    await outputFile.writeAsBytes(fileBytes);
     return outputFile;
   }
 }
