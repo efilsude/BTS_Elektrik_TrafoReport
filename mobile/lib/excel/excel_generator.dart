@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:excel_plus/excel_plus.dart';
 import 'package:flutter/services.dart' show ByteData, rootBundle;
@@ -11,44 +12,39 @@ class ExcelGenerator {
     required Report report,
     String? signaturePath,
   }) async {
-    final String transformerType = report.transformerType.toLowerCase().trim();
-    final String assetPath = ExcelCellMapping.templateAssetPaths[transformerType] ??
-        ExcelCellMapping.templateAssetPaths['hermetik']!;
+    if (Platform.isWindows) {
+      return await _generateReportExcelWindowsCli(
+        report: report,
+        signaturePath: signaturePath,
+      );
+    }
+    return await _generateReportExcelFallback(
+      report: report,
+      signaturePath: signaturePath,
+    );
+  }
 
-    // Select type-based cell mapping matrix (hermetik | kuru_tip | gt)
-    final Map<String, Map<String, String>> typeMapping =
-        ExcelCellMapping.cellMappingForType(transformerType);
-
-    // Load template bytes from Flutter bundled assets
-    final ByteData data = await rootBundle.load(assetPath);
-    final List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-
-    final Excel excel = Excel.decodeBytes(bytes);
-
-    // Flatten values map from Report attributes and dataJson
+  /// Windows implementation: executes local openpyxl CLI (tools/generate_excel.py) via Process.run
+  static Future<File> _generateReportExcelWindowsCli({
+    required Report report,
+    String? signaturePath,
+  }) async {
     final Map<String, dynamic> dataDict = <String, dynamic>{};
     if (report.dataJson.isNotEmpty) {
       dataDict.addAll(report.dataJson);
     }
 
-    // Mandatory overrides from Report properties
     dataDict['customer_name'] = report.customerName;
     dataDict['trafo_label'] = report.trafoLabel;
-
-    // Address & Location alias
     dataDict['address'] = dataDict['address'] ?? dataDict['location'] ?? '';
-
-    // Dates
     dataDict['report_date'] = dataDict['report_date'] ?? ExcelCellMapping.formatDateDisplay(report.createdAt);
     dataDict['test_date'] = dataDict['test_date'] ?? ExcelCellMapping.formatDateDisplay(report.createdAt);
-
-    // Personnel display name
     dataDict['creator_display_name'] = report.creatorDisplayName ??
         dataDict['operator_title'] ??
         dataDict['operator_name'] ??
         '';
 
-    // Tank mark checkmark auto-set ('ü')
+    final String transformerType = report.transformerType.toLowerCase().trim();
     if (transformerType == 'hermetik') {
       dataDict['tank_mark_hermetik'] = 'ü';
     } else if (transformerType == 'gt') {
@@ -57,7 +53,180 @@ class ExcelGenerator {
       dataDict['tank_mark_kuru'] = 'ü';
     }
 
-    // Legacy nested aliases (safety fallback)
+    final Directory appDocDir = await getApplicationDocumentsDirectory();
+    final Directory reportsDir = Directory('${appDocDir.path}/reports');
+    if (!await reportsDir.exists()) {
+      await reportsDir.create(recursive: true);
+    }
+
+    final String dateStr = ExcelCellMapping.formatDateDisplay(dataDict['test_date'] ?? report.createdAt);
+    final String customerStr = report.customerName.isEmpty ? 'Musteri' : report.customerName;
+    final String labelStr = report.trafoLabel.isEmpty ? 'Trafo' : report.trafoLabel;
+
+    final String rawFilename = '$customerStr - $labelStr - $dateStr.xlsx';
+    final String cleanFilename = ExcelCellMapping.sanitizeFilename(rawFilename);
+    final String outputPath = '${reportsDir.path}/$cleanFilename';
+
+    // Temporary JSON file for CLI argument
+    final File tempJsonFile = File('${reportsDir.path}/temp_report_${report.id}.json');
+    await tempJsonFile.writeAsString(jsonEncode(dataDict));
+
+    final String? scriptPath = _findPythonScriptPath();
+    if (scriptPath == null) {
+      if (await tempJsonFile.exists()) {
+        await tempJsonFile.delete();
+      }
+      throw Exception(
+        'Excel şablon üretim aracı bulunamadı (tools/generate_excel.py).\n'
+        'Lütfen proje dizininde tools/generate_excel.py dosyasının bulunduğundan emin olun.',
+      );
+    }
+
+    final List<String> pythonExecutables = <String>['python', 'py', 'python3'];
+    ProcessResult? result;
+    String? lastError;
+
+    for (final String pyExe in pythonExecutables) {
+      final List<String> cliArgs = <String>[
+        scriptPath,
+        '--json',
+        tempJsonFile.path,
+        '--template-type',
+        transformerType,
+        '--output',
+        outputPath,
+      ];
+
+      final String? effectiveSigPath = signaturePath ??
+          dataDict['signature_path']?.toString() ??
+          dataDict['signature']?.toString();
+
+      if (effectiveSigPath != null && effectiveSigPath.isNotEmpty && File(effectiveSigPath).existsSync()) {
+        cliArgs.addAll(<String>['--signature', effectiveSigPath]);
+      }
+
+      dynamic photoBefore = dataDict['photo_before'];
+      if (photoBefore == null && dataDict['photos'] is Map) {
+        photoBefore = dataDict['photos']['photo_before'];
+      }
+      if (photoBefore is String && photoBefore.isNotEmpty && File(photoBefore).existsSync()) {
+        cliArgs.addAll(<String>['--photo-before', photoBefore]);
+      }
+
+      dynamic photoAfter = dataDict['photo_after'];
+      if (photoAfter == null && dataDict['photos'] is Map) {
+        photoAfter = dataDict['photos']['photo_after'];
+      }
+      if (photoAfter is String && photoAfter.isNotEmpty && File(photoAfter).existsSync()) {
+        cliArgs.addAll(<String>['--photo-after', photoAfter]);
+      }
+
+      dynamic photoLabel = dataDict['photo_label'];
+      if (photoLabel == null && dataDict['photos'] is Map) {
+        photoLabel = dataDict['photos']['photo_label'];
+      }
+      if (photoLabel is String && photoLabel.isNotEmpty && File(photoLabel).existsSync()) {
+        cliArgs.addAll(<String>['--photo-label', photoLabel]);
+      }
+
+      try {
+        result = await Process.run(pyExe, cliArgs);
+        if (result.exitCode == 0 && result.stdout.toString().contains('OUTPUT_OK:')) {
+          if (await tempJsonFile.exists()) {
+            await tempJsonFile.delete();
+          }
+          final File outputFile = File(outputPath);
+          if (await outputFile.exists()) {
+            return outputFile;
+          }
+        } else {
+          lastError = result.stderr.toString().trim();
+          if (lastError.isEmpty) {
+            lastError = result.stdout.toString().trim();
+          }
+        }
+      } catch (e) {
+        lastError = e.toString();
+      }
+    }
+
+    if (await tempJsonFile.exists()) {
+      await tempJsonFile.delete();
+    }
+
+    throw Exception(
+      'Excel raporu üretilemedi.\n'
+      'Lütfen bilgisayarınızda Python ve "openpyxl" kütüphanesinin yüklü olduğundan emin olun.\n'
+      'Hata Detayı: $lastError',
+    );
+  }
+
+  static String? _findPythonScriptPath() {
+    final String? envToolsDir = Platform.environment['TRAFO_TOOLS_DIR'];
+    if (envToolsDir != null && envToolsDir.isNotEmpty) {
+      final File envScript = File('$envToolsDir/generate_excel.py');
+      if (envScript.existsSync()) return envScript.path;
+    }
+
+    final String cwd = Directory.current.path;
+    final List<String> candidatePaths = <String>[
+      '$cwd/tools/generate_excel.py',
+      '$cwd/../tools/generate_excel.py',
+      '$cwd/../../tools/generate_excel.py',
+      'tools/generate_excel.py',
+      'C:/Users/User/OneDrive/Desktop/BTS_Elektrik/tools/generate_excel.py',
+    ];
+
+    for (final String path in candidatePaths) {
+      final File f = File(path);
+      if (f.existsSync()) {
+        return f.absolute.path;
+      }
+    }
+
+    return null;
+  }
+
+  /// Fallback implementation for mobile/non-Windows platforms using excel_plus
+  static Future<File> _generateReportExcelFallback({
+    required Report report,
+    String? signaturePath,
+  }) async {
+    final String transformerType = report.transformerType.toLowerCase().trim();
+    final String assetPath = ExcelCellMapping.templateAssetPaths[transformerType] ??
+        ExcelCellMapping.templateAssetPaths['hermetik']!;
+
+    final Map<String, Map<String, String>> typeMapping =
+        ExcelCellMapping.cellMappingForType(transformerType);
+
+    final ByteData data = await rootBundle.load(assetPath);
+    final List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+
+    final Excel excel = Excel.decodeBytes(bytes);
+
+    final Map<String, dynamic> dataDict = <String, dynamic>{};
+    if (report.dataJson.isNotEmpty) {
+      dataDict.addAll(report.dataJson);
+    }
+
+    dataDict['customer_name'] = report.customerName;
+    dataDict['trafo_label'] = report.trafoLabel;
+    dataDict['address'] = dataDict['address'] ?? dataDict['location'] ?? '';
+    dataDict['report_date'] = dataDict['report_date'] ?? ExcelCellMapping.formatDateDisplay(report.createdAt);
+    dataDict['test_date'] = dataDict['test_date'] ?? ExcelCellMapping.formatDateDisplay(report.createdAt);
+    dataDict['creator_display_name'] = report.creatorDisplayName ??
+        dataDict['operator_title'] ??
+        dataDict['operator_name'] ??
+        '';
+
+    if (transformerType == 'hermetik') {
+      dataDict['tank_mark_hermetik'] = 'ü';
+    } else if (transformerType == 'gt') {
+      dataDict['tank_mark_gt'] = 'ü';
+    } else if (transformerType == 'kuru_tip') {
+      dataDict['tank_mark_kuru'] = 'ü';
+    }
+
     final Map<dynamic, dynamic> wr = dataDict['winding_resistance'] as Map? ?? <dynamic, dynamic>{};
     dataDict['og_rab'] ??= wr['r_phase'];
     dataDict['og_rbc'] ??= wr['s_phase'];
@@ -77,11 +246,9 @@ class ExcelGenerator {
     dataDict['breaker_timing_close'] ??= br['close_time'];
     dataDict['breaker_phase_diff'] ??= br['phase_diff'];
 
-    // Iterate through type-specific mapped sheets and cells
     for (final String targetSheetName in typeMapping.keys) {
       final String normTarget = ExcelCellMapping.normalizeSheetName(targetSheetName);
 
-      // Match sheet in workbook trying exact name first, then trimmed name (e.g. 'İZOLASYON ')
       Sheet? sheet;
       for (final String sName in excel.tables.keys) {
         if (sName == targetSheetName || ExcelCellMapping.normalizeSheetName(sName) == normTarget) {
@@ -95,7 +262,6 @@ class ExcelGenerator {
       final Map<String, String> cellMap = typeMapping[targetSheetName]!;
 
       cellMap.forEach((String cellRef, String fieldKey) {
-        // Skip TODO_VERIFY sızıntı entries
         if (fieldKey.startsWith('TODO_VERIFY')) return;
 
         if (!dataDict.containsKey(fieldKey)) return;
@@ -104,16 +270,14 @@ class ExcelGenerator {
 
         final CellIndex cellIndex = CellIndex.indexByString(cellRef);
 
-        // Formula protection: preserve existing template formulas (=...)
         final Data? existingCell = sheet!.cell(cellIndex);
         if (existingCell != null && existingCell.value != null) {
           final String existingStr = existingCell.value.toString().trim();
           if (existingStr.startsWith('=')) {
-            return; // Skip overwriting template formula cell
+            return;
           }
         }
 
-        // Value writing logic
         if (fieldKey == 'report_date' || fieldKey == 'test_date') {
           final double? serial = ExcelCellMapping.dateToExcelSerial(rawVal);
           if (serial != null) {
@@ -147,10 +311,8 @@ class ExcelGenerator {
       });
     }
 
-    // Embed Signature and Cover Photos on KAPAK SAYFASI sheet (Paket 4)
     final Sheet? kapakSheet = excel.tables['KAPAK SAYFASI'];
     if (kapakSheet != null) {
-      // 1. Signature Image (Anchor G56, box G55:H58)
       final String? effectiveSigPath = signaturePath ??
           dataDict['signature_path']?.toString() ??
           dataDict['signature']?.toString();
@@ -166,13 +328,10 @@ class ExcelGenerator {
               width: 140,
               height: 50,
             );
-          } catch (e) {
-            // Log/skip silently without failing Excel generation
-          }
+          } catch (_) {}
         }
       }
 
-      // 2. Cover Photos (A35, F35, A43, F43)
       final List<String> photoSlotCells = <String>['A35', 'F35', 'A43', 'F43'];
       final List<String> photoKeys = <String>[
         'photo_before',
@@ -203,15 +362,12 @@ class ExcelGenerator {
                 height: 120,
               );
               photoIndex++;
-            } catch (e) {
-              // Log/skip silently
-            }
+            } catch (_) {}
           }
         }
       }
     }
 
-    // Prepare output directory and filename: {Customer} - {TrafoLabel} - {DD.MM.YYYY}.xlsx
     final Directory appDocDir = await getApplicationDocumentsDirectory();
     final Directory reportsDir = Directory('${appDocDir.path}/reports');
     if (!await reportsDir.exists()) {
