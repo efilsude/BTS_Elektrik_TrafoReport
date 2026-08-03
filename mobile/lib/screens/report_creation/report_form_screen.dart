@@ -377,61 +377,136 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
   Future<void> _simulateQrScan() async {
     final String? scannedCode = await QrScannerDialog.scan(context);
-    if (scannedCode != null && scannedCode.isNotEmpty && mounted) {
-      try {
-        if (scannedCode.startsWith('{') && scannedCode.endsWith('}')) {
-          final Map<String, dynamic> jsonMap = jsonDecode(scannedCode) as Map<String, dynamic>;
-          _populateLabelData(
-            brand: jsonMap['brand']?.toString() ?? '',
-            power: jsonMap['power_kva']?.toString() ?? jsonMap['power']?.toString() ?? '',
-            voltage: jsonMap['voltage']?.toString() ?? '',
-            serial: jsonMap['serial_no']?.toString() ?? jsonMap['serial']?.toString() ?? '',
-            year: jsonMap['manufacture_year']?.toString() ?? jsonMap['year']?.toString() ?? '',
-            connection: jsonMap['connection_group']?.toString() ?? jsonMap['connection']?.toString() ?? '',
-          );
-          return;
-        }
-      } catch (_) {}
+    if (scannedCode != null && scannedCode.trim().isNotEmpty && mounted) {
+      final String code = scannedCode.trim();
 
-      setState(() {
-        _serialNoController.text = scannedCode;
-      });
-      final ReportService service = Provider.of<ReportService>(context, listen: false);
-      service.updateField('serial_no', scannedCode);
+      // 1. JSON parse
+      if (code.startsWith('{') && code.endsWith('}')) {
+        try {
+          final Map<String, dynamic> jsonMap = jsonDecode(code) as Map<String, dynamic>;
+          final Map<String, String> parsed = <String, String>{};
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('QR Kod Başarıyla Okundu: $scannedCode', style: GoogleFonts.inter()),
-          backgroundColor: AppTheme.successColor,
+          if (jsonMap.containsKey('brand')) parsed['brand'] = jsonMap['brand'].toString();
+          if (jsonMap.containsKey('power_kva') || jsonMap.containsKey('power')) {
+            parsed['power_kva'] = (jsonMap['power_kva'] ?? jsonMap['power']).toString();
+          }
+          if (jsonMap.containsKey('voltage')) parsed['voltage'] = jsonMap['voltage'].toString();
+          if (jsonMap.containsKey('serial_no') || jsonMap.containsKey('serial')) {
+            parsed['serial_no'] = (jsonMap['serial_no'] ?? jsonMap['serial']).toString();
+          }
+          if (jsonMap.containsKey('manufacture_year') || jsonMap.containsKey('year')) {
+            parsed['manufacture_year'] = (jsonMap['manufacture_year'] ?? jsonMap['year']).toString();
+          }
+          if (jsonMap.containsKey('connection_group') || jsonMap.containsKey('connection')) {
+            parsed['connection_group'] = (jsonMap['connection_group'] ?? jsonMap['connection']).toString();
+          }
+          if (jsonMap.containsKey('oil_weight') || jsonMap.containsKey('oil')) {
+            parsed['oil_weight'] = (jsonMap['oil_weight'] ?? jsonMap['oil']).toString();
+          }
+
+          if (parsed.isNotEmpty) {
+            _applyParsedQrFields(parsed);
+            return;
+          }
+        } catch (_) {}
+      }
+
+      // 2. Key-Value Regex parse (flexible spacing & concatenated texts)
+      final Map<String, RegExp> patterns = <String, RegExp>{
+        'brand': RegExp(
+          r'(?:Brand|Marka|Manufacturer|Üretici)\s*:?\s*([A-Za-z0-9_\-\s]+?)(?=(?:Rated|Power|Voltage|Serial|Seri|Year|İmal|Vector|Connection|Bağlantı|[A-Z][a-zA-Z\s]+:|\s|$))',
+          caseSensitive: false,
         ),
-      );
+        'power_kva': RegExp(
+          r'(?:Rated\s*Power|Power|kVA|Güç)\s*:?\s*([0-9]+(?:[.,][0-9]+)?)',
+          caseSensitive: false,
+        ),
+        'voltage': RegExp(
+          r'(?:Rated\s*Voltage|Voltage|Gerilim)\s*:?\s*([0-9.,]+(?:\s*/\s*[0-9.,]+)?(?:\s*k?V)?)',
+          caseSensitive: false,
+        ),
+        'manufacture_year': RegExp(
+          r'(?:Production\s*(?:Year|Date)?|Manufacture\s*(?:Year|Date)?|Year|İmal\s*(?:Yılı|Tarihi)?)\s*:?\s*(\d{2}\.\d{2}\.\d{4}|\d{4})',
+          caseSensitive: false,
+        ),
+        'serial_no': RegExp(
+          r'(?:Serial\s*(?:No)?|Seri\s*(?:No)?|S/N)\s*:?\s*([A-Za-z0-9_-]+)',
+          caseSensitive: false,
+        ),
+        'connection_group': RegExp(
+          r'(?:Vector\s*(?:Type|Group)?|Connection\s*(?:Group)?|Bağlantı\s*Grubu)\s*:?\s*([A-Za-z0-9]+?)(?=(?:Production|Rated|Serial|Year|Voltage|Marka|Güç|Gerilim|[A-Z][a-zA-Z\s]+:|\s|$))',
+          caseSensitive: false,
+        ),
+        'oil_weight': RegExp(
+          r'(?:Oil\s*Weight|Oil|Yağ\s*Ağırlığı|Yağ\s*Miktarı|Yağ)\s*:?\s*([0-9]+)',
+          caseSensitive: false,
+        ),
+      };
+
+      final Map<String, String> extracted = <String, String>{};
+      patterns.forEach((String key, RegExp regex) {
+        final Match? match = regex.firstMatch(code);
+        if (match != null && match.groupCount >= 1) {
+          final String matchedVal = match.group(1)!.trim();
+          if (matchedVal.isNotEmpty) {
+            extracted[key] = matchedVal;
+          }
+        }
+      });
+
+      if (extracted.isNotEmpty) {
+        _applyParsedQrFields(extracted);
+        return;
+      }
+
+      // 3. Fallback: Write raw string to serial_no if no fields matched
+      _applyParsedQrFields(<String, String>{'serial_no': code});
     }
   }
 
-  void _populateLabelData({
-    required String brand,
-    required String power,
-    required String voltage,
-    required String serial,
-    required String year,
-    required String connection,
-  }) {
+  void _applyParsedQrFields(Map<String, String> fields) {
+    final ReportService service = Provider.of<ReportService>(context, listen: false);
+
     setState(() {
-      _brandController.text = brand;
-      _powerController.text = power;
-      _voltageController.text = voltage;
-      _serialNoController.text = serial;
-      _yearController.text = year;
-      _connectionGroupController.text = connection;
+      if (fields.containsKey('brand')) {
+        _brandController.text = fields['brand']!;
+        service.updateField('brand', fields['brand']!);
+      }
+      if (fields.containsKey('power_kva')) {
+        _powerController.text = fields['power_kva']!;
+        service.updateField('power_kva', fields['power_kva']!);
+      }
+      if (fields.containsKey('voltage')) {
+        _voltageController.text = fields['voltage']!;
+        service.updateField('voltage', fields['voltage']!);
+      }
+      if (fields.containsKey('serial_no')) {
+        _serialNoController.text = fields['serial_no']!;
+        service.updateField('serial_no', fields['serial_no']!);
+      }
+      if (fields.containsKey('manufacture_year')) {
+        _yearController.text = fields['manufacture_year']!;
+        service.updateField('manufacture_year', fields['manufacture_year']!);
+      }
+      if (fields.containsKey('connection_group')) {
+        _connectionGroupController.text = fields['connection_group']!;
+        service.updateField('connection_group', fields['connection_group']!);
+      }
+      if (fields.containsKey('oil_weight')) {
+        _oilWeightController.text = fields['oil_weight']!;
+        service.updateField('oil_weight', fields['oil_weight']!);
+      }
     });
 
-    final ReportService service = Provider.of<ReportService>(context, listen: false);
-    service.updateField('brand', brand);
-    service.updateField('power_kva', power);
-    service.updateField('voltage', voltage);
-    service.updateField('serial_no', serial);
-    service.updateField('manufacture_year', year);
-    service.updateField('connection_group', connection);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'QR Kod Başarıyla Okundu: ${fields.length} alan dolduruldu',
+          style: GoogleFonts.inter(),
+        ),
+        backgroundColor: AppTheme.successColor,
+      ),
+    );
   }
 
   Future<void> _changeStep(int direction) async {
