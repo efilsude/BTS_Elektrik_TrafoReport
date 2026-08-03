@@ -1,15 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+
 import '../../models/report_model.dart';
 import '../../services/report_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/photo_picker_widget.dart';
 import '../../widgets/qr_scanner_dialog.dart';
-
 
 class ReportFormScreen extends StatefulWidget {
   const ReportFormScreen({super.key});
@@ -23,40 +22,101 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   int _currentStepIndex = 0;
   bool _isAutoSaving = false;
 
-  // Controllers for general inputs
+  // Step 1: Genel Bilgiler Controllers
   final TextEditingController _customerController = TextEditingController();
-  final TextEditingController _locationController = TextEditingController();
-  final TextEditingController _operatorController = TextEditingController();
+  final TextEditingController _trafoLabelController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _reportDateController = TextEditingController();
+  final TextEditingController _testDateController = TextEditingController();
+  final TextEditingController _operatorNameController = TextEditingController();
   final TextEditingController _deviceModelController = TextEditingController();
   final TextEditingController _deviceSerialController = TextEditingController();
+  final TextEditingController _operatorTitleController = TextEditingController();
+  final TextEditingController _sicilNoController = TextEditingController();
+  final TextEditingController _ekipnetNoController = TextEditingController();
 
-  // Controllers for label specs
+  // Step 2: Etiket Bilgileri Controllers
   final TextEditingController _brandController = TextEditingController();
   final TextEditingController _powerController = TextEditingController();
   final TextEditingController _voltageController = TextEditingController();
   final TextEditingController _serialNoController = TextEditingController();
   final TextEditingController _yearController = TextEditingController();
   final TextEditingController _connectionGroupController = TextEditingController();
+  final TextEditingController _tapInfo1Controller = TextEditingController();
+  final TextEditingController _tapInfo2Controller = TextEditingController();
+  final TextEditingController _tapInfo3Controller = TextEditingController();
+  final TextEditingController _shortCircuitImpController = TextEditingController();
+  final TextEditingController _oilBrandController = TextEditingController();
+  final TextEditingController _oilWeightController = TextEditingController();
 
-  // Controllers for Winding Resistance (YG / Primer)
-  final TextEditingController _ygRController = TextEditingController();
-  final TextEditingController _ygSController = TextEditingController();
-  final TextEditingController _ygTController = TextEditingController();
+  // Step 4: Sargı Ölçümleri Controllers
+  final TextEditingController _ogRabController = TextEditingController();
+  final TextEditingController _ogRbcController = TextEditingController();
+  final TextEditingController _ogRcaController = TextEditingController();
+  final TextEditingController _agRanController = TextEditingController();
+  final TextEditingController _agRbnController = TextEditingController();
+  final TextEditingController _agRcnController = TextEditingController();
+  final TextEditingController _agRabController = TextEditingController();
+  final TextEditingController _agRbcController = TextEditingController();
+  final TextEditingController _agRcaController = TextEditingController();
 
-  // Controllers for TTR (Turns Ratio)
+  // Step 5: İzolasyon Controllers
+  final TextEditingController _isoTempController = TextEditingController();
+  final TextEditingController _isoHumidityController = TextEditingController();
+  final TextEditingController _isoOgGndController = TextEditingController();
+  final TextEditingController _isoAgGndController = TextEditingController();
+  final TextEditingController _isoOgAgController = TextEditingController();
+  final TextEditingController _isoCoreGndController = TextEditingController();
+
+  // Step 6: TTR & Toprak Controllers
   final TextEditingController _ttrNominalController = TextEditingController();
-  final TextEditingController _ttrRController = TextEditingController();
-  final TextEditingController _ttrSController = TextEditingController();
-  final TextEditingController _ttrTController = TextEditingController();
+  final TextEditingController _ttrTap1AController = TextEditingController();
+  final TextEditingController _ttrTap1BController = TextEditingController();
+  final TextEditingController _ttrTap1CController = TextEditingController();
+  final TextEditingController _ttrTap2AController = TextEditingController();
+  final TextEditingController _ttrTap2BController = TextEditingController();
+  final TextEditingController _ttrTap2CController = TextEditingController();
+  final TextEditingController _ttrTap3AController = TextEditingController();
+  final TextEditingController _ttrTap3BController = TextEditingController();
+  final TextEditingController _ttrTap3CController = TextEditingController();
+  final TextEditingController _ttrTap4AController = TextEditingController();
+  final TextEditingController _ttrTap4BController = TextEditingController();
+  final TextEditingController _ttrTap4CController = TextEditingController();
+  final TextEditingController _ttrTap5AController = TextEditingController();
+  final TextEditingController _ttrTap5BController = TextEditingController();
+  final TextEditingController _ttrTap5CController = TextEditingController();
 
-  // Controllers for Grounding
-  final TextEditingController _groundingController = TextEditingController();
+  final TextEditingController _groundTrafoBodyController = TextEditingController();
+  final TextEditingController _groundNeutralController = TextEditingController();
+  final TextEditingController _groundTankController = TextEditingController();
+  final TextEditingController _groundOgLightningController = TextEditingController();
+  final TextEditingController _groundPanelController = TextEditingController();
+  final TextEditingController _groundFenceController = TextEditingController();
 
-  // Controllers for Breaker Module
+  // Step 7: Kesici Controllers
+  final TextEditingController _breakerBrandController = TextEditingController();
+  final TextEditingController _breakerModelController = TextEditingController();
+  final TextEditingController _breakerSerialController = TextEditingController();
+  final TextEditingController _breakerYearController = TextEditingController();
   final TextEditingController _breakerContactController = TextEditingController();
   final TextEditingController _breakerOpenController = TextEditingController();
   final TextEditingController _breakerCloseController = TextEditingController();
   final TextEditingController _breakerDiffController = TextEditingController();
+  final TextEditingController _breakerIsoGndController = TextEditingController();
+
+  // Step 8: İsteğe Bağlı Modüller Controllers (PF, Akım Trafosu)
+  final TextEditingController _pfHvTempController = TextEditingController();
+  final TextEditingController _pfHvHumidityController = TextEditingController();
+  final TextEditingController _pfLvTempController = TextEditingController();
+  final TextEditingController _pfLvHumidityController = TextEditingController();
+  final TextEditingController _ctRatioController = TextEditingController();
+
+  // Step 9: Yağ Testi Controllers
+  final TextEditingController _oilBreakdownVoltageController = TextEditingController();
+  final TextEditingController _oilWaterContentController = TextEditingController();
+
+  // Step 11: Özet Controller
+  final TextEditingController _summaryTextController = TextEditingController();
 
   @override
   void initState() {
@@ -69,28 +129,91 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   @override
   void dispose() {
     _customerController.dispose();
-    _locationController.dispose();
-    _operatorController.dispose();
+    _trafoLabelController.dispose();
+    _addressController.dispose();
+    _reportDateController.dispose();
+    _testDateController.dispose();
+    _operatorNameController.dispose();
     _deviceModelController.dispose();
     _deviceSerialController.dispose();
+    _operatorTitleController.dispose();
+    _sicilNoController.dispose();
+    _ekipnetNoController.dispose();
+
     _brandController.dispose();
     _powerController.dispose();
     _voltageController.dispose();
     _serialNoController.dispose();
     _yearController.dispose();
     _connectionGroupController.dispose();
-    _ygRController.dispose();
-    _ygSController.dispose();
-    _ygTController.dispose();
+    _tapInfo1Controller.dispose();
+    _tapInfo2Controller.dispose();
+    _tapInfo3Controller.dispose();
+    _shortCircuitImpController.dispose();
+    _oilBrandController.dispose();
+    _oilWeightController.dispose();
+
+    _ogRabController.dispose();
+    _ogRbcController.dispose();
+    _ogRcaController.dispose();
+    _agRanController.dispose();
+    _agRbnController.dispose();
+    _agRcnController.dispose();
+    _agRabController.dispose();
+    _agRbcController.dispose();
+    _agRcaController.dispose();
+
+    _isoTempController.dispose();
+    _isoHumidityController.dispose();
+    _isoOgGndController.dispose();
+    _isoAgGndController.dispose();
+    _isoOgAgController.dispose();
+    _isoCoreGndController.dispose();
+
     _ttrNominalController.dispose();
-    _ttrRController.dispose();
-    _ttrSController.dispose();
-    _ttrTController.dispose();
-    _groundingController.dispose();
+    _ttrTap1AController.dispose();
+    _ttrTap1BController.dispose();
+    _ttrTap1CController.dispose();
+    _ttrTap2AController.dispose();
+    _ttrTap2BController.dispose();
+    _ttrTap2CController.dispose();
+    _ttrTap3AController.dispose();
+    _ttrTap3BController.dispose();
+    _ttrTap3CController.dispose();
+    _ttrTap4AController.dispose();
+    _ttrTap4BController.dispose();
+    _ttrTap4CController.dispose();
+    _ttrTap5AController.dispose();
+    _ttrTap5BController.dispose();
+    _ttrTap5CController.dispose();
+
+    _groundTrafoBodyController.dispose();
+    _groundNeutralController.dispose();
+    _groundTankController.dispose();
+    _groundOgLightningController.dispose();
+    _groundPanelController.dispose();
+    _groundFenceController.dispose();
+
+    _breakerBrandController.dispose();
+    _breakerModelController.dispose();
+    _breakerSerialController.dispose();
+    _breakerYearController.dispose();
     _breakerContactController.dispose();
     _breakerOpenController.dispose();
     _breakerCloseController.dispose();
     _breakerDiffController.dispose();
+    _breakerIsoGndController.dispose();
+
+    _pfHvTempController.dispose();
+    _pfHvHumidityController.dispose();
+    _pfLvTempController.dispose();
+    _pfLvHumidityController.dispose();
+    _ctRatioController.dispose();
+
+    _oilBreakdownVoltageController.dispose();
+    _oilWaterContentController.dispose();
+
+    _summaryTextController.dispose();
     super.dispose();
   }
 
@@ -99,45 +222,133 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final Report? report = reportService.activeReport;
     if (report == null) return;
 
+    final Map<String, dynamic> data = report.dataJson;
+
     setState(() {
       _customerController.text = report.customerName;
-      _locationController.text = report.dataJson['location']?.toString() ?? '';
-      _operatorController.text = report.dataJson['operator_name']?.toString() ?? '';
-      _deviceModelController.text = report.dataJson['device_model']?.toString() ?? '';
-      _deviceSerialController.text = report.dataJson['device_serial']?.toString() ?? '';
+      _trafoLabelController.text = report.trafoLabel;
+      _addressController.text = data['address']?.toString() ?? data['location']?.toString() ?? '';
+      _reportDateController.text = data['report_date']?.toString() ?? '';
+      _testDateController.text = data['test_date']?.toString() ?? '';
+      _operatorNameController.text = data['operator_name']?.toString() ?? '';
+      _deviceModelController.text = data['device_model']?.toString() ?? '';
+      _deviceSerialController.text = data['device_serial']?.toString() ?? '';
+      _operatorTitleController.text = data['operator_title']?.toString() ?? '';
+      _sicilNoController.text = data['sicil_no']?.toString() ?? '';
+      _ekipnetNoController.text = data['ekipnet_no']?.toString() ?? '';
 
-      _brandController.text = report.dataJson['brand']?.toString() ?? '';
-      _powerController.text = report.dataJson['power_kva']?.toString() ?? '';
-      _voltageController.text = report.dataJson['voltage']?.toString() ?? '';
-      _serialNoController.text = report.dataJson['serial_no']?.toString() ?? '';
-      _yearController.text = report.dataJson['manufacture_year']?.toString() ?? '';
-      _connectionGroupController.text = report.dataJson['connection_group']?.toString() ?? '';
+      _brandController.text = data['brand']?.toString() ?? '';
+      _powerController.text = data['power_kva']?.toString() ?? '';
+      _voltageController.text = data['voltage']?.toString() ?? '';
+      _serialNoController.text = data['serial_no']?.toString() ?? '';
+      _yearController.text = data['manufacture_year']?.toString() ?? '';
+      _connectionGroupController.text = data['connection_group']?.toString() ?? '';
+      _tapInfo1Controller.text = data['tap_info_1']?.toString() ?? '';
+      _tapInfo2Controller.text = data['tap_info_2']?.toString() ?? '';
+      _tapInfo3Controller.text = data['tap_info_3']?.toString() ?? '';
+      _shortCircuitImpController.text = data['short_circuit_imp_pct']?.toString() ?? '';
+      _oilBrandController.text = data['oil_brand']?.toString() ?? '';
+      _oilWeightController.text = data['oil_weight']?.toString() ?? '';
 
-      final Map<dynamic, dynamic> wr = report.dataJson['winding_resistance'] as Map? ?? <dynamic, dynamic>{};
-      _ygRController.text = wr['r_phase']?.toString() ?? '';
-      _ygSController.text = wr['s_phase']?.toString() ?? '';
-      _ygTController.text = wr['t_phase']?.toString() ?? '';
+      // Winding Resistance
+      final Map<dynamic, dynamic> wr = data['winding_resistance'] as Map? ?? <dynamic, dynamic>{};
+      _ogRabController.text = data['og_rab']?.toString() ?? wr['r_phase']?.toString() ?? '';
+      _ogRbcController.text = data['og_rbc']?.toString() ?? wr['s_phase']?.toString() ?? '';
+      _ogRcaController.text = data['og_rca']?.toString() ?? wr['t_phase']?.toString() ?? '';
+      _agRanController.text = data['ag_ran']?.toString() ?? '';
+      _agRbnController.text = data['ag_rbn']?.toString() ?? '';
+      _agRcnController.text = data['ag_rcn']?.toString() ?? '';
+      _agRabController.text = data['ag_rab']?.toString() ?? '';
+      _agRbcController.text = data['ag_rbc']?.toString() ?? '';
+      _agRcaController.text = data['ag_rca']?.toString() ?? '';
 
-      final Map<dynamic, dynamic> ttr = report.dataJson['ttr'] as Map? ?? <dynamic, dynamic>{};
+      // Insulation
+      _isoTempController.text = data['iso_temp']?.toString() ?? data['iso_temp_c']?.toString() ?? '';
+      _isoHumidityController.text = data['iso_humidity']?.toString() ?? '';
+      _isoOgGndController.text = data['iso_og_gnd']?.toString() ?? '';
+      _isoAgGndController.text = data['iso_ag_gnd']?.toString() ?? '';
+      _isoOgAgController.text = data['iso_og_ag']?.toString() ?? '';
+      _isoCoreGndController.text = data['iso_core_gnd']?.toString() ?? '';
+
+      // TTR
+      final Map<dynamic, dynamic> ttr = data['ttr'] as Map? ?? <dynamic, dynamic>{};
       _ttrNominalController.text = ttr['nominal']?.toString() ?? '';
-      _ttrRController.text = ttr['r_phase']?.toString() ?? '';
-      _ttrSController.text = ttr['s_phase']?.toString() ?? '';
-      _ttrTController.text = ttr['t_phase']?.toString() ?? '';
+      _ttrTap1AController.text = data['ttr_tap1_a']?.toString() ?? ttr['r_phase']?.toString() ?? '';
+      _ttrTap1BController.text = data['ttr_tap1_b']?.toString() ?? ttr['s_phase']?.toString() ?? '';
+      _ttrTap1CController.text = data['ttr_tap1_c']?.toString() ?? ttr['t_phase']?.toString() ?? '';
+      _ttrTap2AController.text = data['ttr_tap2_a']?.toString() ?? '';
+      _ttrTap2BController.text = data['ttr_tap2_b']?.toString() ?? '';
+      _ttrTap2CController.text = data['ttr_tap2_c']?.toString() ?? '';
+      _ttrTap3AController.text = data['ttr_tap3_a']?.toString() ?? '';
+      _ttrTap3BController.text = data['ttr_tap3_b']?.toString() ?? '';
+      _ttrTap3CController.text = data['ttr_tap3_c']?.toString() ?? '';
+      _ttrTap4AController.text = data['ttr_tap4_a']?.toString() ?? '';
+      _ttrTap4BController.text = data['ttr_tap4_b']?.toString() ?? '';
+      _ttrTap4CController.text = data['ttr_tap4_c']?.toString() ?? '';
+      _ttrTap5AController.text = data['ttr_tap5_a']?.toString() ?? '';
+      _ttrTap5BController.text = data['ttr_tap5_b']?.toString() ?? '';
+      _ttrTap5CController.text = data['ttr_tap5_c']?.toString() ?? '';
 
-      final Map<dynamic, dynamic> grounding = report.dataJson['grounding'] as Map? ?? <dynamic, dynamic>{};
-      _groundingController.text = grounding['value']?.toString() ?? '';
+      // Grounding
+      final Map<dynamic, dynamic> gr = data['grounding'] as Map? ?? <dynamic, dynamic>{};
+      _groundTrafoBodyController.text = data['ground_r_trafo_body']?.toString() ?? data['ground_trafo_body']?.toString() ?? gr['value']?.toString() ?? '';
+      _groundNeutralController.text = data['ground_r_neutral']?.toString() ?? data['ground_neutral']?.toString() ?? '';
+      _groundTankController.text = data['ground_r_tank']?.toString() ?? data['ground_tank']?.toString() ?? '';
+      _groundOgLightningController.text = data['ground_r_og_lightning']?.toString() ?? data['ground_og_lightning']?.toString() ?? '';
+      _groundPanelController.text = data['ground_r_panel']?.toString() ?? data['ground_panel']?.toString() ?? '';
+      _groundFenceController.text = data['ground_r_fence']?.toString() ?? data['ground_fence']?.toString() ?? '';
 
-      final Map<dynamic, dynamic> br = report.dataJson['breaker'] as Map? ?? <dynamic, dynamic>{};
-      _breakerContactController.text = br['contact_resistance']?.toString() ?? '';
-      _breakerOpenController.text = br['open_time']?.toString() ?? '';
-      _breakerCloseController.text = br['close_time']?.toString() ?? '';
-      _breakerDiffController.text = br['phase_diff']?.toString() ?? '';
+      // Breaker
+      final Map<dynamic, dynamic> br = data['breaker'] as Map? ?? <dynamic, dynamic>{};
+      _breakerBrandController.text = data['breaker_brand']?.toString() ?? '';
+      _breakerModelController.text = data['breaker_model']?.toString() ?? '';
+      _breakerSerialController.text = data['breaker_serial_no']?.toString() ?? '';
+      _breakerYearController.text = data['breaker_year']?.toString() ?? '';
+      _breakerContactController.text = data['breaker_contact_r']?.toString() ?? br['contact_resistance']?.toString() ?? '';
+      _breakerOpenController.text = data['breaker_timing_open']?.toString() ?? br['open_time']?.toString() ?? '';
+      _breakerCloseController.text = data['breaker_timing_close']?.toString() ?? br['close_time']?.toString() ?? '';
+      _breakerDiffController.text = data['breaker_phase_diff']?.toString() ?? br['phase_diff']?.toString() ?? '';
+      _breakerIsoGndController.text = data['breaker_iso_r_gnd']?.toString() ?? '';
+
+      // Modules (PF / CT)
+      _pfHvTempController.text = data['pf_hv_temp']?.toString() ?? '';
+      _pfHvHumidityController.text = data['pf_hv_humidity']?.toString() ?? '';
+      _pfLvTempController.text = data['pf_lv_temp']?.toString() ?? '';
+      _pfLvHumidityController.text = data['pf_lv_humidity']?.toString() ?? '';
+      _ctRatioController.text = data['ct_ratio']?.toString() ?? '';
+
+      // Oil Test
+      _oilBreakdownVoltageController.text = data['oil_test_breakdown_voltage']?.toString() ?? '';
+      _oilWaterContentController.text = data['oil_test_water_content']?.toString() ?? '';
+
+      // Summary
+      _summaryTextController.text = data['summary_text']?.toString() ?? '';
 
       _currentStepIndex = report.currentStep;
     });
+
+    _autoSetTankMark(report.transformerType);
   }
 
-  // Handle Safe Exit Dialog (PRD §20)
+  void _autoSetTankMark(String type) {
+    final ReportService service = Provider.of<ReportService>(context, listen: false);
+    final String normType = type.toLowerCase().trim();
+
+    if (normType == 'hermetik') {
+      service.updateField('tank_mark_hermetik', 'ü');
+      service.updateField('tank_mark_gt', null);
+      service.updateField('tank_mark_kuru', null);
+    } else if (normType == 'gt') {
+      service.updateField('tank_mark_gt', 'ü');
+      service.updateField('tank_mark_hermetik', null);
+      service.updateField('tank_mark_kuru', null);
+    } else if (normType == 'kuru_tip') {
+      service.updateField('tank_mark_kuru', 'ü');
+      service.updateField('tank_mark_hermetik', null);
+      service.updateField('tank_mark_gt', null);
+    }
+  }
+
   Future<bool> _onWillPop() async {
     final bool? shouldExit = await showDialog<bool>(
       context: context,
@@ -163,17 +374,15 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     return shouldExit ?? false;
   }
 
-  // QR / Barcode Scanner (PRD §21.2, Kabul #10)
   Future<void> _simulateQrScan() async {
     final String? scannedCode = await QrScannerDialog.scan(context);
     if (scannedCode != null && scannedCode.isNotEmpty && mounted) {
-      // If code is JSON string, parse attributes
       try {
         if (scannedCode.startsWith('{') && scannedCode.endsWith('}')) {
           final Map<String, dynamic> jsonMap = jsonDecode(scannedCode) as Map<String, dynamic>;
           _populateLabelData(
             brand: jsonMap['brand']?.toString() ?? '',
-            power: jsonMap['power']?.toString() ?? jsonMap['power_kva']?.toString() ?? '',
+            power: jsonMap['power_kva']?.toString() ?? jsonMap['power']?.toString() ?? '',
             voltage: jsonMap['voltage']?.toString() ?? '',
             serial: jsonMap['serial_no']?.toString() ?? jsonMap['serial']?.toString() ?? '',
             year: jsonMap['manufacture_year']?.toString() ?? jsonMap['year']?.toString() ?? '',
@@ -183,7 +392,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         }
       } catch (_) {}
 
-      // If raw serial string (e.g. SN-ABB-99120)
       setState(() {
         _serialNoController.text = scannedCode;
       });
@@ -198,7 +406,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       );
     }
   }
-
 
   void _populateLabelData({
     required String brand,
@@ -226,7 +433,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     service.updateField('connection_group', connection);
   }
 
-  // Immediate Save on Step Transition
   Future<void> _changeStep(int direction) async {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
     final int nextStep = _currentStepIndex + direction;
@@ -243,11 +449,10 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     });
   }
 
-  // Winding resistance calculations
   Map<String, dynamic> _calculateWindingUnbalance() {
-    final double? r = double.tryParse(_ygRController.text);
-    final double? s = double.tryParse(_ygSController.text);
-    final double? t = double.tryParse(_ygTController.text);
+    final double? r = double.tryParse(_ogRabController.text);
+    final double? s = double.tryParse(_ogRbcController.text);
+    final double? t = double.tryParse(_ogRcaController.text);
 
     if (r == null || s == null || t == null) {
       return <String, dynamic>{'unbalance': null, 'status': 'Eksik'};
@@ -256,11 +461,11 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final double max = <double>[r, s, t].reduce((double a, double b) => a > b ? a : b);
     final double min = <double>[r, s, t].reduce((double a, double b) => a < b ? a : b);
     final double avg = (r + s + t) / 3.0;
-    
+
     if (avg == 0) return <String, dynamic>{'unbalance': 0.0, 'status': 'UYGUN'};
 
     final double unbalance = ((max - min) / avg) * 100.0;
-    final bool ok = unbalance <= 5.0; // PRD §2.5 limit: 5% unbalance
+    final bool ok = unbalance <= 5.0;
 
     return <String, dynamic>{
       'unbalance': unbalance,
@@ -269,12 +474,11 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     };
   }
 
-  // TTR ratio check calculations
   Map<String, dynamic> _calculateTtrError() {
     final double? nom = double.tryParse(_ttrNominalController.text);
-    final double? r = double.tryParse(_ttrRController.text);
-    final double? s = double.tryParse(_ttrSController.text);
-    final double? t = double.tryParse(_ttrTController.text);
+    final double? r = double.tryParse(_ttrTap1AController.text);
+    final double? s = double.tryParse(_ttrTap1BController.text);
+    final double? t = double.tryParse(_ttrTap1CController.text);
 
     if (nom == null || r == null || s == null || t == null || nom == 0) {
       return <String, dynamic>{'error': null, 'status': 'Eksik'};
@@ -285,7 +489,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final double errT = ((t - nom).abs() / nom) * 100.0;
 
     final double maxErr = <double>[errR, errS, errT].reduce((double a, double b) => a > b ? a : b);
-    final bool ok = maxErr <= 0.5; // PRD §2.5 TTR limit: ±0.5%
+    final bool ok = maxErr <= 0.5;
 
     return <String, dynamic>{
       'error': maxErr,
@@ -294,14 +498,35 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     };
   }
 
-  // Save report draft and inform user about Phase 2 Excel generation
+  void _generateSummaryProposal(Report report) {
+    final Map<String, dynamic> windingEval = _calculateWindingUnbalance();
+    final Map<String, dynamic> ttrEval = _calculateTtrError();
+
+    final String unbalanceStr = windingEval['unbalance'] != null
+        ? ' %${(windingEval['unbalance'] as double).toStringAsFixed(2)} faz dengesizliği (${windingEval['status']})'
+        : '';
+
+    final String ttrStr = ttrEval['error'] != null
+        ? ' %${(ttrEval['error'] as double).toStringAsFixed(2)} maks TTR sapması (${ttrEval['status']})'
+        : '';
+
+    final String proposal =
+        'Kontroller yapıldıktan sonra trafoya enerji verildi. OG Sargı direnç ölçümünde$unbalanceStr, Çevirme oranı (TTR) ölçümünde$ttrStr tespit edilmiştir. Mevcut şartların korunması halinde bir sonraki periyodik kontrol tarihine kadar trafonun kullanımı UYGUNDUR. Aksi belirtilmediği sürece periyodik kontroller 1 (bir) yıl sonra tekrarlanır.';
+
+    setState(() {
+      _summaryTextController.text = proposal;
+    });
+
+    final ReportService service = Provider.of<ReportService>(context, listen: false);
+    service.updateField('summary_text', proposal);
+  }
+
   Future<void> _finalizeReport() async {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
     final Report? report = service.activeReport;
 
     if (report == null) return;
 
-    // Check mandatory photos before finalization
     final bool isTestOnly = report.reportType == 'test';
     final dynamic hasLabelPhoto = report.dataJson['photo_label'] ??
         (report.dataJson['photos'] is Map ? report.dataJson['photos']['photo_label'] : null);
@@ -336,7 +561,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     }
   }
 
-  // Post-Production Screen (PRD §21.4): Open | Share | Close
   void _showPostProductionDialog(String reportTitle, String reportId, File excelFile) {
     showDialog<dynamic>(
       context: context,
@@ -366,7 +590,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Text(
-              'Excel (.xlsx) raporu orijinal şablon biçimlendirmesiyle üretildi ve cihazınızın yerel belgeler klasörüne kaydedildi.',
+              'Excel (.xlsx) raporu şablon hücre haritasına göre üretildi ve cihazınızın yerel belgeler klasörüne kaydedildi.',
               style: GoogleFonts.inter(color: AppTheme.textLight, fontSize: 13, height: 1.4),
               textAlign: TextAlign.center,
             ),
@@ -385,7 +609,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            
             ElevatedButton.icon(
               onPressed: () async {
                 final ReportService service = Provider.of<ReportService>(context, listen: false);
@@ -409,8 +632,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         actions: <Widget>[
           TextButton(
             onPressed: () {
-              Navigator.pop(ctx); // Close dialog
-              Navigator.pop(context); // Pop FormScreen to return to Home
+              Navigator.pop(ctx);
+              Navigator.pop(context);
             },
             child: Text(
               'Kapat',
@@ -444,90 +667,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     );
   }
 
-
-
-
-
-  void _simulateIntent(String label, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: <Widget>[
-            const Icon(Icons.android_rounded, color: Colors.white),
-            const SizedBox(width: 10),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: AppTheme.secondaryColor,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
-  // Camera capture simulation (PRD §10)
-  void _simulatePhotoCapture(String photoKey, String label) {
-    showModalBottomSheet<dynamic>(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (BuildContext context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Text(
-              '$label Ekle',
-              style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                _saveMockPhoto(photoKey, 'Kamera');
-              },
-              icon: const Icon(Icons.camera_alt_rounded),
-              label: const Text('Kamerayı Aç'),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                _saveMockPhoto(photoKey, 'Galeri');
-              },
-              icon: const Icon(Icons.photo_library_rounded),
-              label: const Text('Galeriden Seç'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _saveMockPhoto(String photoKey, String source) {
-    final ReportService service = Provider.of<ReportService>(context, listen: false);
-    // Write mock placeholder
-    service.updateField(photoKey, 'mock_photo_path_$photoKey');
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$source kullanılarak fotoğraf başarıyla eklendi.'),
-        backgroundColor: AppTheme.successColor,
-      ),
-    );
-  }
-
-  void _deletePhoto(String photoKey) {
-    final ReportService service = Provider.of<ReportService>(context, listen: false);
-    service.updateField(photoKey, null);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fotoğraf kaldırıldı.'),
-        backgroundColor: AppTheme.errorColor,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final ReportService reportService = Provider.of<ReportService>(context);
@@ -538,22 +677,27 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     }
 
     final bool isKesici = report.subType == 'kesici';
-    
-    // Total steps calculation
+    final String type = report.transformerType.toLowerCase().trim();
+    final bool isKuru = type == 'kuru_tip';
+
+    // Steps list for Wizard Navigation
     final List<String> stepsList = <String>[
       'Genel Bilgiler',
       'Etiket Bilgileri',
       'Kontroller',
       'Sargı Ölçümleri',
+      'İzolasyon',
       'TTR & Toprak',
-      if (isKesici) 'Kesici Testleri',
-      'Fotoğraflar', // Added Step (Phase 3)
-      'Raporu Bitir',
+      if (isKesici) 'Kesici',
+      'Modüller',
+      if (!isKuru) 'Yağ Raporu',
+      'Fotoğraflar',
+      'Özet & Bitir',
     ];
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (bool didPop) async {
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
         if (didPop) return;
         final bool shouldPop = await _onWillPop();
         if (shouldPop && mounted) {
@@ -567,7 +711,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           elevation: 0,
           foregroundColor: AppTheme.textDark,
           actions: <Widget>[
-            // Auto-saving Indicator (PRD §8)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
@@ -601,7 +744,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                 border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
               ),
               child: ListView.builder(
-
                 scrollDirection: Axis.horizontal,
                 itemCount: stepsList.length,
                 itemBuilder: (BuildContext context, int index) {
@@ -609,35 +751,33 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                   final bool isPassed = index < _currentStepIndex;
                   return Row(
                     children: <Widget>[
-                      // Step dot
                       GestureDetector(
                         onTap: () {
-                          // Allow navigation by clicking dots
                           if (index < _currentStepIndex) {
                             _changeStep(index - _currentStepIndex);
                           }
                         },
                         child: Chip(
-                          backgroundColor: isCurrent 
-                              ? AppTheme.primaryColor 
-                              : isPassed 
+                          backgroundColor: isCurrent
+                              ? AppTheme.primaryColor
+                              : isPassed
                                   ? AppTheme.primaryColor.withOpacity(0.12)
                                   : Colors.white,
                           shape: const CircleBorder(),
                           side: BorderSide(
-                            color: isCurrent 
-                                ? AppTheme.primaryColor 
-                                : isPassed 
+                            color: isCurrent
+                                ? AppTheme.primaryColor
+                                : isPassed
                                     ? AppTheme.primaryColor.withOpacity(0.2)
                                     : AppTheme.borderLight,
                           ),
                           label: Text(
                             '${index + 1}',
                             style: GoogleFonts.inter(
-                              color: isCurrent 
-                                  ? Colors.white 
-                                  : isPassed 
-                                      ? AppTheme.primaryColor 
+                              color: isCurrent
+                                  ? Colors.white
+                                  : isPassed
+                                      ? AppTheme.primaryColor
                                       : AppTheme.textLight,
                               fontWeight: FontWeight.bold,
                             ),
@@ -645,7 +785,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // Step text label
                       Text(
                         stepsList[index],
                         style: GoogleFonts.inter(
@@ -673,7 +812,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                   key: _formKey,
                   child: Container(
                     constraints: const BoxConstraints(maxWidth: 800),
-                    child: _getStepWidget(report),
+                    child: _getStepWidget(report, stepsList[_currentStepIndex]),
                   ),
                 ),
               ),
@@ -689,15 +828,14 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  // Back button
                   OutlinedButton(
-                    onPressed: _currentStepIndex > 0 ? () => _changeStep(-1) : () => _onWillPop().then((bool exit) {
-                      if (exit && mounted) Navigator.pop(context);
-                    }),
+                    onPressed: _currentStepIndex > 0
+                        ? () => _changeStep(-1)
+                        : () => _onWillPop().then((bool exit) {
+                              if (exit && mounted) Navigator.pop(context);
+                            }),
                     child: Text(_currentStepIndex > 0 ? 'Geri' : 'İptal Et'),
                   ),
-                  
-                  // Next / Finalize button
                   ElevatedButton(
                     onPressed: _currentStepIndex < stepsList.length - 1
                         ? () => _changeStep(1)
@@ -715,60 +853,43 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     );
   }
 
-  // Render proper wizard step form
-  Widget _getStepWidget(Report report) {
-    final bool isKesici = report.subType == 'kesici';
-    
-    // We adjust the step index map dynamically
-    final List<int> stepMapping = <int>[
-      0, // Genel Bilgiler
-      1, // Etiket Bilgileri
-      2, // Kontroller
-      3, // Sargı Ölçümleri
-      4, // TTR & Toprak
-      if (isKesici) 5, // Kesici Testleri
-      isKesici ? 6 : 5, // Fotoğraflar
-      isKesici ? 7 : 6, // Raporu Bitir
-    ];
-
-    final int activeStep = stepMapping[_currentStepIndex];
-
-    switch (activeStep) {
-      case 0:
+  Widget _getStepWidget(Report report, String stepTitle) {
+    switch (stepTitle) {
+      case 'Genel Bilgiler':
         return _buildGeneralStep(report);
-      case 1:
+      case 'Etiket Bilgileri':
         return _buildLabelStep(report);
-      case 2:
+      case 'Kontroller':
         return _buildChecklistStep(report);
-      case 3:
+      case 'Sargı Ölçümleri':
         return _buildWindingStep(report);
-      case 4:
+      case 'İzolasyon':
+        return _buildInsulationStep(report);
+      case 'TTR & Toprak':
         return _buildTtrStep(report);
-      case 5:
-        if (isKesici) {
-          return _buildBreakerStep(report);
-        }
+      case 'Kesici':
+        return _buildBreakerStep(report);
+      case 'Modüller':
+        return _buildModulesStep(report);
+      case 'Yağ Raporu':
+        return _buildOilTestStep(report);
+      case 'Fotoğraflar':
         return _buildPhotosStep(report);
-      case 6:
-        if (isKesici) {
-          return _buildPhotosStep(report);
-        }
-        return _buildFinalizeStep(report);
-      case 7:
+      case 'Özet & Bitir':
         return _buildFinalizeStep(report);
       default:
         return _buildGeneralStep(report);
     }
   }
 
-  // Step 0: General Customer info
+  // Step 1: Genel Bilgiler
   Widget _buildGeneralStep(Report report) {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _buildSectionHeader('Genel Rapor Bilgileri', 'Rapor kapak sayfasında gösterilecek müşteri ve lokasyon detayları.'),
+        _buildSectionHeader('Genel Rapor Bilgileri', 'Rapor kapak sayfasında gösterilecek müşteri, lokasyon ve personel detayları.'),
         const SizedBox(height: 24),
         TextFormField(
           controller: _customerController,
@@ -781,26 +902,114 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         ),
         const SizedBox(height: 16),
         TextFormField(
-          controller: _locationController,
+          controller: _trafoLabelController,
           decoration: const InputDecoration(
-            labelText: 'Lokasyon / Şehir',
-            hintText: 'Örn: Bursa OSB 2. Cadde',
-            prefixIcon: Icon(Icons.place_outlined),
+            labelText: 'Trafo Etiketi / Tanımı *',
+            hintText: 'Örn: TRAFO 1',
+            prefixIcon: Icon(Icons.label_outlined),
           ),
-          onChanged: (String val) => service.updateField('location', val),
+          onChanged: (String val) => service.updateField('trafo_label', val),
         ),
         const SizedBox(height: 16),
         TextFormField(
-          controller: _operatorController,
+          controller: _addressController,
           decoration: const InputDecoration(
-            labelText: 'Testi Yapan Teknisyen',
-            hintText: 'Örn: Ahmet Teknisyen',
-            prefixIcon: Icon(Icons.person_outline),
+            labelText: 'Adres / Lokasyon *',
+            hintText: 'Örn: OSB 2. Cadde No: 8 Bursa',
+            prefixIcon: Icon(Icons.place_outlined),
           ),
-          onChanged: (String val) => service.updateField('operator_name', val),
+          onChanged: (String val) {
+            service.updateField('address', val);
+            service.updateField('location', val);
+          },
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _reportDateController,
+                decoration: const InputDecoration(
+                  labelText: 'Rapor Tarihi (DD.MM.YYYY)',
+                  hintText: '19.01.2024',
+                  prefixIcon: Icon(Icons.calendar_month_outlined),
+                ),
+                onChanged: (String val) => service.updateField('report_date', val),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _testDateController,
+                decoration: const InputDecoration(
+                  labelText: 'Test Tarihi (DD.MM.YYYY)',
+                  hintText: '16.01.2024',
+                  prefixIcon: Icon(Icons.edit_calendar_outlined),
+                ),
+                onChanged: (String val) => service.updateField('test_date', val),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 24),
-        _buildSectionHeader('Test Cihazı Bilgileri', 'Kapak sayfasında belirtilmesi zorunlu olan kalibrasyonlu cihaz bilgileri.'),
+        _buildSectionHeader('Personel ve Cihaz Bilgileri', 'Kapak sayfasında yer alan imza sahibi mühendis/teknisyen ve cihaz kayıtları.'),
+        const SizedBox(height: 16),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _operatorNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Testi Yapan Personel',
+                  hintText: 'Örn: Hilmi YILMAZ',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
+                onChanged: (String val) => service.updateField('operator_name', val),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _operatorTitleController,
+                decoration: const InputDecoration(
+                  labelText: 'Unvan',
+                  hintText: 'Elektrik Mühendisi',
+                  prefixIcon: Icon(Icons.badge_outlined),
+                ),
+                onChanged: (String val) {
+                  service.updateField('operator_title', val);
+                  service.updateField('creator_display_name', val);
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _sicilNoController,
+                decoration: const InputDecoration(
+                  labelText: 'Sicil No',
+                  hintText: 'Örn: 88258',
+                ),
+                onChanged: (String val) => service.updateField('sicil_no', val),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _ekipnetNoController,
+                decoration: const InputDecoration(
+                  labelText: 'EKİPNET Kayıt No',
+                  hintText: 'Örn: K202439698',
+                ),
+                onChanged: (String val) => service.updateField('ekipnet_no', val),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
         Row(
           children: <Widget>[
@@ -808,7 +1017,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _deviceModelController,
                 decoration: const InputDecoration(
-                  labelText: 'Cihaz Modeli',
+                  labelText: 'Test Cihaz Modeli',
                   hintText: 'Megger TTR300',
                 ),
                 onChanged: (String val) => service.updateField('device_model', val),
@@ -831,9 +1040,11 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     );
   }
 
-  // Step 1: Transformer specs from label
+  // Step 2: Etiket Bilgileri
   Widget _buildLabelStep(Report report) {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
+    final String type = report.transformerType.toLowerCase().trim();
+    final bool isKuru = type == 'kuru_tip';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -842,7 +1053,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             Expanded(
-              child: _buildSectionHeader('Trafo Etiket Değerleri', 'Trafo plakasından okunan teknik etiket değerleri.'),
+              child: _buildSectionHeader('Trafo Etiket Değerleri', 'Trafo plakasından okunan teknik etiket verileri.'),
             ),
             ElevatedButton.icon(
               onPressed: _simulateQrScan,
@@ -860,6 +1071,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           controller: _brandController,
           decoration: const InputDecoration(
             labelText: 'Marka',
+            hintText: 'Örn: BEST / ABB',
             prefixIcon: Icon(Icons.factory_outlined),
           ),
           onChanged: (String val) => service.updateField('brand', val),
@@ -874,6 +1086,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Güç (kVA)',
                   suffixText: 'kVA',
+                  hintText: 'Örn: 2000',
                 ),
                 onChanged: (String val) => service.updateField('power_kva', val),
               ),
@@ -884,7 +1097,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                 controller: _voltageController,
                 decoration: const InputDecoration(
                   labelText: 'Gerilim (V)',
-                  hintText: '34500 / 400 V',
+                  hintText: '34500 / 400',
                 ),
                 onChanged: (String val) => service.updateField('voltage', val),
               ),
@@ -899,6 +1112,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                 controller: _serialNoController,
                 decoration: const InputDecoration(
                   labelText: 'Seri No',
+                  hintText: 'Örn: 1330',
                 ),
                 onChanged: (String val) => service.updateField('serial_no', val),
               ),
@@ -910,6 +1124,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   labelText: 'İmal Yılı',
+                  hintText: 'Örn: 2013',
                 ),
                 onChanged: (String val) => service.updateField('manufacture_year', val),
               ),
@@ -917,68 +1132,164 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        TextFormField(
-          controller: _connectionGroupController,
-          decoration: const InputDecoration(
-            labelText: 'Bağlantı Grubu',
-            hintText: 'Örn: Dyn11',
-          ),
-          onChanged: (String val) => service.updateField('connection_group', val),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _connectionGroupController,
+                decoration: const InputDecoration(
+                  labelText: 'Bağlantı Grubu',
+                  hintText: 'Örn: Dyn11',
+                ),
+                onChanged: (String val) => service.updateField('connection_group', val),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _shortCircuitImpController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Kısa Devre Empedansı (%)',
+                  suffixText: '%',
+                  hintText: 'Örn: 6.42',
+                ),
+                onChanged: (String val) => service.updateField('short_circuit_imp_pct', val),
+              ),
+            ),
+          ],
         ),
+        const SizedBox(height: 16),
+        _buildSectionHeader('Kademe Değerleri (O11 / Q11 / S11)', 'Mevcut kademe pozisyonları.'),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _tapInfo1Controller,
+                decoration: const InputDecoration(labelText: 'Kademe 1 (O11)', hintText: '6'),
+                onChanged: (String val) => service.updateField('tap_info_1', val),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _tapInfo2Controller,
+                decoration: const InputDecoration(labelText: 'Kademe 2 (Q11)', hintText: '4'),
+                onChanged: (String val) => service.updateField('tap_info_2', val),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _tapInfo3Controller,
+                decoration: const InputDecoration(labelText: 'Kademe 3 (S11)', hintText: '3'),
+                onChanged: (String val) => service.updateField('tap_info_3', val),
+              ),
+            ),
+          ],
+        ),
+
+        // Oil fields ONLY for hermetik & GT (HIDDEN for kuru_tip)
+        if (!isKuru) ...<Widget>[
+          const SizedBox(height: 24),
+          _buildSectionHeader('İzolasyon Yağı Bilgileri', 'Hermetik ve GT trafolar için yağ markası ve ağırlığı.'),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: TextFormField(
+                  controller: _oilBrandController,
+                  decoration: const InputDecoration(
+                    labelText: 'Yağ Markası',
+                    hintText: 'Örn: NYNAS',
+                  ),
+                  onChanged: (String val) => service.updateField('oil_brand', val),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: TextFormField(
+                  controller: _oilWeightController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Yağ Miktarı / Ağırlığı (kg)',
+                    suffixText: 'kg',
+                    hintText: 'Örn: 875',
+                  ),
+                  onChanged: (String val) => service.updateField('oil_weight', val),
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
 
-  // Step 2: Dynamic Checks Checklist (PRD §2.4, §7.2)
+  // Step 3: Physical Checklist
   Widget _buildChecklistStep(Report report) {
-    final ReportService service = Provider.of<ReportService>(context, listen: false);
-    final String type = report.transformerType;
+    final String type = report.transformerType.toLowerCase().trim();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _buildSectionHeader('Fiziksel Gözlem Kontrolleri', 'Seçtiğiniz Trafo Tipi ile uyumlu alanlar dinamik olarak gösterilmektedir.'),
-        const SizedBox(height: 24),
+        _buildSectionHeader(
+          'Fiziksel Gözlem ve Kontrol Listesi',
+          'Seçtiğiniz Trafo Tipi (${type.toUpperCase()}) için tanımlı kontrol maddeleri aşağıda listelenmiştir.',
+        ),
+        const SizedBox(height: 20),
 
-        // Shared Check: Temizlik
-        _buildSwitchTile('Genel Temizlik ve Pas Kontrolü', 'shared_clean', report.dataJson),
-        _buildSwitchTile('Bağlantı Klemensleri Sıkılık Kontrolü', 'shared_clamp', report.dataJson),
-
-        // GT specific checks (Oil level, silica-gel, Buchholz)
-        if (type == 'gt') ...<Widget>[
-          const SizedBox(height: 16),
-          _buildAlertText('Yağlı / Genleşme Tanklı Trafo Modülü Aktif'),
-          const SizedBox(height: 8),
-          _buildSwitchTile('Yağ Seviye Kontrolü (Genleşme Deposu)', 'oil_level', report.dataJson),
-          _buildSwitchTile('Yağ Sızıntısı Kontrolü', 'oil_leak', report.dataJson),
-          _buildSwitchTile('Buchholz Rölesi Kablo & Sızıntı Kontrolü', 'buchholz', report.dataJson),
-          _buildSwitchTile('Silika-Jel (Nem Alıcı) Durum Kontrolü', 'silica_gel', report.dataJson),
-          _buildSwitchTile('Yağ Numunesi Alındı mı?', 'oil_sample', report.dataJson),
-        ],
-
-        // Hermetik specific checks (Pressure and Gas)
+        // Hermetik Checklist
         if (type == 'hermetik') ...<Widget>[
-          const SizedBox(height: 16),
-          _buildAlertText('Hermetik Sızdırmaz Trafo Modülü Aktif'),
-          const SizedBox(height: 8),
-          _buildSwitchTile('Basınç Tahliye Valfi Testi', 'pressure_release', report.dataJson),
-          _buildSwitchTile('Gaz Tahliye Ventili Sızdırmazlığı', 'gas_release', report.dataJson),
+          _buildAlertText('Hermetik Sızdırmaz Trafo Modülü: Basınç ve gaz kontrolleri aktif.'),
+          const SizedBox(height: 12),
+          _buildSwitchTile('Genel Temizlik ve Gövde Korozyon Kontrolü', 'checklist_1', report.dataJson),
+          _buildSwitchTile('Terminaller ve Klemens Bağlantı Sıkılığı', 'checklist_2', report.dataJson),
+          _buildSwitchTile('Yağ Sızdırmazlık Contaları Kontrolü', 'checklist_3', report.dataJson),
+          _buildSwitchTile('Basınç Tahliye Valfi Testi', 'checklist_4', report.dataJson),
+          _buildSwitchTile('Hermetik Gaz Tahliye Ventili Sızdırmazlığı', 'checklist_5', report.dataJson),
+          _buildSwitchTile('Ark Boynuzları ve Bushing İzolatörler', 'checklist_6', report.dataJson),
+          _buildSwitchTile('Topraklama İletkeni Bağlantıları', 'checklist_7', report.dataJson),
+          _buildSwitchTile('Boya ve Pas Durumu Kontrolü', 'checklist_8', report.dataJson),
+          _buildSwitchTile('OG / AG Klemens Cıvata Sıkılığı', 'checklist_9', report.dataJson),
+          _buildSwitchTile('Havalandırma ve Ortam Sıcaklığı', 'checklist_10', report.dataJson),
         ],
 
-        // Kuru Tip specific checks (Fan, epoxy)
+        // GT Checklist
+        if (type == 'gt') ...<Widget>[
+          _buildAlertText('Genleşme Tanklı (GT) Trafo Modülü: Yağ seviyesi, Buchholz ve Silikajel kontrolleri aktif.'),
+          const SizedBox(height: 12),
+          _buildSwitchTile('Genel Temizlik ve Görünüm Kontrolü', 'checklist_1', report.dataJson),
+          _buildSwitchTile('Klemens ve İletken Bağlantı Kontrolleri', 'checklist_2', report.dataJson),
+          _buildSwitchTile('Gövde & Flanş Yağ Sızdırmazlık Contaları', 'checklist_3', report.dataJson),
+          _buildSwitchTile('Genleşme Deposu Yağ Seviye Göstergesi', 'checklist_4', report.dataJson),
+          _buildSwitchTile('Trafo Kazan ve Radyatör Yağ Sızıntısı', 'checklist_5', report.dataJson),
+          _buildSwitchTile('Buchholz Rölesi Kablo ve Gaz Kontrolü', 'checklist_6', report.dataJson),
+          _buildSwitchTile('Silikajel (Nem Alıcı) Renk ve Durum Kontrolü', 'checklist_7', report.dataJson),
+          _buildSwitchTile('İzolasyon Yağ Numunesi Alındı mı?', 'checklist_8', report.dataJson),
+          _buildSwitchTile('Termometre ve Yağ Sıcaklık Göstergeleri', 'checklist_9', report.dataJson),
+          _buildSwitchTile('Ark Boynuzları ve Bushing Temizliği', 'checklist_10', report.dataJson),
+          _buildSwitchTile('Topraklama İletkeni ve Klemensleri', 'checklist_11', report.dataJson),
+          _buildSwitchTile('Kazan Korozyon ve Boya Durumu', 'checklist_12', report.dataJson),
+        ],
+
+        // Kuru Tip Checklist
         if (type == 'kuru_tip') ...<Widget>[
-          const SizedBox(height: 16),
-          _buildAlertText('Kuru Tip Trafo Modülü Aktif (Yağ Kontrolleri Gizlendi)'),
-          const SizedBox(height: 8),
-          _buildSwitchTile('Fan ON/OFF Fonksiyon Testi', 'fan_on_off', report.dataJson),
-          _buildSwitchTile('Epoksi Sargı Döküm Temizlik ve Çatlak Kontrolü', 'epoxy', report.dataJson),
-          _buildSwitchTile('Termistör ve Sıcaklık Koruma Ünitesi', 'thermistor', report.dataJson),
+          _buildAlertText('Kuru Tip Trafo Modülü: Fan, epoksi döküm ve termistör kontrolleri aktif (Yağ kontrolleri gizlendi).'),
+          const SizedBox(height: 12),
+          _buildSwitchTile('Epoksi Sargı Döküm Yüzey Temizliği ve Çatlak Kontrolü', 'checklist_1', report.dataJson),
+          _buildSwitchTile('Sargı Havalandırma Kanalları Toz Temizliği', 'checklist_2', report.dataJson),
+          _buildSwitchTile('Cebri Havalandırma (Fan) Otomatik ON/OFF Testi', 'checklist_3', report.dataJson),
+          _buildSwitchTile('Sıcaklık Koruma Ünitesi ve PT100 Termistörler', 'checklist_4', report.dataJson),
+          _buildSwitchTile('AG Bara ve OG Klemens Bağlantı Sıkılık Kontrolü', 'checklist_5', report.dataJson),
+          _buildSwitchTile('Sargı Destek Takozları ve Titreşim Sönümleyiciler', 'checklist_6', report.dataJson),
+          _buildSwitchTile('Gövde ve Kabin Topraklama İletkenleri', 'checklist_7', report.dataJson),
+          _buildSwitchTile('Koruma Kabini (IP Enclosure) İzolasyon ve Kilitler', 'checklist_8', report.dataJson),
         ],
       ],
     );
   }
 
-  // Step 3: Winding Resistance Winding Test
+  // Step 4: Sargı Ölçümleri
   Widget _buildWindingStep(Report report) {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
     final Map<String, dynamic> evaluation = _calculateWindingUnbalance();
@@ -986,213 +1297,369 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _buildSectionHeader('YG Sargı Direnç Testi', 'Primer YG sargılarının miliohm (mΩ) cinsinden direnç değerlerini girin.'),
+        _buildSectionHeader('OG Sargı Direnç Ölçümleri (2A)', 'Primer OG sargılarının miliohm (mΩ) cinsinden faz-faz direnç değerlerini girin.'),
         const SizedBox(height: 24),
-
         Row(
           children: <Widget>[
             Expanded(
               child: TextFormField(
-                controller: _ygRController,
+                controller: _ogRabController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'R Fazı Direnci',
-                  suffixText: 'mΩ',
-                ),
-                onChanged: (String val) => service.updateField('winding_resistance.r_phase', val),
+                decoration: const InputDecoration(labelText: 'OG R-AB Direnci', suffixText: 'mΩ'),
+                onChanged: (String val) {
+                  service.updateField('og_rab', val);
+                  service.updateField('winding_resistance.r_phase', val);
+                },
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: TextFormField(
-                controller: _ygSController,
+                controller: _ogRbcController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'S Fazı Direnci',
-                  suffixText: 'mΩ',
-                ),
-                onChanged: (String val) => service.updateField('winding_resistance.s_phase', val),
+                decoration: const InputDecoration(labelText: 'OG R-BC Direnci', suffixText: 'mΩ'),
+                onChanged: (String val) {
+                  service.updateField('og_rbc', val);
+                  service.updateField('winding_resistance.s_phase', val);
+                },
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: TextFormField(
-                controller: _ygTController,
+                controller: _ogRcaController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'T Fazı Direnci',
-                  suffixText: 'mΩ',
-                ),
-                onChanged: (String val) => service.updateField('winding_resistance.t_phase', val),
+                decoration: const InputDecoration(labelText: 'OG R-CA Direnci', suffixText: 'mΩ'),
+                onChanged: (String val) {
+                  service.updateField('og_rca', val);
+                  service.updateField('winding_resistance.t_phase', val);
+                },
               ),
             ),
           ],
         ),
+        const SizedBox(height: 24),
+        _buildEvaluationCard(
+          title: 'OG Faz Dengesizliği Değerlendirmesi',
+          feedback: evaluation,
+          limitText: 'Maksimum İzin Verilen Dengesizlik Sınırı: %5 (0.05)',
+          valueText: evaluation['unbalance'] != null
+              ? 'Maksimum Faz Dengesizliği: %${(evaluation['unbalance'] as double).toStringAsFixed(2)}'
+              : 'Gözlemlenen: Değer Bekleniyor...',
+        ),
         const SizedBox(height: 32),
 
-        // Passed/Failed visual feedback panel (PRD §2.4, §2.5)
-        _buildEvaluationCard(
-          title: 'YG Sargı Direnci Faz Dengesi Değerlendirmesi',
-          feedback: evaluation,
-          limitText: 'Maksimum Dengesi Sınırı: %5 (0.05)',
-          valueText: evaluation['unbalance'] != null 
-              ? 'Faz Dengesizliği (Unbalance): %${(evaluation['unbalance'] as double).toStringAsFixed(2)}' 
-              : 'Gözlemlenen: Girdi Bekleniyor...',
+        _buildSectionHeader('AG Sargı Direnç Ölçümleri (Faz-Nötr ve Faz-Faz)', 'Sekonder AG sargılarının miliohm (mΩ) cinsinden dirençleri.'),
+        const SizedBox(height: 16),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _agRanController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'AG R-AN (mΩ)'),
+                onChanged: (String val) => service.updateField('ag_ran', val),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _agRbnController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'AG R-BN (mΩ)'),
+                onChanged: (String val) => service.updateField('ag_rbn', val),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _agRcnController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'AG R-CN (mΩ)'),
+                onChanged: (String val) => service.updateField('ag_rcn', val),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _agRabController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'AG R-AB (mΩ)'),
+                onChanged: (String val) => service.updateField('ag_rab', val),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _agRbcController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'AG R-BC (mΩ)'),
+                onChanged: (String val) => service.updateField('ag_rbc', val),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _agRcaController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'AG R-CA (mΩ)'),
+                onChanged: (String val) => service.updateField('ag_rca', val),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  // Step 4: Turns Ratio (TTR) & Grounding tests
+  // Step 5: İzolasyon Testleri
+  Widget _buildInsulationStep(Report report) {
+    final ReportService service = Provider.of<ReportService>(context, listen: false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _buildSectionHeader('İzolasyon Direnci Ölçümleri (Megohm)', 'Ortam sıcaklığı ve nem koşullarında sargı izolasyon dirençleri.'),
+        const SizedBox(height: 24),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _isoTempController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'Ortam Sıcaklığı (°C)', suffixText: '°C'),
+                onChanged: (String val) {
+                  service.updateField('iso_temp', val);
+                  service.updateField('iso_temp_c', val);
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _isoHumidityController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'Nem Oranı (%)', suffixText: '%'),
+                onChanged: (String val) => service.updateField('iso_humidity', val),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        TextFormField(
+          controller: _isoOgGndController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(labelText: 'OG - GND İzolasyon Direnci (MΩ)', suffixText: 'MΩ'),
+          onChanged: (String val) => service.updateField('iso_og_gnd', val),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _isoAgGndController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(labelText: 'AG - GND İzolasyon Direnci (MΩ)', suffixText: 'MΩ'),
+          onChanged: (String val) => service.updateField('iso_ag_gnd', val),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _isoOgAgController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(labelText: 'OG - AG İzolasyon Direnci (MΩ)', suffixText: 'MΩ'),
+          onChanged: (String val) => service.updateField('iso_og_ag', val),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _isoCoreGndController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(labelText: 'Nüve - GND İzolasyon Direnci (MΩ)', suffixText: 'MΩ'),
+          onChanged: (String val) => service.updateField('iso_core_gnd', val),
+        ),
+      ],
+    );
+  }
+
+  // Step 6: TTR & Toprak
   Widget _buildTtrStep(Report report) {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
     final Map<String, dynamic> evaluation = _calculateTtrError();
 
-    final double? groundVal = double.tryParse(_groundingController.text);
+    final double? groundVal = double.tryParse(_groundTrafoBodyController.text);
     final bool groundOk = groundVal != null && groundVal <= 2.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _buildSectionHeader('Çevirme Oranı (TTR) Ölçümü', 'Belirlenen YG/AG kademesi için ölçülen çevirme oranlarını girin.'),
+        _buildSectionHeader('Çevirme Oranı (TTR) Ölçümleri', 'Nominal çevirme oranı ve faz ölçümleri.'),
         const SizedBox(height: 24),
-
         TextFormField(
           controller: _ttrNominalController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
-            labelText: 'Nominal Çevirme Oranı',
-            hintText: 'Örn: 86.25',
-          ),
+          decoration: const InputDecoration(labelText: 'Nominal Çevirme Oranı', hintText: 'Örn: 86.25'),
           onChanged: (String val) => service.updateField('ttr.nominal', val),
         ),
         const SizedBox(height: 16),
-
+        _buildSectionHeader('Kademe 1 (Nominal) Çevirme Oranları', 'Faz bazlı TTR oranları.'),
         Row(
           children: <Widget>[
             Expanded(
               child: TextFormField(
-                controller: _ttrRController,
+                controller: _ttrTap1AController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'R Fazı Oranı'),
-                onChanged: (String val) => service.updateField('ttr.r_phase', val),
+                decoration: const InputDecoration(labelText: 'Kademe 1 - A Fazı'),
+                onChanged: (String val) {
+                  service.updateField('ttr_tap1_a', val);
+                  service.updateField('ttr.r_phase', val);
+                },
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: TextFormField(
-                controller: _ttrSController,
+                controller: _ttrTap1BController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'S Fazı Oranı'),
-                onChanged: (String val) => service.updateField('ttr.s_phase', val),
+                decoration: const InputDecoration(labelText: 'Kademe 1 - B Fazı'),
+                onChanged: (String val) {
+                  service.updateField('ttr_tap1_b', val);
+                  service.updateField('ttr.s_phase', val);
+                },
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: TextFormField(
-                controller: _ttrTController,
+                controller: _ttrTap1CController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'T Fazı Oranı'),
-                onChanged: (String val) => service.updateField('ttr.t_phase', val),
+                decoration: const InputDecoration(labelText: 'Kademe 1 - C Fazı'),
+                onChanged: (String val) {
+                  service.updateField('ttr_tap1_c', val);
+                  service.updateField('ttr.t_phase', val);
+                },
               ),
             ),
           ],
         ),
         const SizedBox(height: 20),
-
         _buildEvaluationCard(
           title: 'TTR Çevirme Oranı Hata Değerlendirmesi',
           feedback: evaluation,
-          limitText: 'Maksimum Hata Sınırı: ±%0.5 (0.005)',
-          valueText: evaluation['error'] != null 
-              ? 'Ölçülen Maksimum Hata: %${(evaluation['error'] as double).toStringAsFixed(2)}' 
-              : 'Gözlemlenen: Girdi Bekleniyor...',
+          limitText: 'Maksimum İzin Verilen Hata Sınırı: ±%0.5 (0.005)',
+          valueText: evaluation['error'] != null
+              ? 'Maksimum Ölçülen Sapma: %${(evaluation['error'] as double).toStringAsFixed(2)}'
+              : 'Gözlemlenen: Değer Bekleniyor...',
         ),
         const SizedBox(height: 32),
 
-        _buildSectionHeader('Topraklama Direnci', 'Trafo gövdesi ve yıldız noktası topraklama direnci ölçümü.'),
+        _buildSectionHeader('Topraklama Direnci Ölçümleri (Ohm)', 'Gövde, nötr ve şalt sahası topraklama dirençleri.'),
         const SizedBox(height: 16),
-
         TextFormField(
-          controller: _groundingController,
+          controller: _groundTrafoBodyController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
-            labelText: 'Toprak Direnci (Ω)',
-            suffixText: 'Ω',
-            hintText: 'Örn: 1.2',
-          ),
-          onChanged: (String val) => service.updateField('grounding.value', val),
+          decoration: const InputDecoration(labelText: 'Trafo Gövde Topraklaması (Ω)', suffixText: 'Ω'),
+          onChanged: (String val) {
+            service.updateField('ground_r_trafo_body', val);
+            service.updateField('ground_trafo_body', val);
+            service.updateField('grounding.value', val);
+          },
         ),
-        const SizedBox(height: 16),
-
         if (groundVal != null)
           _buildInstantFeedbackRow(
             isOk: groundOk,
             label: 'Toprak Direnci Karşılaştırması',
-            valueText: '$groundVal Ω (Sınır: ≤ 2.0 Ω)',
+            valueText: '$groundVal Ω (Limit: ≤ 2.0 Ω)',
           ),
+        const SizedBox(height: 16),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _groundNeutralController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'Yıldız Noktası (Nötr) (Ω)'),
+                onChanged: (String val) {
+                  service.updateField('ground_r_neutral', val);
+                  service.updateField('ground_neutral', val);
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _groundTankController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'Kazan / Tank Topraklaması (Ω)'),
+                onChanged: (String val) {
+                  service.updateField('ground_r_tank', val);
+                  service.updateField('ground_tank', val);
+                },
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
 
-  // Step 5 (Optional): Breaker test checks
+  // Step 7: Kesici
   Widget _buildBreakerStep(Report report) {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
 
     final double? contact = double.tryParse(_breakerContactController.text);
     final double? open = double.tryParse(_breakerOpenController.text);
     final double? close = double.tryParse(_breakerCloseController.text);
-    final double? diff = double.tryParse(_breakerDiffController.text);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _buildSectionHeader('AG/OG Kesici Test Paketi', 'Kesicili trafo bakımı kapsamında kontak direnci ve açma/kapama süreleri ölçümü.'),
+        _buildSectionHeader('Kesici Test Paketi', 'AG/OG Kesici kontak direnci ve açma/kapama süreleri.'),
         const SizedBox(height: 24),
-
+        TextFormField(
+          controller: _breakerBrandController,
+          decoration: const InputDecoration(labelText: 'Kesici Markası', hintText: 'Örn: ABB / Siemens'),
+          onChanged: (String val) => service.updateField('breaker_brand', val),
+        ),
+        const SizedBox(height: 16),
         TextFormField(
           controller: _breakerContactController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
-            labelText: 'Kontak Direnci (µΩ) *',
-            suffixText: 'µΩ',
-            hintText: 'Max 150 µΩ',
-          ),
-          onChanged: (String val) => service.updateField('breaker.contact_resistance', val),
+          decoration: const InputDecoration(labelText: 'Kontak Direnci (µΩ) *', suffixText: 'µΩ', hintText: 'Max 150 µΩ'),
+          onChanged: (String val) {
+            service.updateField('breaker_contact_r', val);
+            service.updateField('breaker.contact_resistance', val);
+          },
         ),
         if (contact != null)
           _buildInstantFeedbackRow(
             isOk: contact <= 150,
             label: 'Kontak Direnci Değerlendirmesi',
-            valueText: '$contact µΩ (Sınır: ≤ 150 µΩ)',
+            valueText: '$contact µΩ (Limit: ≤ 150 µΩ)',
           ),
         const SizedBox(height: 16),
-
         Row(
           children: <Widget>[
             Expanded(
               child: TextFormField(
                 controller: _breakerOpenController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Açma Süresi (ms)',
-                  suffixText: 'ms',
-                  hintText: 'Max 80 ms',
-                ),
-                onChanged: (String val) => service.updateField('breaker.open_time', val),
+                decoration: const InputDecoration(labelText: 'Açma Süresi (ms)', suffixText: 'ms', hintText: 'Max 80 ms'),
+                onChanged: (String val) {
+                  service.updateField('breaker_timing_open', val);
+                  service.updateField('breaker.open_time', val);
+                },
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
               child: TextFormField(
                 controller: _breakerCloseController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Kapama Süresi (ms)',
-                  suffixText: 'ms',
-                  hintText: 'Max 120 ms',
-                ),
-                onChanged: (String val) => service.updateField('breaker.close_time', val),
+                decoration: const InputDecoration(labelText: 'Kapama Süresi (ms)', suffixText: 'ms', hintText: 'Max 120 ms'),
+                onChanged: (String val) {
+                  service.updateField('breaker_timing_close', val);
+                  service.updateField('breaker.close_time', val);
+                },
               ),
             ),
           ],
@@ -1202,43 +1669,103 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           if (open != null)
             _buildInstantFeedbackRow(
               isOk: open < 80,
-              label: 'Açma Süresi',
-              valueText: '$open ms (Sınır: < 80 ms)',
+              label: 'Açma Süresi Değerlendirmesi',
+              valueText: '$open ms (Limit: < 80 ms)',
             ),
           if (close != null)
             _buildInstantFeedbackRow(
               isOk: close < 120,
-              label: 'Kapama Süresi',
-              valueText: '$close ms (Sınır: < 120 ms)',
+              label: 'Kapama Süresi Değerlendirmesi',
+              valueText: '$close ms (Limit: < 120 ms)',
             ),
         ],
-        const SizedBox(height: 16),
-
-        TextFormField(
-          controller: _breakerDiffController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
-            labelText: 'Faz Uyuşmazlığı (ms)',
-            suffixText: 'ms',
-            hintText: 'Max 5 ms',
-          ),
-          onChanged: (String val) => service.updateField('breaker.phase_diff', val),
-        ),
-        if (diff != null)
-          _buildInstantFeedbackRow(
-            isOk: diff < 5,
-            label: 'Faz Uyuşmazlığı Değerlendirmesi',
-            valueText: '$diff ms (Sınır: < 5 ms)',
-          ),
       ],
     );
   }
 
-  // Phase 3: Photos Management Step (PRD §10)
+  // Step 8: İsteğe Bağlı Modüller (Power Factor & Akım Trafoları)
+  Widget _buildModulesStep(Report report) {
+    final ReportService service = Provider.of<ReportService>(context, listen: false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _buildSectionHeader('Güç Faktörü (PF) ve Akım Trafoları', 'HV PF, LV PF ve Akım Trafosu dönüştürme oranı.'),
+        const SizedBox(height: 24),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _pfHvHumidityController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'HV PF Nem (%)', suffixText: '%'),
+                onChanged: (String val) => service.updateField('pf_hv_humidity', val),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _pfLvHumidityController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'LV PF Nem (%)', suffixText: '%'),
+                onChanged: (String val) => service.updateField('pf_lv_humidity', val),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        TextFormField(
+          controller: _ctRatioController,
+          decoration: const InputDecoration(labelText: 'Akım Trafosu Dönüştürme Oranı (CT Ratio)', hintText: 'Örn: 100/5 A'),
+          onChanged: (String val) => service.updateField('ct_ratio', val),
+        ),
+      ],
+    );
+  }
+
+  // Step 9: Yağ Testi (GT / Hermetik)
+  Widget _buildOilTestStep(Report report) {
+    final ReportService service = Provider.of<ReportService>(context, listen: false);
+    final String type = report.transformerType.toLowerCase().trim();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _buildSectionHeader('İzolasyon Yağ Test Raporu', 'İzolasyon yağının fiziksel ve kimyasal test sonuçları.'),
+        const SizedBox(height: 24),
+        if (type == 'gt') ...<Widget>[
+          TextFormField(
+            controller: _oilBreakdownVoltageController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: 'Yağ Delinme Gerilimi (kV)', suffixText: 'kV', hintText: 'Örn: 65'),
+            onChanged: (String val) => service.updateField('oil_test_breakdown_voltage', val),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _oilWaterContentController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: 'Yağ Su İhtivası (ppm)', suffixText: 'ppm', hintText: 'Örn: 15'),
+            onChanged: (String val) => service.updateField('oil_test_water_content', val),
+          ),
+        ] else if (type == 'hermetik') ...<Widget>[
+          _buildAlertText('Hermetik trafolarda yağ numunesi alınamadıysa dilekçe sayfasına yağ analiz kaydı işlenir.'),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _oilBreakdownVoltageController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: 'Yağ Delinme Gerilimi (kV)', suffixText: 'kV'),
+            onChanged: (String val) => service.updateField('oil_test_breakdown_voltage', val),
+          ),
+        ],
+      ],
+    );
+  }
+
+  // Step 10: Saha Fotoğrafları
   Widget _buildPhotosStep(Report report) {
     final bool isTestOnly = report.reportType == 'test';
     final ReportService service = Provider.of<ReportService>(context, listen: false);
-    
+
     final dynamic labelPhoto = report.dataJson['photo_label'] ??
         (report.dataJson['photos'] is Map ? report.dataJson['photos']['photo_label'] : null);
     final dynamic beforePhoto = report.dataJson['photo_before'] ??
@@ -1249,91 +1776,84 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _buildSectionHeader('Saha Fotoğrafları', 'Rapor tiplerine göre zorunlu fotoğrafların tablette çekilmesi veya galeriden eklenmesi gerekir.'),
+        _buildSectionHeader('Saha Fotoğrafları', 'Fotoğrafları doğrudan cihaz kamerasından çekebilir veya galeriden ekleyebilirsiniz.'),
         const SizedBox(height: 24),
-
-        // 1. Etiket Fotoğrafı (Zorunlu - Hepsi için)
         PhotoPickerWidget(
-          label: 'Trafo Etiket / Plaka Fotoğrafı',
-          description: 'Trafonun marka, model ve seri numarasını gösteren plakanın net resmi.',
+          label: 'Trafo Etiket / Plaka Fotoğrafı *',
+          description: 'Marka, güç ve seri no okunabilen plaka resmi.',
           imagePath: labelPhoto?.toString(),
           isRequired: true,
           onPhotoSelected: (String? path) async {
             if (path != null && File(path).existsSync()) {
-              final String? saved = await service.savePhotoLocally('photo_label', File(path));
-              if (saved == null && context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Fotoğraf kaydedilemedi.'),
-                    backgroundColor: AppTheme.errorColor,
-                  ),
-                );
-              }
+              await service.savePhotoLocally('photo_label', File(path));
             } else {
               await service.deletePhotoLocally('photo_label');
             }
           },
         ),
-
-        // 2. Öncesi ve Sonrası Fotoğrafları (Bakım ise Zorunlu)
         if (!isTestOnly) ...<Widget>[
           PhotoPickerWidget(
-            label: 'Bakım Öncesi Genel Görünüm',
-            description: 'Çalışmaya başlamadan önce trafonun ve şalt sahasının durum resmi.',
+            label: 'Bakım Öncesi Genel Görünüm *',
+            description: 'Bakıma başlamadan önceki saha resmi.',
             imagePath: beforePhoto?.toString(),
             isRequired: true,
             onPhotoSelected: (String? path) async {
               if (path != null && File(path).existsSync()) {
-                final String? saved = await service.savePhotoLocally('photo_before', File(path));
-                if (saved == null && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Fotoğraf kaydedilemedi.'),
-                      backgroundColor: AppTheme.errorColor,
-                    ),
-                  );
-                }
+                await service.savePhotoLocally('photo_before', File(path));
               } else {
                 await service.deletePhotoLocally('photo_before');
               }
             },
           ),
           PhotoPickerWidget(
-            label: 'Bakım Sonrası Genel Görünüm',
-            description: 'Temizlik, sıkma ve klemens bakımları tamamlanmış trafonun bitiş resmi.',
+            label: 'Bakım Sonrası Genel Görünüm *',
+            description: 'Temizlik ve sıkma bakımları bitmiş resmi.',
             imagePath: afterPhoto?.toString(),
             isRequired: true,
             onPhotoSelected: (String? path) async {
               if (path != null && File(path).existsSync()) {
-                final String? saved = await service.savePhotoLocally('photo_after', File(path));
-                if (saved == null && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Fotoğraf kaydedilemedi.'),
-                      backgroundColor: AppTheme.errorColor,
-                    ),
-                  );
-                }
+                await service.savePhotoLocally('photo_after', File(path));
               } else {
                 await service.deletePhotoLocally('photo_after');
               }
             },
           ),
-        ] else
-          _buildAlertText('Yalnızca Test raporlarında Bakım Öncesi/Sonrası fotoğrafları zorunlu değildir.'),
+        ],
       ],
     );
   }
 
-
-  // Step 6 / Finalize: Overview and submit
+  // Step 11: Özet & Raporu Bitir
   Widget _buildFinalizeStep(Report report) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _buildSectionHeader('Raporu Tamamla', 'Veri girişleri tamamlandı. Rapor özetini gözden geçirip kesinleştirin.'),
+        _buildSectionHeader('Rapor Özeti ve Son Değerlendirme', 'Kapak sayfasındaki A31 hücresine basılacak genel sonuç özeti.'),
         const SizedBox(height: 24),
-
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Text('Sonuç Özeti Metni (KAPAK A31)', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
+            TextButton.icon(
+              onPressed: () => _generateSummaryProposal(report),
+              icon: const Icon(Icons.auto_fix_high_rounded, size: 18),
+              label: const Text('Otomatik Özet Öner'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _summaryTextController,
+          maxLines: 4,
+          decoration: const InputDecoration(
+            hintText: 'Kontroller yapıldıktan sonra trafoya enerji verildi...',
+          ),
+          onChanged: (String val) {
+            final ReportService service = Provider.of<ReportService>(context, listen: false);
+            service.updateField('summary_text', val);
+          },
+        ),
+        const SizedBox(height: 24),
         Card(
           color: Colors.white,
           child: Padding(
@@ -1341,57 +1861,21 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  'Rapor Özeti',
-                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
-                ),
+                Text('Rapor Künyesi', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
                 const SizedBox(height: 16),
                 _buildSummaryRow('Müşteri:', report.customerName.isEmpty ? '(Belirtilmedi)' : report.customerName),
                 _buildSummaryRow('Trafo Tipi:', report.transformerType.toUpperCase()),
                 _buildSummaryRow('Kapsam:', report.subType == 'kesici' ? 'Trafo + Kesici Bakımı' : 'Trafo Bakımı'),
-                _buildSummaryRow('Ölçüm Tarihi:', report.dataJson['test_date']?.toString() ?? ''),
-                _buildSummaryRow('Cihaz:', '${report.dataJson['device_model'] ?? ''} (${report.dataJson['device_serial'] ?? ''})'),
-                const Divider(height: 24),
-                
-                // Final file name notification
-                Row(
-                  children: <Widget>[
-                    const Icon(Icons.description_outlined, color: AppTheme.textLight),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Üretilecek Dosya Adı: \n"${report.title}.xlsx"',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textLight,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                _buildSummaryRow('Rapor Tarihi:', report.dataJson['report_date']?.toString() ?? ''),
+                _buildSummaryRow('Test Tarihi:', report.dataJson['test_date']?.toString() ?? ''),
+                _buildSummaryRow('Test Cihazı:', '${report.dataJson['device_model'] ?? ''} (${report.dataJson['device_serial'] ?? ''})'),
               ],
             ),
           ),
         ),
         const SizedBox(height: 24),
-        _buildAlertText('Kesinleştirilen raporlar şirket arşivine eklenir ve teknisyenler tarafından değiştirilemez (sadece indirilebilir).'),
+        _buildAlertText('Raporu Kesinleştir butonuna bastığınızda orijinal Excel (.xlsx) şablonu doldurulacak ve yerel belgelerinize kaydedilecektir.'),
       ],
-    );
-  }
-
-  Widget _buildTableCell(String text, {bool isHeader = false, TextAlign align = TextAlign.left}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Text(
-        text,
-        style: GoogleFonts.inter(
-          fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
-          color: isHeader ? AppTheme.textLight : AppTheme.textDark,
-          fontSize: isHeader ? 13 : 14,
-        ),
-        textAlign: align,
-      ),
     );
   }
 
@@ -1448,16 +1932,12 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: color.withOpacity(0.4), width: 1.5),
       ),
-
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Text(
-              title,
-              style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold),
-            ),
+            Text(title, style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1550,7 +2030,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   }
 
   Widget _buildSummaryRow(String label, String value) {
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),
       child: Row(
