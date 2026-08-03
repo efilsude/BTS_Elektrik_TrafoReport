@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/report_model.dart';
+import '../../services/auth_service.dart';
 import '../../services/report_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/photo_picker_widget.dart';
@@ -547,7 +548,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       }
     }
 
-    final File? excelFile = await service.finalizeReport(report.id);
+    final AuthService authService = Provider.of<AuthService>(context, listen: false);
+    final String? signaturePath = await authService.getSignaturePath();
+    final File? excelFile = await service.finalizeReport(report.id, signaturePath: signaturePath);
 
     if (mounted && excelFile != null) {
       _showPostProductionDialog(report.title, report.id, excelFile);

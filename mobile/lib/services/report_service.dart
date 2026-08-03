@@ -287,7 +287,7 @@ class ReportService extends ChangeNotifier {
   }
 
   /// Finalize report locally in SQLite and generate native Excel file
-  Future<File?> finalizeReport(String reportId) async {
+  Future<File?> finalizeReport(String reportId, {String? signaturePath}) async {
     _isLoading = true;
     notifyListeners();
 
@@ -303,7 +303,10 @@ class ReportService extends ChangeNotifier {
       }
 
       // Generate filled native Excel file from asset template
-      final File excelFile = await ExcelGenerator.generateReportExcel(report: reportToFinalize);
+      final File excelFile = await ExcelGenerator.generateReportExcel(
+        report: reportToFinalize,
+        signaturePath: signaturePath,
+      );
 
       final Map<String, dynamic> updatedData = Map<String, dynamic>.from(reportToFinalize.dataJson);
       updatedData['excel_path'] = excelFile.path;

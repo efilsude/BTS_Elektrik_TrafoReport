@@ -9,6 +9,7 @@ class ExcelGenerator {
   /// Generates a filled Excel (.xlsx) file on device using official templates
   static Future<File> generateReportExcel({
     required Report report,
+    String? signaturePath,
   }) async {
     final String transformerType = report.transformerType.toLowerCase().trim();
     final String assetPath = ExcelCellMapping.templateAssetPaths[transformerType] ??
@@ -144,6 +145,70 @@ class ExcelGenerator {
           }
         }
       });
+    }
+
+    // Embed Signature and Cover Photos on KAPAK SAYFASI sheet (Paket 4)
+    final Sheet? kapakSheet = excel.tables['KAPAK SAYFASI'];
+    if (kapakSheet != null) {
+      // 1. Signature Image (Anchor G56, box G55:H58)
+      final String? effectiveSigPath = signaturePath ??
+          dataDict['signature_path']?.toString() ??
+          dataDict['signature']?.toString();
+
+      if (effectiveSigPath != null && effectiveSigPath.isNotEmpty) {
+        final File sigFile = File(effectiveSigPath);
+        if (sigFile.existsSync()) {
+          try {
+            final List<int> sigBytes = await sigFile.readAsBytes();
+            kapakSheet.insertImage(
+              sigBytes,
+              anchor: CellIndex.indexByString('G56'),
+              width: 140,
+              height: 50,
+            );
+          } catch (e) {
+            // Log/skip silently without failing Excel generation
+          }
+        }
+      }
+
+      // 2. Cover Photos (A35, F35, A43, F43)
+      final List<String> photoSlotCells = <String>['A35', 'F35', 'A43', 'F43'];
+      final List<String> photoKeys = <String>[
+        'photo_before',
+        'photo_after',
+        'photo_label',
+        'photo_extra',
+      ];
+
+      int photoIndex = 0;
+      for (final String photoKey in photoKeys) {
+        if (photoIndex >= photoSlotCells.length) break;
+
+        dynamic pathVal = dataDict[photoKey];
+        if (pathVal == null && dataDict['photos'] is Map) {
+          pathVal = dataDict['photos'][photoKey];
+        }
+
+        if (pathVal is String && pathVal.isNotEmpty) {
+          final File photoFile = File(pathVal);
+          if (photoFile.existsSync()) {
+            try {
+              final List<int> photoBytes = await photoFile.readAsBytes();
+              final String anchorCell = photoSlotCells[photoIndex];
+              kapakSheet.insertImage(
+                photoBytes,
+                anchor: CellIndex.indexByString(anchorCell),
+                width: 180,
+                height: 120,
+              );
+              photoIndex++;
+            } catch (e) {
+              // Log/skip silently
+            }
+          }
+        }
+      }
     }
 
     // Prepare output directory and filename: {Customer} - {TrafoLabel} - {DD.MM.YYYY}.xlsx
