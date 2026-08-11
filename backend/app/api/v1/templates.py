@@ -8,6 +8,7 @@ from app.api.deps import get_db, get_current_user, get_current_active_admin
 from app.core.config import settings
 from app.core.exceptions import BadRequestException
 from app.models.template import Template
+from app.models.user import User
 from app.schemas.template import TemplateResponse
 
 router = APIRouter()
