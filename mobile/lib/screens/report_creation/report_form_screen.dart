@@ -118,6 +118,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
   // Step 11: Özet Controller
   final TextEditingController _summaryTextController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
 
   @override
   void initState() {
@@ -215,6 +216,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     _oilWaterContentController.dispose();
 
     _summaryTextController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -322,8 +324,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _oilBreakdownVoltageController.text = data['oil_test_breakdown_voltage']?.toString() ?? '';
       _oilWaterContentController.text = data['oil_test_water_content']?.toString() ?? '';
 
-      // Summary
+      // Summary & Notes
       _summaryTextController.text = data['summary_text']?.toString() ?? '';
+      _notesController.text = data['notes']?.toString() ?? data['notes_text']?.toString() ?? 'NOTLAR : Trafonun, trafo odasının, hücre odasının, trafo koruma hücresinin, kesicinin test, kontrol ve temizliği yapıldı. Test sonuçlarının değerlendirilmesi kapak sayfasında yapılmıştır.';
 
       _currentStepIndex = report.currentStep;
     });
@@ -625,6 +628,25 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
     final AuthService authService = Provider.of<AuthService>(context, listen: false);
     final String? signaturePath = await authService.getSignaturePath();
+
+    final String opName = _operatorNameController.text.trim().isNotEmpty
+        ? _operatorNameController.text.trim()
+        : (report.dataJson['operator_name']?.toString().trim() ?? authService.currentUser?.name ?? '');
+    final String opTitle = _operatorTitleController.text.trim().isNotEmpty
+        ? _operatorTitleController.text.trim()
+        : (report.dataJson['operator_title']?.toString().trim() ?? 'Elektrik Mühendisi');
+
+    service.updateField('operator_name', opName);
+    service.updateField('operator_title', opTitle);
+    service.updateField('creator_display_name', opTitle.isNotEmpty ? '$opName ($opTitle)' : opName);
+
+    if (_notesController.text.trim().isNotEmpty) {
+      service.updateField('notes', _notesController.text.trim());
+    }
+    if (signaturePath != null && signaturePath.isNotEmpty) {
+      service.updateField('signature_path', signaturePath);
+    }
+
     final File? excelFile = await service.finalizeReport(report.id, signaturePath: signaturePath);
 
     if (mounted && excelFile != null) {
@@ -1929,6 +1951,20 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           onChanged: (String val) {
             final ReportService service = Provider.of<ReportService>(context, listen: false);
             service.updateField('summary_text', val);
+          },
+        ),
+        const SizedBox(height: 20),
+        Text('Notlar (ANA SAYFA)', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _notesController,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: 'Trafonun, trafo odasının, hücre odasının, trafo koruma hücresinin, kesicinin test, kontrol ve temizliği yapıldı...',
+          ),
+          onChanged: (String val) {
+            final ReportService service = Provider.of<ReportService>(context, listen: false);
+            service.updateField('notes', val);
           },
         ),
         const SizedBox(height: 24),

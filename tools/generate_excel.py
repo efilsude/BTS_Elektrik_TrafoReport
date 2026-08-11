@@ -30,9 +30,10 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D12": "report_date",
             "D14": "test_date",
             "A31": "summary_text",
-            "D56": "creator_display_name",
+            "D56": "operator_title",
             "D57": "sicil_no",
             "D58": "ekipnet_no",
+            "G56": "operator_name",
         },
         "ANA SAYFA": {
             "G11": "brand",
@@ -98,14 +99,35 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "C63": "ground_r_og_lightning",
             "F63": "ground_r_panel",
             "J63": "ground_r_fence",
+            "B73": "notes",
+            "F80": "operator_title",
+            "F81": "sicil_no",
+            "F82": "ekipnet_no",
+            "K79": "operator_name",
+        },
+        "OG SARGI MEVCUT KADEME": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
+        },
+        "AG SARGI": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
         },
         "İZOLASYON ": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "D16": "iso_og_gnd",
             "D17": "iso_ag_gnd",
             "D30": "iso_temp",
             "D31": "iso_humidity",
         },
         "Ç.O 34500": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "B16": "ttr_tap1_a",
             "C16": "ttr_tap1_b",
             "D16": "ttr_tap1_c",
@@ -123,6 +145,9 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D20": "ttr_tap5_c",
         },
         "TOPRAKLAMALAR": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D17": "ground_r_trafo_body",
             "D18": "ground_r_neutral",
             "D19": "ground_r_tank",
@@ -131,9 +156,15 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D34": "ground_r_fence",
         },
         "HV PF": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "P17": "pf_hv_humidity",
         },
         "LV PF": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "P17": "pf_lv_humidity",
         },
         "ANA SAYFA KESİCİ": {
@@ -143,19 +174,34 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O13": "breaker_year",
         },
         "KESİCİ İZOLASYON": {
-            "D10": "breaker_iso_r_gnd",
+            "D10": "operator_name",
+            "J10": "device_model",
+            "O10": "device_serial",
+            "D10_VAL": "breaker_iso_r_gnd",
         },
         "KESİCİ KONTAK": {
-            "D10": "breaker_contact_r",
+            "D10": "operator_name",
+            "J10": "device_model",
+            "O10": "device_serial",
+            "D10_VAL": "breaker_contact_r",
         },
         "AÇMA-KAPAMA": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D10": "breaker_timing_open",
         },
         "DİĞER": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D16": "device_model",
             "D17": "device_serial",
         },
         "AKIM TRAFOLARI": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D16": "ct_ratio",
         },
         "HERMETİK YAĞ DİLEKÇESİ": {
@@ -171,9 +217,10 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D12": "report_date",
             "D14": "test_date",
             "A31": "summary_text",
-            "D56": "creator_display_name",
+            "D56": "operator_title",
             "D57": "sicil_no",
             "D58": "ekipnet_no",
+            "G56": "operator_name",
         },
         "ANA SAYFA": {
             "G11": "brand",
@@ -237,14 +284,35 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "C57": "ground_r_og_lightning",
             "F57": "ground_r_panel",
             "J57": "ground_r_fence",
+            "B67": "notes",
+            "F74": "operator_title",
+            "F75": "sicil_no",
+            "F76": "ekipnet_no",
+            "K73": "operator_name",
+        },
+        "OG SARGI MEVCUT KADEME": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
+        },
+        "AG SARGI": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
         },
         "İZOLASYON ": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "D16": "iso_og_gnd",
             "D17": "iso_ag_gnd",
             "D30": "iso_temp",
             "D31": "iso_humidity",
         },
         "Ç.O 34500": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "B16": "ttr_tap1_a",
             "C16": "ttr_tap1_b",
             "D16": "ttr_tap1_c",
@@ -262,6 +330,9 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D20": "ttr_tap5_c",
         },
         "TOPRAKLAMALAR": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D17": "ground_r_trafo_body",
             "D18": "ground_r_neutral",
             "D19": "ground_r_tank",
@@ -270,9 +341,15 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D34": "ground_r_fence",
         },
         "HV PF": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "P17": "pf_hv_humidity",
         },
         "LV PF": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "P17": "pf_lv_humidity",
         },
         "ANA SAYFA KESİCİ": {
@@ -282,19 +359,34 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O13": "breaker_year",
         },
         "KESİCİ İZOLASYON": {
-            "D10": "breaker_iso_r_gnd",
+            "D10": "operator_name",
+            "J10": "device_model",
+            "O10": "device_serial",
+            "D10_VAL": "breaker_iso_r_gnd",
         },
         "KESİCİ KONTAK": {
-            "D10": "breaker_contact_r",
+            "D10": "operator_name",
+            "J10": "device_model",
+            "O10": "device_serial",
+            "D10_VAL": "breaker_contact_r",
         },
         "AÇMA-KAPAMA": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D10": "breaker_timing_open",
         },
         "DİĞER": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D16": "device_model",
             "D17": "device_serial",
         },
         "AKIM TRAFOLARI": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D16": "ct_ratio",
         }
     },
@@ -306,9 +398,10 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D12": "report_date",
             "D14": "test_date",
             "A31": "summary_text",
-            "D56": "creator_display_name",
+            "D56": "operator_title",
             "D57": "sicil_no",
             "D58": "ekipnet_no",
+            "G56": "operator_name",
         },
         "ANA SAYFA": {
             "G11": "brand",
@@ -374,14 +467,35 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "C63": "ground_r_og_lightning",
             "F63": "ground_r_panel",
             "J63": "ground_r_fence",
+            "B73": "notes",
+            "F80": "operator_title",
+            "F81": "sicil_no",
+            "F82": "ekipnet_no",
+            "K79": "operator_name",
+        },
+        "OG SARGI MEVCUT KADEME": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
+        },
+        "AG SARGI": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
         },
         "İZOLASYON ": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "D16": "iso_og_gnd",
             "D17": "iso_ag_gnd",
             "D30": "iso_temp",
             "D31": "iso_humidity",
         },
         "Ç.O 34500": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "B16": "ttr_tap1_a",
             "C16": "ttr_tap1_b",
             "D16": "ttr_tap1_c",
@@ -399,6 +513,9 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D20": "ttr_tap5_c",
         },
         "TOPRAKLAMALAR": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D17": "ground_r_trafo_body",
             "D18": "ground_r_neutral",
             "D19": "ground_r_tank",
@@ -413,12 +530,21 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O13": "breaker_year",
         },
         "KESİCİ İZOLASYON": {
-            "D10": "breaker_iso_r_gnd",
+            "D10": "operator_name",
+            "J10": "device_model",
+            "O10": "device_serial",
+            "D10_VAL": "breaker_iso_r_gnd",
         },
         "KESİCİ KONTAK": {
-            "D10": "breaker_contact_r",
+            "D10": "operator_name",
+            "J10": "device_model",
+            "O10": "device_serial",
+            "D10_VAL": "breaker_contact_r",
         },
         "AÇMA-KAPAMA": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D10": "breaker_timing_open",
         },
         "YAĞ RAPORU": {
@@ -432,9 +558,12 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
     }
 }
 
+# Global fallback mapping
+CELL_MAPPING = TYPE_CELL_MAPPINGS["HERMETIK"]
 
-def date_to_excel_serial(date_input: Optional[Any]) -> Optional[float]:
-    """Converts a date string (YYYY-MM-DD or DD.MM.YYYY) into an Excel serial date number."""
+
+def date_to_excel_serial(date_input: Optional[str]) -> Optional[float]:
+    """Converts a date string (YYYY-MM-DD or DD.MM.YYYY) into an Excel serial date number (epoch: 1899-12-30)."""
     if not date_input:
         return None
     try:
@@ -451,6 +580,38 @@ def date_to_excel_serial(date_input: Optional[Any]) -> Optional[float]:
         return float((d_obj - epoch).days)
     except Exception:
         return None
+
+
+def sanitize_filename(filename: str) -> str:
+    """Removes invalid OS filename characters."""
+    return re.sub(r'[\\/*?:"<>|]', '_', filename)
+
+
+def format_date_display(date_input: Optional[str]) -> str:
+    """Formats date to DD.MM.YYYY for filenames."""
+    if not date_input:
+        return datetime.now().strftime("%d.%m.%Y")
+    try:
+        s_date = str(date_input).strip()
+        if "." in s_date:
+            parts = s_date.split(".")
+            return f"{int(parts[0]):02d}.{int(parts[1]):02d}.{parts[2]}"
+        elif "-" in s_date:
+            parts = s_date.split("-")
+            return f"{int(parts[2]):02d}.{int(parts[1]):02d}.{parts[0]}"
+    except Exception:
+        pass
+    return datetime.now().strftime("%d.%m.%Y")
+
+
+def get_writable_cell(ws, cell_ref: str):
+    """Returns the top-left cell if cell_ref belongs to a merged range."""
+    cell = ws[cell_ref]
+    if type(cell).__name__ == 'MergedCell':
+        for rng in ws.merged_cells.ranges:
+            if cell_ref in rng:
+                return ws.cell(rng.min_row, rng.min_col)
+    return cell
 
 
 def resolve_default_template(mapped_type: str, repo_root: str) -> str:
@@ -523,6 +684,27 @@ def main():
     if "address" not in data_dict or not data_dict["address"]:
         data_dict["address"] = data_dict.get("location", "")
 
+    # Normalize operator & title aliases
+    op_name = data_dict.get("operator_name") or data_dict.get("creator_display_name") or ""
+    if not op_name:
+        op_name = "Operatör"
+    data_dict["operator_name"] = op_name
+
+    op_title = data_dict.get("operator_title") or data_dict.get("title") or "Elektrik Mühendisi"
+    data_dict["operator_title"] = op_title
+
+    if not data_dict.get("creator_display_name"):
+        data_dict["creator_display_name"] = op_name
+
+    # Notes field normalization
+    notes_text = data_dict.get("notes") or data_dict.get("notes_text") or ""
+    if notes_text:
+        notes_str = str(notes_text).strip()
+        if not notes_str.upper().startswith("NOTLAR"):
+            data_dict["notes"] = f"NOTLAR : {notes_str}"
+        else:
+            data_dict["notes"] = notes_str
+
     # Legacy nested aliases fallback
     wr = data_dict.get("winding_resistance") if isinstance(data_dict.get("winding_resistance"), dict) else {}
     data_dict.setdefault("og_rab", wr.get("r_phase"))
@@ -553,6 +735,11 @@ def main():
     cell_map_sheets = TYPE_CELL_MAPPINGS.get(mapped_type, TYPE_CELL_MAPPINGS["HERMETIK"])
 
     # 5. Cell writing loop across sheets
+    force_overwrite_keys = {
+        "operator_name", "operator_title", "creator_display_name", "sicil_no",
+        "ekipnet_no", "notes", "device_model", "device_serial"
+    }
+
     for target_sheet_name, cell_map in cell_map_sheets.items():
         matched_sheet = None
         for sname in wb.sheetnames:
@@ -571,51 +758,65 @@ def main():
                     if val is None:
                         continue
 
-                    cell_obj = ws[cell_ref]
+                    cell_obj = get_writable_cell(ws, cell_ref)
 
-                    # Formula Protection: if existing cell value in template starts with '=', DO NOT overwrite!
+                    # Formula Protection: if existing cell value starts with '=', only overwrite if explicitly mapped personnel/notes key
                     if cell_obj.value is not None and str(cell_obj.value).strip().startswith("="):
-                        continue
+                        if field_key not in force_overwrite_keys:
+                            continue
 
                     # Checkmarks: checklist_* or tank_mark_*
                     if field_key.startswith("checklist_") or field_key.startswith("tank_mark_"):
                         if val is True or str(val).strip() in ["true", "ü", "1"]:
-                            ws[cell_ref] = "ü"
+                            cell_obj.value = "ü"
                         continue
 
                     # Dates
                     if field_key in ["report_date", "test_date"]:
                         serial_val = date_to_excel_serial(val)
                         if serial_val is not None:
-                            ws[cell_ref] = serial_val
+                            cell_obj.value = serial_val
                         else:
-                            ws[cell_ref] = str(val)
+                            cell_obj.value = str(val)
                         continue
 
                     # Numeric or string values
                     if isinstance(val, bool):
-                        ws[cell_ref] = "ü" if val else ""
+                        cell_obj.value = "ü" if val else ""
                     elif isinstance(val, (int, float)):
-                        ws[cell_ref] = val
+                        cell_obj.value = val
                     else:
                         str_val = str(val).strip()
                         clean_num = str_val.replace(',', '.')
                         try:
                             if '.' in clean_num:
-                                ws[cell_ref] = float(clean_num)
+                                cell_obj.value = float(clean_num)
                             else:
-                                ws[cell_ref] = int(clean_num)
+                                cell_obj.value = int(clean_num)
                         except Exception:
-                            ws[cell_ref] = str_val
+                            cell_obj.value = str_val
 
     # 6. Signature Image (KAPAK SAYFASI!G56)
     sig_path = args.signature or data_dict.get("signature_path") or data_dict.get("signature")
     if sig_path and os.path.exists(sig_path) and "KAPAK SAYFASI" in wb.sheetnames:
         ws_kapak = wb["KAPAK SAYFASI"]
+        # Clear existing old drawing/signature images anchored in bottom right area if present
+        if hasattr(ws_kapak, '_images') and ws_kapak._images:
+            filtered_images = []
+            for img in ws_kapak._images:
+                is_old_sig = False
+                if hasattr(img, 'anchor') and hasattr(img.anchor, '_from'):
+                    c = img.anchor._from.col
+                    r = img.anchor._from.row
+                    if c >= 6 and r >= 50:
+                        is_old_sig = True
+                if not is_old_sig:
+                    filtered_images.append(img)
+            ws_kapak._images = filtered_images
         try:
             img = OpenPyXLImage(sig_path)
-            img.width = 120
-            img.height = 50
+            img.width = 140
+            img.height = 60
             ws_kapak.add_image(img, "G56")
         except Exception as e:
             sys.stderr.write(f"Warning: Failed to insert signature image: {e}\n")
@@ -642,7 +843,20 @@ def main():
                 except Exception as e:
                     sys.stderr.write(f"Warning: Failed to insert photo at {cell_ref}: {e}\n")
 
-    # 8. Save output file
+    # 8. Fail-safe sweep to clear any remaining 'Hilmi' or 'Hilmi GÜL' text
+    for sname in wb.sheetnames:
+        ws = wb[sname]
+        for row in ws.iter_rows():
+            for cell in row:
+                if cell.value is not None and isinstance(cell.value, str):
+                    cval = cell.value
+                    cval_u = cval.upper()
+                    if "HİLMİ" in cval_u or "HILMI" in cval_u:
+                        for old_term in ["Hilmi GÜL", "Hilmi GUL", "Hilmi"]:
+                            cval = cval.replace(old_term, op_name)
+                        cell.value = cval
+
+    # 9. Save output file
     output_abs_path = os.path.abspath(args.output)
     output_dir = os.path.dirname(output_abs_path)
     if output_dir:
@@ -654,7 +868,7 @@ def main():
         sys.stderr.write(f"ERROR: Failed to save output workbook: {e}\n")
         sys.exit(1)
 
-    # 9. Success stdout signature
+    # 10. Success stdout signature
     print(f"OUTPUT_OK:{output_abs_path}")
     sys.exit(0)
 

@@ -78,10 +78,10 @@ This document provides the authoritative, type-based Excel cell mapping specific
       "A31": "summary_text",
       "D54": "TODO_VERIFY: formula_protected =D14",
       "D55": "TODO_VERIFY: formula_protected =D12",
-      "D56": "creator_display_name",
+      "D56": "operator_title",
       "D57": "sicil_no",
       "D58": "ekipnet_no",
-      "G56": "signature"
+      "G56": "operator_name / signature"
     },
     "ANA SAYFA": {
       "K2": "TODO_VERIFY: formula_protected =KAPAK SAYFASI!D9",

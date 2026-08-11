@@ -17,9 +17,10 @@ class ExcelCellMapping {
         'D12': 'report_date',
         'D14': 'test_date',
         'A31': 'summary_text',
-        'D56': 'creator_display_name',
+        'D56': 'operator_title',
         'D57': 'sicil_no',
         'D58': 'ekipnet_no',
+        'G56': 'operator_name',
       },
       'ANA SAYFA': <String, String>{
         'G11': 'brand',
@@ -79,20 +80,41 @@ class ExcelCellMapping {
         'O55': 'ag_rab',
         'O57': 'ag_rbc',
         'O59': 'ag_rca',
-        'C61': 'ground_trafo_body',
-        'F61': 'ground_neutral',
-        'J61': 'ground_tank',
-        'C63': 'ground_og_lightning',
-        'F63': 'ground_panel',
-        'J63': 'ground_fence',
+        'C61': 'ground_r_trafo_body',
+        'F61': 'ground_r_neutral',
+        'J61': 'ground_r_tank',
+        'C63': 'ground_r_og_lightning',
+        'F63': 'ground_r_panel',
+        'J63': 'ground_r_fence',
+        'B73': 'notes',
+        'F80': 'operator_title',
+        'F81': 'sicil_no',
+        'F82': 'ekipnet_no',
+        'K79': 'operator_name',
+      },
+      'OG SARGI MEVCUT KADEME': <String, String>{
+        'D11': 'operator_name',
+        'J11': 'device_model',
+        'O11': 'device_serial',
+      },
+      'AG SARGI': <String, String>{
+        'D11': 'operator_name',
+        'J11': 'device_model',
+        'O11': 'device_serial',
       },
       'İZOLASYON ': <String, String>{
+        'D11': 'operator_name',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'D16': 'iso_og_gnd',
         'D17': 'iso_ag_gnd',
         'D30': 'iso_temp',
         'D31': 'iso_humidity',
       },
       'Ç.O 34500': <String, String>{
+        'D11': 'operator_name',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'B16': 'ttr_tap1_a',
         'C16': 'ttr_tap1_b',
         'D16': 'ttr_tap1_c',
@@ -110,6 +132,9 @@ class ExcelCellMapping {
         'D20': 'ttr_tap5_c',
       },
       'TOPRAKLAMALAR': <String, String>{
+        'D9': 'operator_name',
+        'J9': 'device_model',
+        'O9': 'device_serial',
         'D17': 'ground_r_trafo_body',
         'D18': 'ground_r_neutral',
         'D19': 'ground_r_tank',
@@ -118,9 +143,15 @@ class ExcelCellMapping {
         'D34': 'ground_r_fence',
       },
       'HV PF': <String, String>{
+        'D11': 'operator_name',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'P17': 'pf_hv_humidity',
       },
       'LV PF': <String, String>{
+        'D11': 'operator_name',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'P17': 'pf_lv_humidity',
       },
       'ANA SAYFA KESİCİ': <String, String>{
@@ -130,19 +161,34 @@ class ExcelCellMapping {
         'O13': 'breaker_year',
       },
       'KESİCİ İZOLASYON': <String, String>{
-        'D10': 'breaker_iso_r_gnd',
+        'D10': 'operator_name',
+        'J10': 'device_model',
+        'O10': 'device_serial',
+        'D10_VAL': 'breaker_iso_r_gnd',
       },
       'KESİCİ KONTAK': <String, String>{
-        'D10': 'breaker_contact_r',
+        'D10': 'operator_name',
+        'J10': 'device_model',
+        'O10': 'device_serial',
+        'D10_VAL': 'breaker_contact_r',
       },
       'AÇMA-KAPAMA': <String, String>{
+        'D9': 'operator_name',
+        'J9': 'device_model',
+        'O9': 'device_serial',
         'D10': 'breaker_timing_open',
       },
       'DİĞER': <String, String>{
+        'D9': 'operator_name',
+        'J9': 'device_model',
+        'O9': 'device_serial',
         'D16': 'device_model',
         'D17': 'device_serial',
       },
       'AKIM TRAFOLARI': <String, String>{
+        'D9': 'operator_name',
+        'J9': 'device_model',
+        'O9': 'device_serial',
         'D16': 'ct_ratio',
       },
       'HERMETİK YAĞ DİLEKÇESİ': <String, String>{
@@ -158,9 +204,10 @@ class ExcelCellMapping {
         'D12': 'report_date',
         'D14': 'test_date',
         'A31': 'summary_text',
-        'D56': 'creator_display_name',
+        'D56': 'operator_title',
         'D57': 'sicil_no',
         'D58': 'ekipnet_no',
+        'G56': 'operator_name',
       },
       'ANA SAYFA': <String, String>{
         'G11': 'brand',
@@ -218,20 +265,41 @@ class ExcelCellMapping {
         'O49': 'ag_rab',
         'O51': 'ag_rbc',
         'O53': 'ag_rca',
-        'C55': 'ground_trafo_body',
-        'F55': 'ground_neutral',
-        'J55': 'ground_tank',
-        'C57': 'ground_og_lightning',
-        'F57': 'ground_panel',
-        'J57': 'ground_fence',
+        'C55': 'ground_r_trafo_body',
+        'F55': 'ground_r_neutral',
+        'J55': 'ground_r_tank',
+        'C57': 'ground_r_og_lightning',
+        'F57': 'ground_r_panel',
+        'J57': 'ground_r_fence',
+        'B67': 'notes',
+        'F74': 'operator_title',
+        'F75': 'sicil_no',
+        'F76': 'ekipnet_no',
+        'K73': 'operator_name',
+      },
+      'OG SARGI MEVCUT KADEME': <String, String>{
+        'D11': 'operator_name',
+        'J11': 'device_model',
+        'O11': 'device_serial',
+      },
+      'AG SARGI': <String, String>{
+        'D11': 'operator_name',
+        'J11': 'device_model',
+        'O11': 'device_serial',
       },
       'İZOLASYON ': <String, String>{
+        'D11': 'operator_name',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'D16': 'iso_og_gnd',
         'D17': 'iso_ag_gnd',
         'D30': 'iso_temp',
         'D31': 'iso_humidity',
       },
       'Ç.O 34500': <String, String>{
+        'D11': 'operator_name',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'B16': 'ttr_tap1_a',
         'C16': 'ttr_tap1_b',
         'D16': 'ttr_tap1_c',
@@ -249,6 +317,9 @@ class ExcelCellMapping {
         'D20': 'ttr_tap5_c',
       },
       'TOPRAKLAMALAR': <String, String>{
+        'D9': 'operator_name',
+        'J9': 'device_model',
+        'O9': 'device_serial',
         'D17': 'ground_r_trafo_body',
         'D18': 'ground_r_neutral',
         'D19': 'ground_r_tank',
@@ -257,9 +328,15 @@ class ExcelCellMapping {
         'D34': 'ground_r_fence',
       },
       'HV PF': <String, String>{
+        'D11': 'operator_name',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'P17': 'pf_hv_humidity',
       },
       'LV PF': <String, String>{
+        'D11': 'operator_name',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'P17': 'pf_lv_humidity',
       },
       'ANA SAYFA KESİCİ': <String, String>{
@@ -269,19 +346,34 @@ class ExcelCellMapping {
         'O13': 'breaker_year',
       },
       'KESİCİ İZOLASYON': <String, String>{
-        'D10': 'breaker_iso_r_gnd',
+        'D10': 'operator_name',
+        'J10': 'device_model',
+        'O10': 'device_serial',
+        'D10_VAL': 'breaker_iso_r_gnd',
       },
       'KESİCİ KONTAK': <String, String>{
-        'D10': 'breaker_contact_r',
+        'D10': 'operator_name',
+        'J10': 'device_model',
+        'O10': 'device_serial',
+        'D10_VAL': 'breaker_contact_r',
       },
       'AÇMA-KAPAMA': <String, String>{
+        'D9': 'operator_name',
+        'J9': 'device_model',
+        'O9': 'device_serial',
         'D10': 'breaker_timing_open',
       },
       'DİĞER': <String, String>{
+        'D9': 'operator_name',
+        'J9': 'device_model',
+        'O9': 'device_serial',
         'D16': 'device_model',
         'D17': 'device_serial',
       },
       'AKIM TRAFOLARI': <String, String>{
+        'D9': 'operator_name',
+        'J9': 'device_model',
+        'O9': 'device_serial',
         'D16': 'ct_ratio',
       },
     },
@@ -293,9 +385,10 @@ class ExcelCellMapping {
         'D12': 'report_date',
         'D14': 'test_date',
         'A31': 'summary_text',
-        'D56': 'creator_display_name',
+        'D56': 'operator_title',
         'D57': 'sicil_no',
         'D58': 'ekipnet_no',
+        'G56': 'operator_name',
       },
       'ANA SAYFA': <String, String>{
         'G11': 'brand',
@@ -355,20 +448,41 @@ class ExcelCellMapping {
         'O55': 'ag_rab',
         'O57': 'ag_rbc',
         'O59': 'ag_rca',
-        'C61': 'ground_trafo_body',
-        'F61': 'ground_neutral',
-        'J61': 'ground_tank',
-        'C63': 'ground_og_lightning',
-        'F63': 'ground_panel',
-        'J63': 'ground_fence',
+        'C61': 'ground_r_trafo_body',
+        'F61': 'ground_r_neutral',
+        'J61': 'ground_r_tank',
+        'C63': 'ground_r_og_lightning',
+        'F63': 'ground_r_panel',
+        'J63': 'ground_r_fence',
+        'B73': 'notes',
+        'F80': 'operator_title',
+        'F81': 'sicil_no',
+        'F82': 'ekipnet_no',
+        'K79': 'operator_name',
+      },
+      'OG SARGI MEVCUT KADEME': <String, String>{
+        'D11': 'operator_name',
+        'J11': 'device_model',
+        'O11': 'device_serial',
+      },
+      'AG SARGI': <String, String>{
+        'D11': 'operator_name',
+        'J11': 'device_model',
+        'O11': 'device_serial',
       },
       'İZOLASYON ': <String, String>{
+        'D11': 'operator_name',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'D16': 'iso_og_gnd',
         'D17': 'iso_ag_gnd',
         'D30': 'iso_temp',
         'D31': 'iso_humidity',
       },
       'Ç.O 34500': <String, String>{
+        'D11': 'operator_name',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'B16': 'ttr_tap1_a',
         'C16': 'ttr_tap1_b',
         'D16': 'ttr_tap1_c',
@@ -386,6 +500,9 @@ class ExcelCellMapping {
         'D20': 'ttr_tap5_c',
       },
       'TOPRAKLAMALAR': <String, String>{
+        'D9': 'operator_name',
+        'J9': 'device_model',
+        'O9': 'device_serial',
         'D17': 'ground_r_trafo_body',
         'D18': 'ground_r_neutral',
         'D19': 'ground_r_tank',
@@ -400,12 +517,21 @@ class ExcelCellMapping {
         'O13': 'breaker_year',
       },
       'KESİCİ İZOLASYON': <String, String>{
-        'D10': 'breaker_iso_r_gnd',
+        'D10': 'operator_name',
+        'J10': 'device_model',
+        'O10': 'device_serial',
+        'D10_VAL': 'breaker_iso_r_gnd',
       },
       'KESİCİ KONTAK': <String, String>{
-        'D10': 'breaker_contact_r',
+        'D10': 'operator_name',
+        'J10': 'device_model',
+        'O10': 'device_serial',
+        'D10_VAL': 'breaker_contact_r',
       },
       'AÇMA-KAPAMA': <String, String>{
+        'D9': 'operator_name',
+        'J9': 'device_model',
+        'O9': 'device_serial',
         'D10': 'breaker_timing_open',
       },
       'YAĞ RAPORU': <String, String>{
@@ -419,83 +545,19 @@ class ExcelCellMapping {
     },
   };
 
-  /// Backward-compatible global cell mapping
-  static Map<String, Map<String, String>> get cellMapping =>
-      typeCellMapping['hermetik']!;
-
-  /// Retrieves cell mapping for specific transformer type with fallback
-  static Map<String, Map<String, String>> cellMappingForType(String transformerType) {
-    final String key = transformerType.toLowerCase().trim();
-    return typeCellMapping[key] ?? typeCellMapping['hermetik']!;
+  /// Formats DateTime object to DD.MM.YYYY
+  static String formatDateDisplay(DateTime dt) {
+    final String day = dt.day.toString().padLeft(2, '0');
+    final String month = dt.month.toString().padLeft(2, '0');
+    return '$day.$month.${dt.year}';
   }
 
-  /// Normalizes sheet name by trimming whitespace
-  static String normalizeSheetName(String sheetName) {
-    return sheetName.trim();
-  }
-
-  /// Converts a date string (DD.MM.YYYY or YYYY-MM-DD) into an Excel serial date number (epoch 1899-12-30)
-  static double? dateToExcelSerial(dynamic dateInput) {
-    if (dateInput == null) return null;
-    final String str = dateInput.toString().trim();
-    if (str.isEmpty) return null;
-
-    try {
-      DateTime? dt;
-      if (str.contains('.')) {
-        final List<String> parts = str.split('.');
-        if (parts.length >= 3) {
-          dt = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
-        }
-      } else if (str.contains('-')) {
-        final List<String> parts = str.split('-');
-        if (parts.length >= 3) {
-          dt = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
-        }
-      }
-
-      if (dt != null) {
-        final DateTime epoch = DateTime(1899, 12, 30);
-        return dt.difference(epoch).inDays.toDouble();
-      }
-    } catch (_) {}
-    return null;
-  }
-
-  /// Formats date display to DD.MM.YYYY for filenames
-  static String formatDateDisplay(dynamic dateInput) {
-    if (dateInput == null) {
-      final DateTime now = DateTime.now();
-      return '${now.day.toString().padLeft(2, '0')}.${now.month.toString().padLeft(2, '0')}.${now.year}';
-    }
-    final String str = dateInput.toString().trim();
-    if (str.isEmpty) {
-      final DateTime now = DateTime.now();
-      return '${now.day.toString().padLeft(2, '0')}.${now.month.toString().padLeft(2, '0')}.${now.year}';
-    }
-
-    try {
-      if (str.contains('.')) {
-        final List<String> parts = str.split('.');
-        if (parts.length >= 3) {
-          return '${int.parse(parts[0]).toString().padLeft(2, '0')}.${int.parse(parts[1]).toString().padLeft(2, '0')}.${parts[2]}';
-        }
-      } else if (str.contains('-')) {
-        final List<String> parts = str.split('-');
-        if (parts.length >= 3) {
-          return '${int.parse(parts[2]).toString().padLeft(2, '0')}.${int.parse(parts[1]).toString().padLeft(2, '0')}.${parts[0]}';
-        }
-      }
-    } catch (_) {}
-    return str;
-  }
-
-  /// Sanitizes OS filename characters
+  /// Removes invalid OS filename characters
   static String sanitizeFilename(String filename) {
     return filename.replaceAll(RegExp(r'[\\/*?:"<>|]'), '_');
   }
 
-  /// Sanitizes formula string: translates Turkish names to English, converts ';' to ',', and fixes decimal separators
+  /// Sanitizes formula string by translating Turkish function names to English
   static String sanitizeFormula(String formula) {
     if (formula.isEmpty) return formula;
 

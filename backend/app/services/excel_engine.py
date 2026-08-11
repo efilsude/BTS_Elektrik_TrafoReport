@@ -26,9 +26,10 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D12": "report_date",
             "D14": "test_date",
             "A31": "summary_text",
-            "D56": "creator_display_name",
+            "D56": "operator_title",
             "D57": "sicil_no",
             "D58": "ekipnet_no",
+            "G56": "operator_name",
         },
         "ANA SAYFA": {
             "G11": "brand",
@@ -88,20 +89,41 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O55": "ag_rab",
             "O57": "ag_rbc",
             "O59": "ag_rca",
-            "C61": "ground_trafo_body",
-            "F61": "ground_neutral",
-            "J61": "ground_tank",
-            "C63": "ground_og_lightning",
-            "F63": "ground_panel",
-            "J63": "ground_fence",
+            "C61": "ground_r_trafo_body",
+            "F61": "ground_r_neutral",
+            "J61": "ground_r_tank",
+            "C63": "ground_r_og_lightning",
+            "F63": "ground_r_panel",
+            "J63": "ground_r_fence",
+            "B73": "notes",
+            "F80": "operator_title",
+            "F81": "sicil_no",
+            "F82": "ekipnet_no",
+            "K79": "operator_name",
+        },
+        "OG SARGI MEVCUT KADEME": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
+        },
+        "AG SARGI": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
         },
         "İZOLASYON ": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "D16": "iso_og_gnd",
             "D17": "iso_ag_gnd",
             "D30": "iso_temp",
             "D31": "iso_humidity",
         },
         "Ç.O 34500": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "B16": "ttr_tap1_a",
             "C16": "ttr_tap1_b",
             "D16": "ttr_tap1_c",
@@ -119,6 +141,9 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D20": "ttr_tap5_c",
         },
         "TOPRAKLAMALAR": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D17": "ground_r_trafo_body",
             "D18": "ground_r_neutral",
             "D19": "ground_r_tank",
@@ -127,9 +152,15 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D34": "ground_r_fence",
         },
         "HV PF": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "P17": "pf_hv_humidity",
         },
         "LV PF": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "P17": "pf_lv_humidity",
         },
         "ANA SAYFA KESİCİ": {
@@ -139,19 +170,34 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O13": "breaker_year",
         },
         "KESİCİ İZOLASYON": {
-            "D10": "breaker_iso_r_gnd",
+            "D10": "operator_name",
+            "J10": "device_model",
+            "O10": "device_serial",
+            "D10_VAL": "breaker_iso_r_gnd",
         },
         "KESİCİ KONTAK": {
-            "D10": "breaker_contact_r",
+            "D10": "operator_name",
+            "J10": "device_model",
+            "O10": "device_serial",
+            "D10_VAL": "breaker_contact_r",
         },
         "AÇMA-KAPAMA": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D10": "breaker_timing_open",
         },
         "DİĞER": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D16": "device_model",
             "D17": "device_serial",
         },
         "AKIM TRAFOLARI": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D16": "ct_ratio",
         },
         "HERMETİK YAĞ DİLEKÇESİ": {
@@ -167,9 +213,10 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D12": "report_date",
             "D14": "test_date",
             "A31": "summary_text",
-            "D56": "creator_display_name",
+            "D56": "operator_title",
             "D57": "sicil_no",
             "D58": "ekipnet_no",
+            "G56": "operator_name",
         },
         "ANA SAYFA": {
             "G11": "brand",
@@ -227,20 +274,41 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O49": "ag_rab",
             "O51": "ag_rbc",
             "O53": "ag_rca",
-            "C55": "ground_trafo_body",
-            "F55": "ground_neutral",
-            "J55": "ground_tank",
-            "C57": "ground_og_lightning",
-            "F57": "ground_panel",
-            "J57": "ground_fence",
+            "C55": "ground_r_trafo_body",
+            "F55": "ground_r_neutral",
+            "J55": "ground_r_tank",
+            "C57": "ground_r_og_lightning",
+            "F57": "ground_r_panel",
+            "J57": "ground_r_fence",
+            "B67": "notes",
+            "F74": "operator_title",
+            "F75": "sicil_no",
+            "F76": "ekipnet_no",
+            "K73": "operator_name",
+        },
+        "OG SARGI MEVCUT KADEME": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
+        },
+        "AG SARGI": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
         },
         "İZOLASYON ": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "D16": "iso_og_gnd",
             "D17": "iso_ag_gnd",
             "D30": "iso_temp",
             "D31": "iso_humidity",
         },
         "Ç.O 34500": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "B16": "ttr_tap1_a",
             "C16": "ttr_tap1_b",
             "D16": "ttr_tap1_c",
@@ -258,6 +326,9 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D20": "ttr_tap5_c",
         },
         "TOPRAKLAMALAR": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D17": "ground_r_trafo_body",
             "D18": "ground_r_neutral",
             "D19": "ground_r_tank",
@@ -266,9 +337,15 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D34": "ground_r_fence",
         },
         "HV PF": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "P17": "pf_hv_humidity",
         },
         "LV PF": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "P17": "pf_lv_humidity",
         },
         "ANA SAYFA KESİCİ": {
@@ -278,19 +355,34 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O13": "breaker_year",
         },
         "KESİCİ İZOLASYON": {
-            "D10": "breaker_iso_r_gnd",
+            "D10": "operator_name",
+            "J10": "device_model",
+            "O10": "device_serial",
+            "D10_VAL": "breaker_iso_r_gnd",
         },
         "KESİCİ KONTAK": {
-            "D10": "breaker_contact_r",
+            "D10": "operator_name",
+            "J10": "device_model",
+            "O10": "device_serial",
+            "D10_VAL": "breaker_contact_r",
         },
         "AÇMA-KAPAMA": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D10": "breaker_timing_open",
         },
         "DİĞER": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D16": "device_model",
             "D17": "device_serial",
         },
         "AKIM TRAFOLARI": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D16": "ct_ratio",
         }
     },
@@ -302,9 +394,10 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D12": "report_date",
             "D14": "test_date",
             "A31": "summary_text",
-            "D56": "creator_display_name",
+            "D56": "operator_title",
             "D57": "sicil_no",
             "D58": "ekipnet_no",
+            "G56": "operator_name",
         },
         "ANA SAYFA": {
             "G11": "brand",
@@ -364,20 +457,41 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O55": "ag_rab",
             "O57": "ag_rbc",
             "O59": "ag_rca",
-            "C61": "ground_trafo_body",
-            "F61": "ground_neutral",
-            "J61": "ground_tank",
-            "C63": "ground_og_lightning",
-            "F63": "ground_panel",
-            "J63": "ground_fence",
+            "C61": "ground_r_trafo_body",
+            "F61": "ground_r_neutral",
+            "J61": "ground_r_tank",
+            "C63": "ground_r_og_lightning",
+            "F63": "ground_r_panel",
+            "J63": "ground_r_fence",
+            "B73": "notes",
+            "F80": "operator_title",
+            "F81": "sicil_no",
+            "F82": "ekipnet_no",
+            "K79": "operator_name",
+        },
+        "OG SARGI MEVCUT KADEME": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
+        },
+        "AG SARGI": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
         },
         "İZOLASYON ": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "D16": "iso_og_gnd",
             "D17": "iso_ag_gnd",
             "D30": "iso_temp",
             "D31": "iso_humidity",
         },
         "Ç.O 34500": {
+            "D11": "operator_name",
+            "J11": "device_model",
+            "O11": "device_serial",
             "B16": "ttr_tap1_a",
             "C16": "ttr_tap1_b",
             "D16": "ttr_tap1_c",
@@ -395,6 +509,9 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D20": "ttr_tap5_c",
         },
         "TOPRAKLAMALAR": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D17": "ground_r_trafo_body",
             "D18": "ground_r_neutral",
             "D19": "ground_r_tank",
@@ -409,12 +526,21 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O13": "breaker_year",
         },
         "KESİCİ İZOLASYON": {
-            "D10": "breaker_iso_r_gnd",
+            "D10": "operator_name",
+            "J10": "device_model",
+            "O10": "device_serial",
+            "D10_VAL": "breaker_iso_r_gnd",
         },
         "KESİCİ KONTAK": {
-            "D10": "breaker_contact_r",
+            "D10": "operator_name",
+            "J10": "device_model",
+            "O10": "device_serial",
+            "D10_VAL": "breaker_contact_r",
         },
         "AÇMA-KAPAMA": {
+            "D9": "operator_name",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D10": "breaker_timing_open",
         },
         "YAĞ RAPORU": {
@@ -512,11 +638,34 @@ def generate_report_excel(
     data_dict["report_date"] = report.report_date
     data_dict["test_date"] = report.test_date
 
+    op_name = data_dict.get("operator_name") or data_dict.get("creator_display_name") or ""
+    if not op_name:
+        op_name = "Operatör"
+    data_dict["operator_name"] = op_name
+
+    op_title = data_dict.get("operator_title") or data_dict.get("title") or "Elektrik Mühendisi"
+    data_dict["operator_title"] = op_title
+
+    if not data_dict.get("creator_display_name"):
+        data_dict["creator_display_name"] = op_name
+
+    notes_text = data_dict.get("notes") or data_dict.get("notes_text") or ""
+    if notes_text:
+        notes_str = str(notes_text).strip()
+        if not notes_str.upper().startswith("NOTLAR"):
+            data_dict["notes"] = f"NOTLAR : {notes_str}"
+        else:
+            data_dict["notes"] = notes_str
+
     cell_mapping_to_use = TYPE_CELL_MAPPINGS.get(report_type, TYPE_CELL_MAPPINGS["HERMETIK"])
+
+    force_overwrite_keys = {
+        "operator_name", "operator_title", "creator_display_name", "sicil_no",
+        "ekipnet_no", "notes", "device_model", "device_serial"
+    }
 
     # Fill mapped cells across sheets
     for target_sheet_name, cell_map in cell_mapping_to_use.items():
-        # Match sheet name preserving trailing space
         matched_sheet = None
         for sname in wb.sheetnames:
             if sname.strip() == target_sheet_name.strip():
@@ -529,7 +678,11 @@ def generate_report_excel(
                 if field_key in data_dict:
                     val = data_dict[field_key]
                     if val is not None:
-                        # Convert date fields to Excel serial numbers
+                        cell_obj = ws[cell_ref]
+                        if cell_obj.value is not None and str(cell_obj.value).strip().startswith("="):
+                            if field_key not in force_overwrite_keys:
+                                continue
+
                         if field_key in ["report_date", "test_date"]:
                             serial_val = date_to_excel_serial(val)
                             if serial_val is not None:
@@ -537,7 +690,6 @@ def generate_report_excel(
                             else:
                                 ws[cell_ref] = str(val)
                         else:
-                            # Try numeric conversion for measurements
                             try:
                                 if isinstance(val, (int, float)):
                                     ws[cell_ref] = val
@@ -551,10 +703,22 @@ def generate_report_excel(
     # Insert signature image if present (Anchor G56)
     if signature_path and os.path.exists(signature_path) and "KAPAK SAYFASI" in wb.sheetnames:
         ws_kapak = wb["KAPAK SAYFASI"]
+        if hasattr(ws_kapak, '_images') and ws_kapak._images:
+            filtered_images = []
+            for img in ws_kapak._images:
+                is_old_sig = False
+                if hasattr(img, 'anchor') and hasattr(img.anchor, '_from'):
+                    c = img.anchor._from.col
+                    r = img.anchor._from.row
+                    if c >= 6 and r >= 50:
+                        is_old_sig = True
+                if not is_old_sig:
+                    filtered_images.append(img)
+            ws_kapak._images = filtered_images
         try:
             img = OpenPyXLImage(signature_path)
-            img.width = 120
-            img.height = 50
+            img.width = 140
+            img.height = 60
             ws_kapak.add_image(img, "G56")
         except Exception:
             pass
@@ -572,6 +736,19 @@ def generate_report_excel(
                     ws_kapak.add_image(img, photo_cells[idx])
                 except Exception:
                     pass
+
+    # Fail-safe sweep for Hilmi text
+    for sname in wb.sheetnames:
+        ws = wb[sname]
+        for row in ws.iter_rows():
+            for cell in row:
+                if cell.value is not None and isinstance(cell.value, str):
+                    cval = cell.value
+                    cval_u = cval.upper()
+                    if "HİLMİ" in cval_u or "HILMI" in cval_u:
+                        for old_term in ["Hilmi GÜL", "Hilmi GUL", "Hilmi"]:
+                            cval = cval.replace(old_term, op_name)
+                        cell.value = cval
 
     # Generate output directory and filename
     output_dir = os.path.join(settings.UPLOAD_DIR, "reports")
