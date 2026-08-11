@@ -597,4 +597,48 @@ class ExcelCellMapping {
   static String formatDouble(double val) {
     return val.toString().replaceAll(',', '.');
   }
+
+  /// Returns cell mapping dictionary for given transformer type
+  static Map<String, Map<String, String>> cellMappingForType(String type) {
+    final String normType = type.toLowerCase().trim();
+    if (normType.contains('kuru')) {
+      return typeCellMapping['kuru_tip'] ?? typeCellMapping['hermetik']!;
+    } else if (normType.contains('gt') || normType.contains('tank')) {
+      return typeCellMapping['gt'] ?? typeCellMapping['hermetik']!;
+    }
+    return typeCellMapping['hermetik']!;
+  }
+
+  /// Normalizes sheet name for comparison
+  static String normalizeSheetName(String name) {
+    return name.trim().toLowerCase();
+  }
+
+  /// Converts a date string or DateTime into Excel serial date number (epoch: 1899-12-30)
+  static double? dateToExcelSerial(dynamic dateInput) {
+    if (dateInput == null) return null;
+    try {
+      if (dateInput is DateTime) {
+        final DateTime epoch = DateTime(1899, 12, 30);
+        return dateInput.difference(epoch).inDays.toDouble();
+      }
+      final String sDate = dateInput.toString().trim();
+      if (sDate.contains('.')) {
+        final List<String> parts = sDate.split('.');
+        if (parts.length == 3) {
+          final DateTime dObj = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+          final DateTime epoch = DateTime(1899, 12, 30);
+          return dObj.difference(epoch).inDays.toDouble();
+        }
+      } else if (sDate.contains('-')) {
+        final List<String> parts = sDate.split('-');
+        if (parts.length == 3) {
+          final DateTime dObj = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+          final DateTime epoch = DateTime(1899, 12, 30);
+          return dObj.difference(epoch).inDays.toDouble();
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
 }

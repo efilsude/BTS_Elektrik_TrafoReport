@@ -631,7 +631,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
     final String opName = _operatorNameController.text.trim().isNotEmpty
         ? _operatorNameController.text.trim()
-        : (report.dataJson['operator_name']?.toString().trim() ?? authService.currentUser?.name ?? '');
+        : (report.dataJson['operator_name']?.toString().trim() ?? authService.currentUser?.fullName ?? '');
     final String opTitle = _operatorTitleController.text.trim().isNotEmpty
         ? _operatorTitleController.text.trim()
         : (report.dataJson['operator_title']?.toString().trim() ?? 'Elektrik Mühendisi');

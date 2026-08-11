@@ -1,14 +1,14 @@
 import 'dart:convert';
+import 'dart:io' show Platform, Directory;
 import 'package:bcrypt/bcrypt.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../models/user_model.dart';
 import '../models/report_model.dart';
-
-import 'dart:io' show Platform;
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -23,19 +23,45 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDB(String filePath) async {
-    if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
+    if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
     }
 
-    final String dbPath = await getDatabasesPath();
+    String dbPath;
+    if (!kIsWeb && Platform.isWindows) {
+      try {
+        final Directory appSupportDir = await getApplicationSupportDirectory();
+        dbPath = appSupportDir.path;
+      } catch (e) {
+        dbPath = await getDatabasesPath();
+      }
+    } else {
+      dbPath = await getDatabasesPath();
+    }
+
+    // Ensure parent directory exists before SQLite tries to open the database file
+    final Directory dbDir = Directory(dbPath);
+    if (!await dbDir.exists()) {
+      await dbDir.create(recursive: true);
+    }
+
     final String path = join(dbPath, filePath);
 
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: _createDB,
-    );
+    try {
+      return await openDatabase(
+        path,
+        version: 1,
+        onCreate: _createDB,
+      );
+    } catch (e, stackTrace) {
+      debugPrint('[DatabaseHelper] SQLite veritabanı açılamadı ($path): $e\n$stackTrace');
+      throw Exception(
+        'Veritabanı dosyası açılamadı ($path).\n'
+        'Lütfen uygulamanın yazma izinlerini ve disk alanını kontrol edin.\n'
+        'Hata: $e',
+      );
+    }
   }
 
   Future<void> closeDatabase() async {
