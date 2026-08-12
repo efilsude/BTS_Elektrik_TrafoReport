@@ -31,11 +31,11 @@
   "checklist_1": true,
   "checklist_2": true,
   "checklist_3": true,
-  "og_rab": "50.1",
-  "og_rbc": "50.0",
-  "og_rca": "50.2",
-  "iso_og_gnd": "2500",
-  "iso_ag_gnd": "2400",
+  "og_rab": "50.123456",
+  "og_rbc": "50.098765",
+  "og_rca": "50.234567",
+  "iso_og_gnd": "2500.876543",
+  "iso_ag_gnd": "2400.123456",
   "iso_temp": "24",
   "iso_humidity": "45"
 }

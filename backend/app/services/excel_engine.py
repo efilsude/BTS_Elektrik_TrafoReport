@@ -640,6 +640,44 @@ def process_sheet_signature(ws, target_anchor: Optional[str], sig_path: Optional
             pass
 
 
+def apply_format_and_column_width_fixes(wb):
+    """
+    Ensures date cells, GΩ 20°C calculated cells, and V DC [V] cells have explicit number_format
+    and sufficient column width to eliminate '#####' display issues.
+    """
+    # 1. KAPAK SAYFASI & ANA SAYFA (Col D for Dates)
+    for sname in ["KAPAK SAYFASI", "ANA SAYFA"]:
+        if sname in wb.sheetnames:
+            ws = wb[sname]
+            ws.column_dimensions["D"].width = max(ws.column_dimensions["D"].width or 0, 14.0)
+            for cref in ["D12", "D14", "D54", "D55"]:
+                if cref in ws:
+                    ws[cref].number_format = "dd.mm.yyyy"
+
+    # 2. İZOLASYON sheet (Cols B, D, F for measured GΩ; Cols H, J, L for 20°C calculated GΩ)
+    for sname in wb.sheetnames:
+        if "İZOLASYON" in sname.upper():
+            ws = wb[sname]
+            for col_let in ["B", "D", "F", "H", "J", "L"]:
+                ws.column_dimensions[col_let].width = max(ws.column_dimensions[col_let].width or 0, 13.0)
+            for r in range(16, 32):
+                for col_let in ["B", "D", "F", "H", "J", "L"]:
+                    cell = ws[f"{col_let}{r}"]
+                    if cell.value is not None:
+                        if cell.number_format in ["General", "0.000000"]:
+                            cell.number_format = "0.00"
+
+    # 3. AG SARGI & OG SARGI MEVCUT KADEME (Col G for V DC [V])
+    for sname in wb.sheetnames:
+        if any(k in sname.upper() for k in ["AG SARGI", "OG SARGI"]):
+            ws = wb[sname]
+            ws.column_dimensions["G"].width = max(ws.column_dimensions["G"].width or 0, 15.0)
+            for r in [24, 25, 26]:
+                cell = ws[f"G{r}"]
+                if cell.number_format in ["General", "0.000000"]:
+                    cell.number_format = "0.00"
+
+
 def date_to_excel_serial(date_input: Optional[str]) -> Optional[float]:
     """Converts a date string (YYYY-MM-DD or DD.MM.YYYY) into an Excel serial date number (epoch: 1899-12-30)."""
     if not date_input:
@@ -773,6 +811,7 @@ def generate_report_excel(
                                 ws[cell_ref] = serial_val
                             else:
                                 ws[cell_ref] = str(val)
+                            cell_obj.number_format = "dd.mm.yyyy"
                         else:
                             try:
                                 if isinstance(val, (int, float)):
@@ -828,6 +867,9 @@ def generate_report_excel(
                         if "ULusoy" in cval:
                             cval = cval.replace("ULusoy", b_brand)
                     cell.value = cval
+
+    # Apply column width & number format fixes
+    apply_format_and_column_width_fixes(wb)
 
     # Generate output directory and filename
     output_dir = os.path.join(settings.UPLOAD_DIR, "reports")
