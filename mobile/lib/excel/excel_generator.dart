@@ -409,12 +409,14 @@ class ExcelGenerator {
         }
 
         if (fieldKey == 'report_date' || fieldKey == 'test_date') {
-          final double? serial = ExcelCellMapping.dateToExcelSerial(rawVal);
-          if (serial != null) {
-            sheet.updateCell(cellIndex, DoubleCellValue(serial));
-          } else {
-            sheet.updateCell(cellIndex, TextCellValue(rawVal.toString()));
-          }
+          final DateTime dt = ExcelCellMapping.parseDateTime(rawVal);
+          sheet.updateCell(
+            cellIndex,
+            DateCellValue(year: dt.year, month: dt.month, day: dt.day),
+            cellStyle: (existingCell?.cellStyle ?? CellStyle()).copyWith(
+              numberFormat: NumFormat.custom(formatCode: 'dd.mm.yyyy'),
+            ),
+          );
         } else if (fieldKey.startsWith('checklist_') || fieldKey.startsWith('tank_mark_')) {
           if (rawVal == true || rawVal.toString().trim() == 'ü') {
             sheet.updateCell(cellIndex, TextCellValue('ü'));
@@ -518,26 +520,89 @@ class ExcelGenerator {
     }
 
     final Directory appDocDir = await getApplicationDocumentsDirectory();
-    final Directory reportsDir = Directory('${appDocDir.path}/reports');
-    if (!await reportsDir.exists()) {
-      await reportsDir.create(recursive: true);
-    }
+    final String reportsDir = p.join(appDocDir.path, 'reports');
+    await Directory(reportsDir).create(recursive: true);
 
     final String dateStr = ExcelCellMapping.formatDateDisplay(dataDict['test_date'], fallback: report.createdAt);
     final String customerStr = report.customerName.isEmpty ? 'Musteri' : report.customerName;
     final String labelStr = report.trafoLabel.isEmpty ? 'Trafo' : report.trafoLabel;
-
-    final String rawFilename = '$customerStr - $labelStr - $dateStr.xlsx';
-    final String cleanFilename = ExcelCellMapping.sanitizeFilename(rawFilename);
-    final String outputPath = '${reportsDir.path}/$cleanFilename';
+    final String rawFileName = '$customerStr - $labelStr - $dateStr.xlsx';
+    final String cleanFileName = ExcelCellMapping.sanitizeFilename(rawFileName);
+    final String outputPath = p.join(reportsDir, cleanFileName);
 
     final List<int>? fileBytes = excel.save();
     if (fileBytes == null) {
-      throw Exception('Excel dosyası kaydedilemedi.');
+      throw Exception('Excel rapor verisi kaydedilemedi (save null döndü).');
     }
 
     final File outputFile = File(outputPath);
-    await outputFile.writeAsBytes(fileBytes);
+    await outputFile.writeAsBytes(fileBytes, flush: true);
     return outputFile;
+  }
+
+  /// Applies column width and number format fixes to eliminate '#####' clipping issues in fallback native Dart generator.
+  static void _applyFormatAndColumnWidthFixes(Excel excel) {
+    for (final String sName in excel.tables.keys) {
+      final Sheet? sheet = excel.tables[sName];
+      if (sheet == null) continue;
+
+      final String upperName = sName.toUpperCase();
+
+      // 1. KAPAK SAYFASI & ANA SAYFA (Col D width >= 14.0, D12/D14/D54/D55 date format)
+      if (upperName.contains('KAPAK') || upperName.contains('ANA SAYFA')) {
+        final double currentW = sheet.getColumnWidth(3);
+        if (currentW < 14.0) {
+          sheet.setColumnWidth(3, 14.0);
+        }
+        for (final String cref in <String>['D12', 'D14', 'D54', 'D55']) {
+          final Data cell = sheet.cell(CellIndex.indexByString(cref));
+          cell.cellStyle = (cell.cellStyle ?? CellStyle()).copyWith(
+            numberFormat: NumFormat.custom(formatCode: 'dd.mm.yyyy'),
+          );
+        }
+      }
+
+      // 2. İZOLASYON Sheet (Cols B, D, F, H, J, L width >= 13.0, rows 16-31 format '0.00')
+      if (upperName.contains('İZOLASYON')) {
+        final List<int> isoCols = <int>[1, 3, 5, 7, 9, 11];
+        for (final int colIdx in isoCols) {
+          final double currentW = sheet.getColumnWidth(colIdx);
+          if (currentW < 13.0) {
+            sheet.setColumnWidth(colIdx, 13.0);
+          }
+        }
+        final List<String> colLetters = <String>['B', 'D', 'F', 'H', 'J', 'L'];
+        for (int r = 16; r <= 31; r++) {
+          for (final String colLet in colLetters) {
+            final Data cell = sheet.cell(CellIndex.indexByString('$colLet$r'));
+            if (cell.value != null) {
+              final String fmtCode = cell.cellStyle?.numberFormat.formatCode ?? 'General';
+              if (fmtCode == 'General' || fmtCode == '0.000000') {
+                cell.cellStyle = (cell.cellStyle ?? CellStyle()).copyWith(
+                  numberFormat: NumFormat.custom(formatCode: '0.00'),
+                );
+              }
+            }
+          }
+        }
+      }
+
+      // 3. AG SARGI & OG SARGI MEVCUT KADEME (Col G width >= 15.0, G24/G25/G26 format '0.00')
+      if (upperName.contains('AG SARGI') || upperName.contains('OG SARGI')) {
+        final double currentW = sheet.getColumnWidth(6);
+        if (currentW < 15.0) {
+          sheet.setColumnWidth(6, 15.0);
+        }
+        for (final String cref in <String>['G24', 'G25', 'G26']) {
+          final Data cell = sheet.cell(CellIndex.indexByString(cref));
+          final String fmtCode = cell.cellStyle?.numberFormat.formatCode ?? 'General';
+          if (fmtCode == 'General' || fmtCode == '0.000000') {
+            cell.cellStyle = (cell.cellStyle ?? CellStyle()).copyWith(
+              numberFormat: NumFormat.custom(formatCode: '0.00'),
+            );
+          }
+        }
+      }
+    }
   }
 }
