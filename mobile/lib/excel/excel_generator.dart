@@ -530,6 +530,9 @@ class ExcelGenerator {
     final String cleanFileName = ExcelCellMapping.sanitizeFilename(rawFileName);
     final String outputPath = p.join(reportsDir, cleanFileName);
 
+    // Apply column width and number format fixes before saving
+    applyFormatAndColumnWidthFixes(excel);
+
     final List<int>? fileBytes = excel.save();
     if (fileBytes == null) {
       throw Exception('Excel rapor verisi kaydedilemedi (save null döndü).');
@@ -541,7 +544,8 @@ class ExcelGenerator {
   }
 
   /// Applies column width and number format fixes to eliminate '#####' clipping issues in fallback native Dart generator.
-  static void _applyFormatAndColumnWidthFixes(Excel excel) {
+  @visibleForTesting
+  static void applyFormatAndColumnWidthFixes(Excel excel) {
     for (final String sName in excel.tables.keys) {
       final Sheet? sheet = excel.tables[sName];
       if (sheet == null) continue;
