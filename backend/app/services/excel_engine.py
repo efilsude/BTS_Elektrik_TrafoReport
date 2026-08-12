@@ -558,6 +558,88 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
 CELL_MAPPING = TYPE_CELL_MAPPINGS["HERMETIK"]
 
 
+SHEET_SIGNATURE_ANCHORS = {
+    "HERMETIK": {
+        "KAPAK SAYFASI": "G56",
+        "ANA SAYFA": "K79",
+        "ANA SAYFA KESİCİ": "K75",
+        "OG SARGI MEVCUT KADEME": "J46",
+        "AG SARGI": "J46",
+        "İZOLASYON ": "J51",
+        "Ç.O 34500": "J51",
+        "TOPRAKLAMALAR": "J48",
+        "HV PF": "J45",
+        "LV PF": "J45",
+        "KESİCİ İZOLASYON": "J41",
+        "KESİCİ KONTAK": "J51",
+        "AÇMA-KAPAMA": "J49",
+        "DİĞER": "J45",
+        "AKIM TRAFOLARI": "J45",
+        "HERMETİK YAĞ DİLEKÇESİ": "J53",
+    },
+    "KURU_TIP": {
+        "KAPAK SAYFASI": "G56",
+        "ANA SAYFA": "K73",
+        "ANA SAYFA KESİCİ": "K75",
+        "OG SARGI MEVCUT KADEME": "J46",
+        "AG SARGI": "J46",
+        "İZOLASYON ": "J51",
+        "Ç.O 34500": "J51",
+        "TOPRAKLAMALAR": "J48",
+        "HV PF": "J45",
+        "LV PF": "J45",
+        "KESİCİ İZOLASYON": "J51",
+        "KESİCİ KONTAK": "J51",
+        "AÇMA-KAPAMA": "J49",
+        "DİĞER": "J45",
+        "AKIM TRAFOLARI": "J45",
+    },
+    "GT": {
+        "KAPAK SAYFASI": "G56",
+        "ANA SAYFA": "K79",
+        "ANA SAYFA KESİCİ": "K75",
+        "OG SARGI MEVCUT KADEME": "J46",
+        "AG SARGI": "J46",
+        "İZOLASYON ": "J51",
+        "Ç.O 34500": "J51",
+        "TOPRAKLAMALAR": "J48",
+        "KESİCİ İZOLASYON": "J51",
+        "KESİCİ KONTAK": "J51",
+        "AÇMA-KAPAMA": "J49",
+        "YAĞ RAPORU": "J53",
+        "HERMETİK YAĞ DİLEKÇESİ": "J53",
+    }
+}
+
+
+def process_sheet_signature(ws, target_anchor: Optional[str], sig_path: Optional[str]):
+    """
+    Cleans old sample signature images from worksheet (row >= 30, col 5..13, width > 350 or height > 180)
+    and inserts the user signature image at target_anchor if sig_path exists.
+    """
+    if hasattr(ws, '_images') and ws._images:
+        filtered = []
+        for img in ws._images:
+            is_old_sig = False
+            if hasattr(img, 'anchor') and hasattr(img.anchor, '_from'):
+                c = img.anchor._from.col
+                r = img.anchor._from.row
+                if r >= 30 and 5 <= c <= 13 and (getattr(img, 'width', 0) > 350 or getattr(img, 'height', 0) > 180):
+                    is_old_sig = True
+            if not is_old_sig:
+                filtered.append(img)
+        ws._images = filtered
+
+    if sig_path and target_anchor and os.path.exists(sig_path):
+        try:
+            img = OpenPyXLImage(sig_path)
+            img.width = 140
+            img.height = 60
+            ws.add_image(img, target_anchor)
+        except Exception:
+            pass
+
+
 def date_to_excel_serial(date_input: Optional[str]) -> Optional[float]:
     """Converts a date string (YYYY-MM-DD or DD.MM.YYYY) into an Excel serial date number (epoch: 1899-12-30)."""
     if not date_input:
@@ -702,28 +784,18 @@ def generate_report_excel(
                             except Exception:
                                 ws[cell_ref] = str(val)
 
-    # Insert signature image if present (Anchor G56)
-    if signature_path and os.path.exists(signature_path) and "KAPAK SAYFASI" in wb.sheetnames:
-        ws_kapak = wb["KAPAK SAYFASI"]
-        if hasattr(ws_kapak, '_images') and ws_kapak._images:
-            filtered_images = []
-            for img in ws_kapak._images:
-                is_old_sig = False
-                if hasattr(img, 'anchor') and hasattr(img.anchor, '_from'):
-                    c = img.anchor._from.col
-                    r = img.anchor._from.row
-                    if c >= 6 and r >= 50:
-                        is_old_sig = True
-                if not is_old_sig:
-                    filtered_images.append(img)
-            ws_kapak._images = filtered_images
-        try:
-            img = OpenPyXLImage(signature_path)
-            img.width = 140
-            img.height = 60
-            ws_kapak.add_image(img, "G56")
-        except Exception:
-            pass
+    # Insert signature image across all sheets
+    sig_path = signature_path or data_dict.get("signature_path") or data_dict.get("signature")
+    sheet_signature_map = SHEET_SIGNATURE_ANCHORS.get(report_type, SHEET_SIGNATURE_ANCHORS["HERMETIK"])
+
+    for sname in wb.sheetnames:
+        ws = wb[sname]
+        target_anchor = None
+        for k_sheet, a_cell in sheet_signature_map.items():
+            if k_sheet.strip() == sname.strip():
+                target_anchor = a_cell
+                break
+        process_sheet_signature(ws, target_anchor, sig_path)
 
     # Insert photos if present into existing cover page area without creating new sheet
     if photos and "KAPAK SAYFASI" in wb.sheetnames:
@@ -739,7 +811,8 @@ def generate_report_excel(
                 except Exception:
                     pass
 
-    # Fail-safe sweep for Hilmi text
+    # Fail-safe sweep for Hilmi and ULUSOY text
+    b_brand = str(data_dict.get("breaker_brand") or "").strip()
     for sname in wb.sheetnames:
         ws = wb[sname]
         for row in ws.iter_rows():
@@ -750,7 +823,11 @@ def generate_report_excel(
                     if "HİLMİ" in cval_u or "HILMI" in cval_u:
                         for old_term in ["Hilmi GÜL", "Hilmi GUL", "Hilmi"]:
                             cval = cval.replace(old_term, op_name)
-                        cell.value = cval
+                    if "ULUSOY" in cval_u:
+                        cval = cval.replace("ULUSOY", b_brand)
+                        if "ULusoy" in cval:
+                            cval = cval.replace("ULusoy", b_brand)
+                    cell.value = cval
 
     # Generate output directory and filename
     output_dir = os.path.join(settings.UPLOAD_DIR, "reports")

@@ -62,6 +62,24 @@ This document provides the authoritative, type-based Excel cell mapping specific
 - **Signature Image**: `G56`
 - **Cover Photos**: `A35`, `F35`, `A43`, `F43` (embedded directly into existing cover area without adding new sheets).
 
+### 6. Signature Image Anchors Across Sheets
+The digital signature image (`signature_path`) is automatically cleared of old sample template images and inserted at the designated ONAYLAYAN signature anchor cell in each sheet:
+
+- **KAPAK SAYFASI**: `G56` / `G55` (bounding box col 6..9, row >= 50)
+- **ANA SAYFA**: `K79` (HERMETİK/GT) / `K73` (KURU_TIP) (bounding box col 9..12, row >= 70)
+- **ANA SAYFA KESİCİ**: `K75` (bounding box col 9..12, row >= 70)
+- **OG SARGI MEVCUT KADEME**: `J46` (bounding box col 8..11, row >= 40)
+- **AG SARGI**: `J46` (bounding box col 8..11, row >= 40)
+- **İZOLASYON **: `J51` (bounding box col 8..11, row >= 40)
+- **Ç.O 34500**: `J51` (bounding box col 8..11, row >= 40)
+- **TOPRAKLAMALAR**: `J48` (bounding box col 8..11, row >= 40)
+- **HV PF** / **LV PF**: `J45` (bounding box col 8..11, row >= 40)
+- **KESİCİ İZOLASYON**: `J41` (HERMETİK) / `J51` (KURU/GT) (bounding box col 8..11, row >= 35)
+- **KESİCİ KONTAK**: `J51` (bounding box col 8..11, row >= 40)
+- **AÇMA-KAPAMA**: `J49` (bounding box col 8..11, row >= 40)
+- **DİĞER** / **AKIM TRAFOLARI**: `J45` (bounding box col 8..11, row >= 40)
+- **YAĞ RAPORU** / **HERMETİK YAĞ DİLEKÇESİ**: `J53` (bounding box col 8..11, row >= 40)
+
 ---
 
 ## Type-Based Mapping Matrix (JSON)

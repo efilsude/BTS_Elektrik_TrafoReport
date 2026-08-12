@@ -11,6 +11,8 @@
   "creator_display_name": "Ahmet YILMAZ (Elektrik Mühendisi)",
   "sicil_no": "12345",
   "ekipnet_no": "K202439698",
+  "signature_path": "tools/test_signature.png",
+  "breaker_brand": "ABB",
   "device_model": "STS 5000",
   "device_serial": "SN-19B20",
   "brand": "BEST",

@@ -545,6 +545,60 @@ class ExcelCellMapping {
     },
   };
 
+  /// Sheet signature anchor cells per transformer type
+  static const Map<String, Map<String, String>> sheetSignatureAnchors = <String, Map<String, String>>{
+    'hermetik': <String, String>{
+      'KAPAK SAYFASI': 'G56',
+      'ANA SAYFA': 'K79',
+      'ANA SAYFA KESİCİ': 'K75',
+      'OG SARGI MEVCUT KADEME': 'J46',
+      'AG SARGI': 'J46',
+      'İZOLASYON ': 'J51',
+      'Ç.O 34500': 'J51',
+      'TOPRAKLAMALAR': 'J48',
+      'HV PF': 'J45',
+      'LV PF': 'J45',
+      'KESİCİ İZOLASYON': 'J41',
+      'KESİCİ KONTAK': 'J51',
+      'AÇMA-KAPAMA': 'J49',
+      'DİĞER': 'J45',
+      'AKIM TRAFOLARI': 'J45',
+      'HERMETİK YAĞ DİLEKÇESİ': 'J53',
+    },
+    'kuru_tip': <String, String>{
+      'KAPAK SAYFASI': 'G56',
+      'ANA SAYFA': 'K73',
+      'ANA SAYFA KESİCİ': 'K75',
+      'OG SARGI MEVCUT KADEME': 'J46',
+      'AG SARGI': 'J46',
+      'İZOLASYON ': 'J51',
+      'Ç.O 34500': 'J51',
+      'TOPRAKLAMALAR': 'J48',
+      'HV PF': 'J45',
+      'LV PF': 'J45',
+      'KESİCİ İZOLASYON': 'J51',
+      'KESİCİ KONTAK': 'J51',
+      'AÇMA-KAPAMA': 'J49',
+      'DİĞER': 'J45',
+      'AKIM TRAFOLARI': 'J45',
+    },
+    'gt': <String, String>{
+      'KAPAK SAYFASI': 'G56',
+      'ANA SAYFA': 'K79',
+      'ANA SAYFA KESİCİ': 'K75',
+      'OG SARGI MEVCUT KADEME': 'J46',
+      'AG SARGI': 'J46',
+      'İZOLASYON ': 'J51',
+      'Ç.O 34500': 'J51',
+      'TOPRAKLAMALAR': 'J48',
+      'KESİCİ İZOLASYON': 'J51',
+      'KESİCİ KONTAK': 'J51',
+      'AÇMA-KAPAMA': 'J49',
+      'YAĞ RAPORU': 'J53',
+      'HERMETİK YAĞ DİLEKÇESİ': 'J53',
+    },
+  };
+
   /// Safely parses dynamic date input (DateTime, String, null) into a DateTime object
   static DateTime parseDateTime(dynamic input, {DateTime? fallback}) {
     if (input == null) return fallback ?? DateTime.now();

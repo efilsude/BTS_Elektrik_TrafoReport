@@ -441,26 +441,45 @@ class ExcelGenerator {
       });
     }
 
+    final String? effectiveSigPath = signaturePath ??
+        dataDict['signature_path']?.toString() ??
+        dataDict['signature']?.toString();
+
+    if (effectiveSigPath != null && effectiveSigPath.isNotEmpty) {
+      final File sigFile = File(effectiveSigPath);
+      if (sigFile.existsSync()) {
+        final Map<String, String> sigAnchors =
+            ExcelCellMapping.sheetSignatureAnchors[transformerType] ??
+                ExcelCellMapping.sheetSignatureAnchors['hermetik']!;
+
+        try {
+          final List<int> sigBytes = await sigFile.readAsBytes();
+          for (final String sName in excel.tables.keys) {
+            String? targetCell;
+            for (final String keySheet in sigAnchors.keys) {
+              if (keySheet.trim() == sName.trim()) {
+                targetCell = sigAnchors[keySheet];
+                break;
+              }
+            }
+            if (targetCell != null) {
+              final Sheet? targetSheet = excel.tables[sName];
+              if (targetSheet != null) {
+                targetSheet.insertImage(
+                  sigBytes,
+                  anchor: CellIndex.indexByString(targetCell),
+                  width: 140,
+                  height: 50,
+                );
+              }
+            }
+          }
+        } catch (_) {}
+      }
+    }
+
     final Sheet? kapakSheet = excel.tables['KAPAK SAYFASI'];
     if (kapakSheet != null) {
-      final String? effectiveSigPath = signaturePath ??
-          dataDict['signature_path']?.toString() ??
-          dataDict['signature']?.toString();
-
-      if (effectiveSigPath != null && effectiveSigPath.isNotEmpty) {
-        final File sigFile = File(effectiveSigPath);
-        if (sigFile.existsSync()) {
-          try {
-            final List<int> sigBytes = await sigFile.readAsBytes();
-            kapakSheet.insertImage(
-              sigBytes,
-              anchor: CellIndex.indexByString('G56'),
-              width: 140,
-              height: 50,
-            );
-          } catch (_) {}
-        }
-      }
 
       final List<String> photoSlotCells = <String>['A35', 'F35', 'A43', 'F43'];
       final List<String> photoKeys = <String>[
