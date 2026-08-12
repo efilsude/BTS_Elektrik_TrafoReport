@@ -545,8 +545,63 @@ class ExcelCellMapping {
     },
   };
 
-  /// Formats DateTime object to DD.MM.YYYY
-  static String formatDateDisplay(DateTime dt) {
+  /// Safely parses dynamic date input (DateTime, String, null) into a DateTime object
+  static DateTime parseDateTime(dynamic input, {DateTime? fallback}) {
+    if (input == null) return fallback ?? DateTime.now();
+    if (input is DateTime) return input;
+
+    final String str = input.toString().trim();
+    if (str.isEmpty) return fallback ?? DateTime.now();
+
+    try {
+      if (str.contains('.')) {
+        final List<String> parts = str.split('.');
+        if (parts.length == 3) {
+          final int p1 = int.parse(parts[0]);
+          final int p2 = int.parse(parts[1]);
+          final int p3 = int.parse(parts[2]);
+          if (p3 > 1000) {
+            return DateTime(p3, p2, p1);
+          } else if (p1 > 1000) {
+            return DateTime(p1, p2, p3);
+          }
+        }
+      } else if (str.contains('-')) {
+        final DateTime? parsed = DateTime.tryParse(str);
+        if (parsed != null) return parsed;
+      }
+    } catch (_) {}
+
+    final DateTime? parsedIso = DateTime.tryParse(str);
+    if (parsedIso != null) return parsedIso;
+
+    return fallback ?? DateTime.now();
+  }
+
+  /// Formats dynamic date input (DateTime, String, null) safely to DD.MM.YYYY string
+  static String formatDateDisplay(dynamic dateInput, {DateTime? fallback}) {
+    if (dateInput == null) {
+      final DateTime dt = fallback ?? DateTime.now();
+      final String day = dt.day.toString().padLeft(2, '0');
+      final String month = dt.month.toString().padLeft(2, '0');
+      return '$day.$month.${dt.year}';
+    }
+    if (dateInput is DateTime) {
+      final String day = dateInput.day.toString().padLeft(2, '0');
+      final String month = dateInput.month.toString().padLeft(2, '0');
+      return '$day.$month.${dateInput.year}';
+    }
+    final String str = dateInput.toString().trim();
+    if (str.isEmpty) {
+      final DateTime dt = fallback ?? DateTime.now();
+      final String day = dt.day.toString().padLeft(2, '0');
+      final String month = dt.month.toString().padLeft(2, '0');
+      return '$day.$month.${dt.year}';
+    }
+    if (RegExp(r'^\d{1,2}\.\d{1,2}\.\d{4}$').hasMatch(str)) {
+      return str;
+    }
+    final DateTime dt = parseDateTime(dateInput, fallback: fallback);
     final String day = dt.day.toString().padLeft(2, '0');
     final String month = dt.month.toString().padLeft(2, '0');
     return '$day.$month.${dt.year}';
@@ -618,26 +673,9 @@ class ExcelCellMapping {
   static double? dateToExcelSerial(dynamic dateInput) {
     if (dateInput == null) return null;
     try {
-      if (dateInput is DateTime) {
-        final DateTime epoch = DateTime(1899, 12, 30);
-        return dateInput.difference(epoch).inDays.toDouble();
-      }
-      final String sDate = dateInput.toString().trim();
-      if (sDate.contains('.')) {
-        final List<String> parts = sDate.split('.');
-        if (parts.length == 3) {
-          final DateTime dObj = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
-          final DateTime epoch = DateTime(1899, 12, 30);
-          return dObj.difference(epoch).inDays.toDouble();
-        }
-      } else if (sDate.contains('-')) {
-        final List<String> parts = sDate.split('-');
-        if (parts.length == 3) {
-          final DateTime dObj = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
-          final DateTime epoch = DateTime(1899, 12, 30);
-          return dObj.difference(epoch).inDays.toDouble();
-        }
-      }
+      final DateTime dObj = parseDateTime(dateInput);
+      final DateTime epoch = DateTime(1899, 12, 30);
+      return dObj.difference(epoch).inDays.toDouble();
     } catch (_) {}
     return null;
   }

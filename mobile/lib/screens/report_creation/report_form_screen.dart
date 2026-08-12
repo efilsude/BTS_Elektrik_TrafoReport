@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/report_model.dart';
+import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/report_service.dart';
 import '../../theme/app_theme.dart';
@@ -227,18 +228,23 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
     final Map<String, dynamic> data = report.dataJson;
 
+    final AuthService authService = Provider.of<AuthService>(context, listen: false);
+    final User? curUser = authService.currentUser;
+
     setState(() {
       _customerController.text = report.customerName;
       _trafoLabelController.text = report.trafoLabel;
       _addressController.text = data['address']?.toString() ?? data['location']?.toString() ?? '';
       _reportDateController.text = data['report_date']?.toString() ?? '';
       _testDateController.text = data['test_date']?.toString() ?? '';
-      _operatorNameController.text = data['operator_name']?.toString() ?? '';
+
+      _operatorNameController.text = curUser?.fullName ?? data['operator_name']?.toString() ?? '';
+      _operatorTitleController.text = curUser?.operatorTitle ?? data['operator_title']?.toString() ?? '';
+      _sicilNoController.text = curUser?.sicilNo ?? data['sicil_no']?.toString() ?? '';
+      _ekipnetNoController.text = curUser?.ekipnetNo ?? data['ekipnet_no']?.toString() ?? '';
+
       _deviceModelController.text = data['device_model']?.toString() ?? '';
       _deviceSerialController.text = data['device_serial']?.toString() ?? '';
-      _operatorTitleController.text = data['operator_title']?.toString() ?? '';
-      _sicilNoController.text = data['sicil_no']?.toString() ?? '';
-      _ekipnetNoController.text = data['ekipnet_no']?.toString() ?? '';
 
       _brandController.text = data['brand']?.toString() ?? '';
       _powerController.text = data['power_kva']?.toString() ?? '';
@@ -627,18 +633,30 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     }
 
     final AuthService authService = Provider.of<AuthService>(context, listen: false);
-    final String? signaturePath = await authService.getSignaturePath();
+    final User? currentUser = authService.currentUser;
 
-    final String opName = _operatorNameController.text.trim().isNotEmpty
-        ? _operatorNameController.text.trim()
-        : (report.dataJson['operator_name']?.toString().trim() ?? authService.currentUser?.fullName ?? '');
-    final String opTitle = _operatorTitleController.text.trim().isNotEmpty
-        ? _operatorTitleController.text.trim()
-        : (report.dataJson['operator_title']?.toString().trim() ?? 'Elektrik Mühendisi');
+    if (currentUser == null) {
+      throw Exception('Oturum açmış kullanıcı bilgisi bulunamadı. Lütfen sisteme giriş yapın.');
+    }
+
+    final String opName = currentUser.fullName.trim();
+    final String opTitle = (currentUser.operatorTitle ?? '').trim();
+    final String sicilNo = (currentUser.sicilNo ?? '').trim();
+    final String ekipnetNo = (currentUser.ekipnetNo ?? '').trim();
+    final String? signaturePath = currentUser.signaturePath ?? await authService.getSignaturePath();
+
+    if (opName.isEmpty) {
+      throw Exception('Profilinizde Operatör Adı (Ad Soyad) eksik. Lütfen profil bilgilerinizi güncelleyin.');
+    }
+    if (opTitle.isEmpty) {
+      throw Exception('Profilinizde Operatör Unvanı eksik. Lütfen profil bilgilerinizi güncelleyin.');
+    }
 
     service.updateField('operator_name', opName);
     service.updateField('operator_title', opTitle);
-    service.updateField('creator_display_name', opTitle.isNotEmpty ? '$opName ($opTitle)' : opName);
+    service.updateField('sicil_no', sicilNo);
+    service.updateField('ekipnet_no', ekipnetNo);
+    service.updateField('creator_display_name', '$opName ($opTitle)');
 
     if (_notesController.text.trim().isNotEmpty) {
       service.updateField('notes', _notesController.text.trim());
@@ -647,17 +665,49 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       service.updateField('signature_path', signaturePath);
     }
 
-    final File? excelFile = await service.finalizeReport(report.id, signaturePath: signaturePath);
+    try {
+      final File? excelFile = await service.finalizeReport(report.id, signaturePath: signaturePath);
 
-    if (mounted && excelFile != null) {
-      _showPostProductionDialog(report.title, report.id, excelFile);
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Excel raporu üretilirken hata oluştu.'),
-          backgroundColor: AppTheme.errorColor,
-        ),
-      );
+      if (mounted && excelFile != null) {
+        _showPostProductionDialog(report.title, report.id, excelFile);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Excel raporu üretilirken beklenmeyen bir durum oluştu.'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        final String rawErr = e.toString().replaceFirst('Exception: ', '');
+        final String displayErr = rawErr.length > 500 ? '${rawErr.substring(0, 500)}...' : rawErr;
+        showDialog<void>(
+          context: context,
+          builder: (BuildContext ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: const <Widget>[
+                Icon(Icons.error_outline, color: AppTheme.errorColor),
+                SizedBox(width: 8),
+                Text('Excel Üretim Hatası', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: SelectableText(
+                displayErr,
+                style: const TextStyle(fontSize: 13, height: 1.4),
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Tamam'),
+              ),
+            ],
+          ),
+        );
+      }
     }
   }
 
@@ -1052,34 +1102,33 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           ],
         ),
         const SizedBox(height: 24),
-        _buildSectionHeader('Personel ve Cihaz Bilgileri', 'Kapak sayfasında yer alan imza sahibi mühendis/teknisyen ve cihaz kayıtları.'),
+        _buildSectionHeader('Operatör ve Cihaz Bilgileri', 'Kapak sayfasında yer alan imza sahibi operatör ve cihaz kayıtları (Operatör bilgileri oturum açan profilden çekilir).'),
         const SizedBox(height: 16),
         Row(
           children: <Widget>[
             Expanded(
               child: TextFormField(
                 controller: _operatorNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Testi Yapan Personel',
-                  hintText: 'Örn: Hilmi YILMAZ',
-                  prefixIcon: Icon(Icons.person_outline),
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'Testi Yapan Personel (Profil)',
+                  prefixIcon: const Icon(Icons.person_outline),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
                 ),
-                onChanged: (String val) => service.updateField('operator_name', val),
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: TextFormField(
                 controller: _operatorTitleController,
-                decoration: const InputDecoration(
-                  labelText: 'Unvan',
-                  hintText: 'Elektrik Mühendisi',
-                  prefixIcon: Icon(Icons.badge_outlined),
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'Unvan (Profil)',
+                  prefixIcon: const Icon(Icons.badge_outlined),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
                 ),
-                onChanged: (String val) {
-                  service.updateField('operator_title', val);
-                  service.updateField('creator_display_name', val);
-                },
               ),
             ),
           ],
@@ -1090,22 +1139,24 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             Expanded(
               child: TextFormField(
                 controller: _sicilNoController,
-                decoration: const InputDecoration(
-                  labelText: 'Sicil No',
-                  hintText: 'Örn: 88258',
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'Sicil No (Profil)',
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
                 ),
-                onChanged: (String val) => service.updateField('sicil_no', val),
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: TextFormField(
                 controller: _ekipnetNoController,
-                decoration: const InputDecoration(
-                  labelText: 'EKİPNET Kayıt No',
-                  hintText: 'Örn: K202439698',
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'EKİPNET Kayıt No (Profil)',
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
                 ),
-                onChanged: (String val) => service.updateField('ekipnet_no', val),
               ),
             ),
           ],

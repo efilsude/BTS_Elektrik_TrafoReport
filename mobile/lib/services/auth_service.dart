@@ -48,16 +48,22 @@ class AuthService extends ChangeNotifier {
     try {
       final User? storedUser = await _storageService.getUser();
       if (storedUser != null) {
-        // Refresh signature status from local DB
+        // Refresh full user data & signature status from local DB
+        final User? freshDbUser = await _dbHelper.getUserById(storedUser.id);
         final String? sigPath = await _dbHelper.getUserSignaturePath(storedUser.id);
+        final User effectiveUser = freshDbUser ?? storedUser;
         _currentUser = User(
-          id: storedUser.id,
-          fullName: storedUser.fullName,
-          phone: storedUser.phone,
-          email: storedUser.email,
-          sicilNo: storedUser.sicilNo,
-          role: storedUser.role,
-          isActive: storedUser.isActive,
+          id: effectiveUser.id,
+          fullName: effectiveUser.fullName,
+          phone: effectiveUser.phone,
+          email: effectiveUser.email,
+          sicilNo: effectiveUser.sicilNo,
+          operatorTitle: effectiveUser.operatorTitle,
+          ekipnetNo: effectiveUser.ekipnetNo,
+          diplomaNo: effectiveUser.diplomaNo,
+          signaturePath: sigPath ?? effectiveUser.signaturePath,
+          role: effectiveUser.role,
+          isActive: effectiveUser.isActive,
           hasSignature: sigPath != null && sigPath.isNotEmpty,
         );
       }
@@ -173,6 +179,10 @@ class AuthService extends ChangeNotifier {
         phone: user.phone,
         email: user.email,
         sicilNo: user.sicilNo,
+        operatorTitle: user.operatorTitle,
+        ekipnetNo: user.ekipnetNo,
+        diplomaNo: user.diplomaNo,
+        signaturePath: sigPath ?? user.signaturePath,
         role: user.role,
         isActive: user.isActive,
         hasSignature: sigPath != null && sigPath.isNotEmpty,
@@ -392,6 +402,10 @@ class AuthService extends ChangeNotifier {
         phone: _currentUser!.phone,
         email: _currentUser!.email,
         sicilNo: _currentUser!.sicilNo,
+        operatorTitle: _currentUser!.operatorTitle,
+        ekipnetNo: _currentUser!.ekipnetNo,
+        diplomaNo: _currentUser!.diplomaNo,
+        signaturePath: signaturePath,
         role: _currentUser!.role,
         isActive: _currentUser!.isActive,
         hasSignature: true,

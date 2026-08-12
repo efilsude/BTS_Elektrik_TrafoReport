@@ -51,8 +51,9 @@ class DatabaseHelper {
     try {
       return await openDatabase(
         path,
-        version: 1,
+        version: 2,
         onCreate: _createDB,
+        onUpgrade: _onUpgrade,
       );
     } catch (e, stackTrace) {
       debugPrint('[DatabaseHelper] SQLite veritabanı açılamadı ($path): $e\n$stackTrace');
@@ -71,6 +72,20 @@ class DatabaseHelper {
     }
   }
 
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      try {
+        await db.execute('ALTER TABLE users ADD COLUMN operator_title TEXT');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE users ADD COLUMN ekipnet_no TEXT');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE users ADD COLUMN diploma_no TEXT');
+      } catch (_) {}
+    }
+  }
+
   Future<void> _createDB(Database db, int version) async {
     const String userTable = '''
       CREATE TABLE users (
@@ -79,6 +94,9 @@ class DatabaseHelper {
         phone TEXT NOT NULL UNIQUE,
         email TEXT,
         sicil_no TEXT,
+        operator_title TEXT,
+        ekipnet_no TEXT,
+        diploma_no TEXT,
         password_hash TEXT NOT NULL,
         role TEXT NOT NULL DEFAULT 'employee',
         signature_path TEXT,
@@ -229,6 +247,9 @@ class DatabaseHelper {
     required String phone,
     String? email,
     String? sicilNo,
+    String? operatorTitle,
+    String? ekipnetNo,
+    String? diplomaNo,
     required String password,
     required String role,
   }) async {
@@ -243,6 +264,9 @@ class DatabaseHelper {
       'phone': phone.trim(),
       'email': email?.trim().isEmpty == true ? null : email?.trim(),
       'sicil_no': sicilNo?.trim().isEmpty == true ? null : sicilNo?.trim(),
+      'operator_title': operatorTitle?.trim().isEmpty == true ? null : operatorTitle?.trim(),
+      'ekipnet_no': ekipnetNo?.trim().isEmpty == true ? null : ekipnetNo?.trim(),
+      'diploma_no': diplomaNo?.trim().isEmpty == true ? null : diplomaNo?.trim(),
       'password_hash': passwordHash,
       'role': role,
       'signature_path': null,
@@ -258,6 +282,9 @@ class DatabaseHelper {
       phone: phone.trim(),
       email: email?.trim().isEmpty == true ? null : email?.trim(),
       sicilNo: sicilNo?.trim().isEmpty == true ? null : sicilNo?.trim(),
+      operatorTitle: operatorTitle?.trim().isEmpty == true ? null : operatorTitle?.trim(),
+      ekipnetNo: ekipnetNo?.trim().isEmpty == true ? null : ekipnetNo?.trim(),
+      diplomaNo: diplomaNo?.trim().isEmpty == true ? null : diplomaNo?.trim(),
       role: role,
       isActive: true,
       hasSignature: false,
@@ -271,6 +298,9 @@ class DatabaseHelper {
     required String phone,
     String? email,
     String? sicilNo,
+    String? operatorTitle,
+    String? ekipnetNo,
+    String? diplomaNo,
     required String role,
     String? newPassword,
   }) async {
@@ -291,6 +321,9 @@ class DatabaseHelper {
       'phone': phone.trim(),
       'email': email?.trim().isEmpty == true ? null : email?.trim(),
       'sicil_no': sicilNo?.trim().isEmpty == true ? null : sicilNo?.trim(),
+      'operator_title': operatorTitle?.trim().isEmpty == true ? null : operatorTitle?.trim(),
+      'ekipnet_no': ekipnetNo?.trim().isEmpty == true ? null : ekipnetNo?.trim(),
+      'diploma_no': diplomaNo?.trim().isEmpty == true ? null : diplomaNo?.trim(),
       'role': role,
     };
 

@@ -684,17 +684,21 @@ def main():
     if "address" not in data_dict or not data_dict["address"]:
         data_dict["address"] = data_dict.get("location", "")
 
-    # Normalize operator & title aliases
-    op_name = data_dict.get("operator_name") or data_dict.get("creator_display_name") or ""
+    # Normalize operator & title validation
+    op_name = str(data_dict.get("operator_name") or data_dict.get("creator_display_name") or "").strip()
     if not op_name:
-        op_name = "Operatör"
+        sys.stderr.write("ERROR: Operatör adı (operator_name) eksik veya boş. Lütfen kullanıcı profil bilgilerinizi güncelleyin.\n")
+        sys.exit(1)
     data_dict["operator_name"] = op_name
 
-    op_title = data_dict.get("operator_title") or data_dict.get("title") or "Elektrik Mühendisi"
+    op_title = str(data_dict.get("operator_title") or data_dict.get("title") or "").strip()
+    if not op_title:
+        sys.stderr.write("ERROR: Operatör unvanı (operator_title) eksik veya boş. Lütfen kullanıcı profil bilgilerinizi güncelleyin.\n")
+        sys.exit(1)
     data_dict["operator_title"] = op_title
 
     if not data_dict.get("creator_display_name"):
-        data_dict["creator_display_name"] = op_name
+        data_dict["creator_display_name"] = f"{op_name} ({op_title})"
 
     # Notes field normalization
     notes_text = data_dict.get("notes") or data_dict.get("notes_text") or ""

@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../database/database_helper.dart';
+import '../excel/cell_mapping.dart';
 import '../excel/excel_generator.dart';
 import '../models/report_model.dart';
 
@@ -89,8 +90,7 @@ class ReportService extends ChangeNotifier {
 
     String title = _activeReport!.title;
     if (customer.isNotEmpty && label.isNotEmpty) {
-      final String dateStr = updatedData['test_date'] ??
-          '${DateTime.now().day}.${DateTime.now().month}.${DateTime.now().year}';
+      final String dateStr = ExcelCellMapping.formatDateDisplay(updatedData['test_date'], fallback: _activeReport!.createdAt);
       title = '$customer - $label - $dateStr';
     }
 
@@ -326,11 +326,11 @@ class ReportService extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return excelFile;
-    } catch (e) {
-      debugPrint('[TrafoReport] Rapor kesinleştirme/Excel üretme hatası: $e');
+    } catch (e, stackTrace) {
+      debugPrint('[TrafoReport] Rapor kesinleştirme/Excel üretme hatası: $e\n$stackTrace');
       _isLoading = false;
       notifyListeners();
-      return null;
+      rethrow;
     }
   }
 

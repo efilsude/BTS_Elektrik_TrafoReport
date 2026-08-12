@@ -4,6 +4,10 @@ class User {
   final String? email;
   final String phone;
   final String? sicilNo;
+  final String? operatorTitle;
+  final String? ekipnetNo;
+  final String? diplomaNo;
+  final String? signaturePath;
   final String role; // 'admin' or 'employee'
   final bool isActive;
   final bool hasSignature;
@@ -14,6 +18,10 @@ class User {
     this.email,
     required this.phone,
     this.sicilNo,
+    this.operatorTitle,
+    this.ekipnetNo,
+    this.diplomaNo,
+    this.signaturePath,
     required this.role,
     required this.isActive,
     this.hasSignature = false,
@@ -35,9 +43,9 @@ class User {
   }
 
   factory User.fromJson(Map<String, dynamic> json) {
-    final dynamic sigPath = json['signature_path'];
+    final String? sigPath = json['signature_path']?.toString() ?? json['signaturePath']?.toString();
     final dynamic sigValue = json['has_signature'] ?? json['hasSignature'];
-    final bool hasSig = (sigPath is String && sigPath.trim().isNotEmpty) ||
+    final bool hasSig = (sigPath != null && sigPath.trim().isNotEmpty) ||
         _parseBool(sigValue, defaultValue: false);
 
     return User(
@@ -46,6 +54,10 @@ class User {
       email: json['email']?.toString(),
       phone: json['phone']?.toString() ?? '',
       sicilNo: json['sicil_no']?.toString() ?? json['sicilNo']?.toString(),
+      operatorTitle: json['operator_title']?.toString() ?? json['operatorTitle']?.toString() ?? json['title']?.toString(),
+      ekipnetNo: json['ekipnet_no']?.toString() ?? json['ekipnetNo']?.toString(),
+      diplomaNo: json['diploma_no']?.toString() ?? json['diplomaNo']?.toString(),
+      signaturePath: sigPath,
       role: json['role']?.toString() ?? 'employee',
       isActive: _parseBool(json['is_active'] ?? json['isActive'], defaultValue: true),
       hasSignature: hasSig,
@@ -59,6 +71,10 @@ class User {
       'email': email,
       'phone': phone,
       'sicil_no': sicilNo,
+      'operator_title': operatorTitle,
+      'ekipnet_no': ekipnetNo,
+      'diploma_no': diplomaNo,
+      'signature_path': signaturePath,
       'role': role,
       'is_active': isActive,
       'has_signature': hasSignature,

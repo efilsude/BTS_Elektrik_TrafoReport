@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:excel_plus/excel_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show ByteData, rootBundle;
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'cell_mapping.dart';
 import '../models/report_model.dart';
@@ -37,8 +39,8 @@ class ExcelGenerator {
     dataDict['customer_name'] = report.customerName;
     dataDict['trafo_label'] = report.trafoLabel;
     dataDict['address'] = dataDict['address'] ?? dataDict['location'] ?? '';
-    dataDict['report_date'] = dataDict['report_date'] ?? ExcelCellMapping.formatDateDisplay(report.createdAt);
-    dataDict['test_date'] = dataDict['test_date'] ?? ExcelCellMapping.formatDateDisplay(report.createdAt);
+    dataDict['report_date'] = ExcelCellMapping.formatDateDisplay(dataDict['report_date'], fallback: report.createdAt);
+    dataDict['test_date'] = ExcelCellMapping.formatDateDisplay(dataDict['test_date'], fallback: report.createdAt);
     dataDict['creator_display_name'] = report.creatorDisplayName ??
         dataDict['operator_title'] ??
         dataDict['operator_name'] ??
@@ -54,40 +56,79 @@ class ExcelGenerator {
     }
 
     final Directory appDocDir = await getApplicationDocumentsDirectory();
-    final Directory reportsDir = Directory('${appDocDir.path}/reports');
+    final Directory reportsDir = Directory(p.join(appDocDir.path, 'reports'));
     if (!await reportsDir.exists()) {
       await reportsDir.create(recursive: true);
     }
 
-    final String dateStr = ExcelCellMapping.formatDateDisplay(dataDict['test_date'] ?? report.createdAt);
+    final String dateStr = ExcelCellMapping.formatDateDisplay(dataDict['test_date'], fallback: report.createdAt);
     final String customerStr = report.customerName.isEmpty ? 'Musteri' : report.customerName;
     final String labelStr = report.trafoLabel.isEmpty ? 'Trafo' : report.trafoLabel;
 
     final String rawFilename = '$customerStr - $labelStr - $dateStr.xlsx';
     final String cleanFilename = ExcelCellMapping.sanitizeFilename(rawFilename);
-    final String outputPath = '${reportsDir.path}/$cleanFilename';
+    final String outputPath = p.join(reportsDir.path, cleanFilename);
 
     // Temporary JSON file for CLI argument
-    final File tempJsonFile = File('${reportsDir.path}/temp_report_${report.id}.json');
+    final File tempJsonFile = File(p.join(reportsDir.path, 'temp_report_${report.id}.json'));
     await tempJsonFile.writeAsString(jsonEncode(dataDict));
 
     final String? scriptPath = _findPythonScriptPath();
+    final String? templatePath = _findTemplatePath(transformerType);
+
+    debugPrint('[ExcelGenerator] Script Path: $scriptPath');
+    debugPrint('[ExcelGenerator] Template Path: $templatePath');
+
     if (scriptPath == null) {
       if (await tempJsonFile.exists()) {
         await tempJsonFile.delete();
       }
       throw Exception(
-        'Excel şablon üretim aracı bulunamadı (tools/generate_excel.py).\n'
-        'Lütfen proje dizininde tools/generate_excel.py dosyasının bulunduğundan emin olun.',
+        'Excel şablon üretim aracı bulunamadı (generate_excel.py).\n'
+        'Lütfen TRAFO_TOOLS_DIR ortam değişkenini ayarlayın veya uygulamanın yanındaki "tools" klasörünü kontrol edin.',
       );
     }
 
-    final List<String> pythonExecutables = <String>['python', 'py', 'python3'];
-    ProcessResult? result;
-    String? lastError;
+    // Candidate python execution commands
+    final List<List<String>> pythonCommands = <List<String>>[
+      <String>['python'],
+      <String>['py', '-3'],
+      <String>['py'],
+      <String>['python3'],
+    ];
 
-    for (final String pyExe in pythonExecutables) {
+    // Check known Windows installation paths as fallbacks
+    final List<String> knownPythonPaths = <String>[
+      r'C:\Python314\python.exe',
+      r'C:\Python313\python.exe',
+      r'C:\Python312\python.exe',
+      r'C:\Python311\python.exe',
+      r'C:\Python310\python.exe',
+    ];
+
+    final String? localAppData = Platform.environment['LOCALAPPDATA'];
+    if (localAppData != null && localAppData.isNotEmpty) {
+      knownPythonPaths.add(p.join(localAppData, 'Programs', 'Python', 'Python314', 'python.exe'));
+      knownPythonPaths.add(p.join(localAppData, 'Programs', 'Python', 'Python313', 'python.exe'));
+      knownPythonPaths.add(p.join(localAppData, 'Programs', 'Python', 'Python312', 'python.exe'));
+      knownPythonPaths.add(p.join(localAppData, 'Programs', 'Python', 'Python311', 'python.exe'));
+      knownPythonPaths.add(p.join(localAppData, 'Programs', 'Python', 'Python310', 'python.exe'));
+    }
+
+    for (final String path in knownPythonPaths) {
+      if (File(path).existsSync()) {
+        pythonCommands.add(<String>[path]);
+      }
+    }
+
+    String? lastErrorMsg;
+
+    for (final List<String> cmd in pythonCommands) {
+      final String exeName = cmd.first;
+      final List<String> extraArgs = cmd.sublist(1);
+
       final List<String> cliArgs = <String>[
+        ...extraArgs,
         scriptPath,
         '--json',
         tempJsonFile.path,
@@ -96,6 +137,10 @@ class ExcelGenerator {
         '--output',
         outputPath,
       ];
+
+      if (templatePath != null) {
+        cliArgs.addAll(<String>['--template', templatePath]);
+      }
 
       final String? effectiveSigPath = signaturePath ??
           dataDict['signature_path']?.toString() ??
@@ -129,8 +174,14 @@ class ExcelGenerator {
         cliArgs.addAll(<String>['--photo-label', photoLabel]);
       }
 
+      debugPrint('[ExcelGenerator] Deneniyor: $exeName ${cliArgs.join(" ")}');
+
       try {
-        result = await Process.run(pyExe, cliArgs);
+        final ProcessResult result = await Process.run(exeName, cliArgs);
+        debugPrint('[ExcelGenerator] exitCode: ${result.exitCode}');
+        debugPrint('[ExcelGenerator] stdout: ${result.stdout}');
+        debugPrint('[ExcelGenerator] stderr: ${result.stderr}');
+
         if (result.exitCode == 0 && result.stdout.toString().contains('OUTPUT_OK:')) {
           if (await tempJsonFile.exists()) {
             await tempJsonFile.delete();
@@ -140,13 +191,13 @@ class ExcelGenerator {
             return outputFile;
           }
         } else {
-          lastError = result.stderr.toString().trim();
-          if (lastError.isEmpty) {
-            lastError = result.stdout.toString().trim();
-          }
+          final String stderrStr = result.stderr.toString().trim();
+          final String stdoutStr = result.stdout.toString().trim();
+          lastErrorMsg = stderrStr.isNotEmpty ? stderrStr : stdoutStr;
         }
       } catch (e) {
-        lastError = e.toString();
+        debugPrint('[ExcelGenerator] $exeName çalıştırma hatası: $e');
+        lastErrorMsg = e.toString();
       }
     }
 
@@ -154,34 +205,113 @@ class ExcelGenerator {
       await tempJsonFile.delete();
     }
 
+    final String cleanErrorStr = (lastErrorMsg != null && lastErrorMsg.isNotEmpty)
+        ? lastErrorMsg
+        : 'Python veya openpyxl kütüphanesi çalıştırılamadı.';
+
     throw Exception(
       'Excel raporu üretilemedi.\n'
-      'Lütfen bilgisayarınızda Python ve "openpyxl" kütüphanesinin yüklü olduğundan emin olun.\n'
-      'Hata Detayı: $lastError',
+      'Script Yolu: $scriptPath\n'
+      'Hata Detayı: $cleanErrorStr\n\n'
+      'Lütfen Python ve "openpyxl" kütüphanesinin yüklü olduğundan ve PATH ortam değişkenine eklendiğinden emin olun.',
     );
   }
 
   static String? _findPythonScriptPath() {
     final String? envToolsDir = Platform.environment['TRAFO_TOOLS_DIR'];
     if (envToolsDir != null && envToolsDir.isNotEmpty) {
-      final File envScript = File('$envToolsDir/generate_excel.py');
-      if (envScript.existsSync()) return envScript.path;
+      final File envScript = File(p.join(envToolsDir, 'generate_excel.py'));
+      if (envScript.existsSync()) return envScript.absolute.path;
     }
 
-    final String cwd = Directory.current.path;
-    final List<String> candidatePaths = <String>[
-      '$cwd/tools/generate_excel.py',
-      '$cwd/../tools/generate_excel.py',
-      '$cwd/../../tools/generate_excel.py',
-      'tools/generate_excel.py',
-      'C:/Users/User/OneDrive/Desktop/BTS_Elektrik/tools/generate_excel.py',
-    ];
+    final String? envRepoRoot = Platform.environment['TRAFO_REPO_ROOT'];
+    if (envRepoRoot != null && envRepoRoot.isNotEmpty) {
+      final File envRepoScript = File(p.join(envRepoRoot, 'tools', 'generate_excel.py'));
+      if (envRepoScript.existsSync()) return envRepoScript.absolute.path;
+    }
 
-    for (final String path in candidatePaths) {
-      final File f = File(path);
-      if (f.existsSync()) {
-        return f.absolute.path;
+    try {
+      final Directory exeDir = File(Platform.resolvedExecutable).parent;
+      final List<String> exeCandidates = <String>[
+        p.join(exeDir.path, 'tools', 'generate_excel.py'),
+        p.join(exeDir.path, 'generate_excel.py'),
+        p.join(exeDir.path, '..', 'tools', 'generate_excel.py'),
+        p.join(exeDir.path, '..', '..', 'tools', 'generate_excel.py'),
+        p.join(exeDir.path, '..', '..', '..', 'tools', 'generate_excel.py'),
+      ];
+      for (final String path in exeCandidates) {
+        final File f = File(path);
+        if (f.existsSync()) return f.absolute.path;
       }
+    } catch (_) {}
+
+    try {
+      final String cwd = Directory.current.path;
+      final List<String> cwdCandidates = <String>[
+        p.join(cwd, 'tools', 'generate_excel.py'),
+        p.join(cwd, '..', 'tools', 'generate_excel.py'),
+        p.join(cwd, '..', '..', 'tools', 'generate_excel.py'),
+        'tools/generate_excel.py',
+      ];
+      for (final String path in cwdCandidates) {
+        final File f = File(path);
+        if (f.existsSync()) return f.absolute.path;
+      }
+    } catch (_) {}
+
+    const String defaultFallback = 'C:/Users/User/OneDrive/Desktop/BTS_Elektrik/tools/generate_excel.py';
+    if (File(defaultFallback).existsSync()) {
+      return File(defaultFallback).absolute.path;
+    }
+
+    return null;
+  }
+
+  static String? _findTemplatePath(String transformerType) {
+    final String normType = transformerType.toLowerCase().trim();
+    String filename;
+    if (normType.contains('kuru')) {
+      filename = 'KURU TİP HİLMİ.xlsx';
+    } else if (normType.contains('gt') || normType.contains('tank')) {
+      filename = 'TR BAKIM RAPORU GT HİLMİ.xlsx';
+    } else {
+      filename = 'HERMETİK TRAFO BAKIM RAPORU HİLMİ.xlsx';
+    }
+
+    final List<String> dirsToSearch = <String>[];
+
+    final String? envRepoRoot = Platform.environment['TRAFO_REPO_ROOT'];
+    if (envRepoRoot != null && envRepoRoot.isNotEmpty) {
+      dirsToSearch.add(p.join(envRepoRoot, 'backend', 'templates'));
+    }
+
+    final String? envToolsDir = Platform.environment['TRAFO_TOOLS_DIR'];
+    if (envToolsDir != null && envToolsDir.isNotEmpty) {
+      dirsToSearch.add(p.join(envToolsDir, '..', 'backend', 'templates'));
+      dirsToSearch.add(p.join(envToolsDir, 'templates'));
+    }
+
+    try {
+      final Directory exeDir = File(Platform.resolvedExecutable).parent;
+      dirsToSearch.addAll(<String>[
+        p.join(exeDir.path, 'templates'),
+        p.join(exeDir.path, 'backend', 'templates'),
+        p.join(exeDir.path, '..', 'backend', 'templates'),
+        p.join(exeDir.path, '..', '..', 'backend', 'templates'),
+      ]);
+    } catch (_) {}
+
+    final String cwd = Directory.current.path;
+    dirsToSearch.addAll(<String>[
+      p.join(cwd, 'backend', 'templates'),
+      p.join(cwd, 'templates'),
+      p.join(cwd, '..', 'backend', 'templates'),
+      'C:/Users/User/OneDrive/Desktop/BTS_Elektrik/backend/templates',
+    ]);
+
+    for (final String dir in dirsToSearch) {
+      final File f = File(p.join(dir, filename));
+      if (f.existsSync()) return f.absolute.path;
     }
 
     return null;
@@ -212,8 +342,8 @@ class ExcelGenerator {
     dataDict['customer_name'] = report.customerName;
     dataDict['trafo_label'] = report.trafoLabel;
     dataDict['address'] = dataDict['address'] ?? dataDict['location'] ?? '';
-    dataDict['report_date'] = dataDict['report_date'] ?? ExcelCellMapping.formatDateDisplay(report.createdAt);
-    dataDict['test_date'] = dataDict['test_date'] ?? ExcelCellMapping.formatDateDisplay(report.createdAt);
+    dataDict['report_date'] = ExcelCellMapping.formatDateDisplay(dataDict['report_date'], fallback: report.createdAt);
+    dataDict['test_date'] = ExcelCellMapping.formatDateDisplay(dataDict['test_date'], fallback: report.createdAt);
     dataDict['creator_display_name'] = report.creatorDisplayName ??
         dataDict['operator_title'] ??
         dataDict['operator_name'] ??
@@ -374,7 +504,7 @@ class ExcelGenerator {
       await reportsDir.create(recursive: true);
     }
 
-    final String dateStr = ExcelCellMapping.formatDateDisplay(dataDict['test_date'] ?? report.createdAt);
+    final String dateStr = ExcelCellMapping.formatDateDisplay(dataDict['test_date'], fallback: report.createdAt);
     final String customerStr = report.customerName.isEmpty ? 'Musteri' : report.customerName;
     final String labelStr = report.trafoLabel.isEmpty ? 'Trafo' : report.trafoLabel;
 

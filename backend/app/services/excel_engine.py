@@ -638,16 +638,18 @@ def generate_report_excel(
     data_dict["report_date"] = report.report_date
     data_dict["test_date"] = report.test_date
 
-    op_name = data_dict.get("operator_name") or data_dict.get("creator_display_name") or ""
+    op_name = str(data_dict.get("operator_name") or data_dict.get("creator_display_name") or "").strip()
     if not op_name:
-        op_name = "Operatör"
+        raise ValueError("Operatör adı (operator_name) eksik veya boş. Lütfen profil bilgilerinizi güncelleyin.")
     data_dict["operator_name"] = op_name
 
-    op_title = data_dict.get("operator_title") or data_dict.get("title") or "Elektrik Mühendisi"
+    op_title = str(data_dict.get("operator_title") or data_dict.get("title") or "").strip()
+    if not op_title:
+        raise ValueError("Operatör unvanı (operator_title) eksik veya boş. Lütfen profil bilgilerinizi güncelleyin.")
     data_dict["operator_title"] = op_title
 
     if not data_dict.get("creator_display_name"):
-        data_dict["creator_display_name"] = op_name
+        data_dict["creator_display_name"] = f"{op_name} ({op_title})"
 
     notes_text = data_dict.get("notes") or data_dict.get("notes_text") or ""
     if notes_text:
