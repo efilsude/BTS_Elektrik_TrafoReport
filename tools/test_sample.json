@@ -13,6 +13,8 @@
   "ekipnet_no": "K202439698",
   "signature_path": "tools/test_signature.png",
   "breaker_brand": "ABB",
+  "breaker_iso_r_gnd": "150.5",
+  "breaker_contact_r": "42.5",
   "device_model": "STS 5000",
   "device_serial": "SN-19B20",
   "brand": "BEST",
