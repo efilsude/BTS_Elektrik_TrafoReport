@@ -38,9 +38,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Future<void> _showAddUserDialog() async {
     final GlobalKey<FormState> dialogFormKey = GlobalKey<FormState>();
     final TextEditingController nameCtrl = TextEditingController();
+    final TextEditingController titleCtrl = TextEditingController();
     final TextEditingController phoneCtrl = TextEditingController();
     final TextEditingController emailCtrl = TextEditingController();
     final TextEditingController sicilCtrl = TextEditingController();
+    final TextEditingController ekipnetCtrl = TextEditingController();
+    final TextEditingController diplomaCtrl = TextEditingController();
     final TextEditingController passCtrl = TextEditingController();
     String selectedRole = 'employee';
 
@@ -63,7 +66,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       children: <Widget>[
                         TextFormField(
                           controller: nameCtrl,
-                          decoration: const InputDecoration(labelText: 'Ad Soyad *'),
+                          decoration: const InputDecoration(labelText: 'Ad Soyad (Operatör Adı) *'),
+                          validator: (String? v) => v == null || v.trim().isEmpty ? 'Zorunlu' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: titleCtrl,
+                          decoration: const InputDecoration(labelText: 'Unvan (Elektrik Mühendisi vb.) *'),
                           validator: (String? v) => v == null || v.trim().isEmpty ? 'Zorunlu' : null,
                         ),
                         const SizedBox(height: 12),
@@ -83,6 +92,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         TextFormField(
                           controller: sicilCtrl,
                           decoration: const InputDecoration(labelText: 'Sicil No (Opsiyonel)'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: ekipnetCtrl,
+                          decoration: const InputDecoration(labelText: 'EKİPNET No (Opsiyonel)'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: diplomaCtrl,
+                          decoration: const InputDecoration(labelText: 'Diploma / Oda Sicil No (Opsiyonel)'),
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
@@ -132,7 +151,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         fullName: nameCtrl.text.trim(),
                         phone: phoneCtrl.text.trim(),
                         email: emailCtrl.text.trim().isEmpty ? null : emailCtrl.text.trim(),
+                        operatorTitle: titleCtrl.text.trim(),
                         sicilNo: sicilCtrl.text.trim().isEmpty ? null : sicilCtrl.text.trim(),
+                        ekipnetNo: ekipnetCtrl.text.trim().isEmpty ? null : ekipnetCtrl.text.trim(),
+                        diplomaNo: diplomaCtrl.text.trim().isEmpty ? null : diplomaCtrl.text.trim(),
                         password: passCtrl.text,
                         role: selectedRole,
                       );
@@ -167,9 +189,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Future<void> _showEditUserDialog(User targetUser) async {
     final GlobalKey<FormState> dialogFormKey = GlobalKey<FormState>();
     final TextEditingController nameCtrl = TextEditingController(text: targetUser.fullName);
+    final TextEditingController titleCtrl = TextEditingController(text: targetUser.operatorTitle ?? '');
     final TextEditingController phoneCtrl = TextEditingController(text: targetUser.phone);
     final TextEditingController emailCtrl = TextEditingController(text: targetUser.email ?? '');
     final TextEditingController sicilCtrl = TextEditingController(text: targetUser.sicilNo ?? '');
+    final TextEditingController ekipnetCtrl = TextEditingController(text: targetUser.ekipnetNo ?? '');
+    final TextEditingController diplomaCtrl = TextEditingController(text: targetUser.diplomaNo ?? '');
     final TextEditingController passCtrl = TextEditingController();
     String selectedRole = targetUser.role;
 
@@ -192,7 +217,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       children: <Widget>[
                         TextFormField(
                           controller: nameCtrl,
-                          decoration: const InputDecoration(labelText: 'Ad Soyad *'),
+                          decoration: const InputDecoration(labelText: 'Ad Soyad (Operatör Adı) *'),
+                          validator: (String? v) => v == null || v.trim().isEmpty ? 'Zorunlu' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: titleCtrl,
+                          decoration: const InputDecoration(labelText: 'Unvan (Elektrik Mühendisi vb.) *'),
                           validator: (String? v) => v == null || v.trim().isEmpty ? 'Zorunlu' : null,
                         ),
                         const SizedBox(height: 12),
@@ -212,6 +243,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         TextFormField(
                           controller: sicilCtrl,
                           decoration: const InputDecoration(labelText: 'Sicil No (Opsiyonel)'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: ekipnetCtrl,
+                          decoration: const InputDecoration(labelText: 'EKİPNET No (Opsiyonel)'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: diplomaCtrl,
+                          decoration: const InputDecoration(labelText: 'Diploma / Oda Sicil No (Opsiyonel)'),
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
@@ -270,7 +311,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         fullName: nameCtrl.text.trim(),
                         phone: phoneCtrl.text.trim(),
                         email: emailCtrl.text.trim().isEmpty ? null : emailCtrl.text.trim(),
+                        operatorTitle: titleCtrl.text.trim(),
                         sicilNo: sicilCtrl.text.trim().isEmpty ? null : sicilCtrl.text.trim(),
+                        ekipnetNo: ekipnetCtrl.text.trim().isEmpty ? null : ekipnetCtrl.text.trim(),
+                        diplomaNo: diplomaCtrl.text.trim().isEmpty ? null : diplomaCtrl.text.trim(),
                         role: selectedRole,
                         newPassword: passCtrl.text.isEmpty ? null : passCtrl.text,
                       );

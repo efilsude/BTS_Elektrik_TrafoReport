@@ -682,6 +682,8 @@ class _ProfileOperatorEditCardState extends State<_ProfileOperatorEditCard> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isAdmin = widget.user.isAdmin;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -702,24 +704,59 @@ class _ProfileOperatorEditCardState extends State<_ProfileOperatorEditCard> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Rapor kapak ve onay sayfalarında yer alacak imza sahibi operatör bilgileri.',
+                'Rapor kapak ve onay sayfalarında yer alan imza sahibi operatör bilgileri.',
                 style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textLight),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+
+              if (!isAdmin) ...<Widget>[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.orange.shade300),
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      Icon(Icons.lock_outline_rounded, color: Colors.orange.shade800, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Bu bilgiler yalnızca sistem yöneticisi (admin) tarafından güncellenebilir.',
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            color: Colors.orange.shade900,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
               TextFormField(
                 controller: _fullNameController,
-                decoration: const InputDecoration(
+                enabled: isAdmin,
+                decoration: InputDecoration(
                   labelText: 'Ad Soyad (Operatör Adı) *',
-                  prefixIcon: Icon(Icons.person_outline),
+                  prefixIcon: const Icon(Icons.person_outline),
+                  filled: !isAdmin,
+                  fillColor: !isAdmin ? Colors.grey.shade100 : null,
                 ),
                 validator: (String? val) => val == null || val.trim().isEmpty ? 'Ad Soyad zorunludur' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _operatorTitleController,
-                decoration: const InputDecoration(
+                enabled: isAdmin,
+                decoration: InputDecoration(
                   labelText: 'Unvan (Elektrik Mühendisi vb.) *',
-                  prefixIcon: Icon(Icons.work_outline_rounded),
+                  prefixIcon: const Icon(Icons.work_outline_rounded),
+                  filled: !isAdmin,
+                  fillColor: !isAdmin ? Colors.grey.shade100 : null,
                 ),
                 validator: (String? val) => val == null || val.trim().isEmpty ? 'Unvan zorunludur' : null,
               ),
@@ -729,9 +766,12 @@ class _ProfileOperatorEditCardState extends State<_ProfileOperatorEditCard> {
                   Expanded(
                     child: TextFormField(
                       controller: _sicilNoController,
-                      decoration: const InputDecoration(
+                      enabled: isAdmin,
+                      decoration: InputDecoration(
                         labelText: 'Sicil No (İsteğe Bağlı)',
-                        prefixIcon: Icon(Icons.assignment_ind_outlined),
+                        prefixIcon: const Icon(Icons.assignment_ind_outlined),
+                        filled: !isAdmin,
+                        fillColor: !isAdmin ? Colors.grey.shade100 : null,
                       ),
                     ),
                   ),
@@ -739,9 +779,12 @@ class _ProfileOperatorEditCardState extends State<_ProfileOperatorEditCard> {
                   Expanded(
                     child: TextFormField(
                       controller: _ekipnetNoController,
-                      decoration: const InputDecoration(
+                      enabled: isAdmin,
+                      decoration: InputDecoration(
                         labelText: 'EKİPNET No (İsteğe Bağlı)',
-                        prefixIcon: Icon(Icons.verified_outlined),
+                        prefixIcon: const Icon(Icons.verified_outlined),
+                        filled: !isAdmin,
+                        fillColor: !isAdmin ? Colors.grey.shade100 : null,
                       ),
                     ),
                   ),
@@ -750,22 +793,27 @@ class _ProfileOperatorEditCardState extends State<_ProfileOperatorEditCard> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _diplomaNoController,
-                decoration: const InputDecoration(
+                enabled: isAdmin,
+                decoration: InputDecoration(
                   labelText: 'Diploma / Oda Sicil No (İsteğe Bağlı)',
-                  prefixIcon: Icon(Icons.school_outlined),
+                  prefixIcon: const Icon(Icons.school_outlined),
+                  filled: !isAdmin,
+                  fillColor: !isAdmin ? Colors.grey.shade100 : null,
                 ),
               ),
-              const SizedBox(height: 20),
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton.icon(
-                  onPressed: _isSaving ? null : _saveProfile,
-                  icon: _isSaving
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Icon(Icons.save_outlined, size: 18),
-                  label: const Text('Profili Kaydet'),
+              if (isAdmin) ...<Widget>[
+                const SizedBox(height: 20),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton.icon(
+                    onPressed: _isSaving ? null : _saveProfile,
+                    icon: _isSaving
+                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Icon(Icons.save_outlined, size: 18),
+                    label: const Text('Profili Kaydet'),
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

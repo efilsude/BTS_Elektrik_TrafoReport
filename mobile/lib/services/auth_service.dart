@@ -269,10 +269,18 @@ class AuthService extends ChangeNotifier {
     required String fullName,
     required String phone,
     String? email,
+    String? operatorTitle,
     String? sicilNo,
+    String? ekipnetNo,
+    String? diplomaNo,
     required String role,
     String? newPassword,
   }) async {
+    if (_currentUser == null || !_currentUser!.isAdmin) {
+      _errorMessage = 'Yalnızca yönetici (admin) kullanıcı bilgilerini güncelleyebilir.';
+      notifyListeners();
+      return false;
+    }
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -302,7 +310,10 @@ class AuthService extends ChangeNotifier {
         fullName: fullName,
         phone: phone,
         email: email,
+        operatorTitle: operatorTitle,
         sicilNo: sicilNo,
+        ekipnetNo: ekipnetNo,
+        diplomaNo: diplomaNo,
         role: role,
         newPassword: newPassword,
       );
@@ -312,6 +323,7 @@ class AuthService extends ChangeNotifier {
         final User? updated = await _dbHelper.getUserById(id);
         if (updated != null) {
           _currentUser = updated;
+          await _storageService.saveUser(_currentUser!);
         }
       }
 
@@ -438,7 +450,7 @@ class AuthService extends ChangeNotifier {
     return await _dbHelper.getUserSignaturePath(_currentUser!.id);
   }
 
-  /// Update currently logged in user profile fields
+  /// Update currently logged in user profile fields (Admin Only)
   Future<bool> updateUserProfile({
     required String fullName,
     required String operatorTitle,
@@ -449,6 +461,13 @@ class AuthService extends ChangeNotifier {
     String? diplomaNo,
   }) async {
     if (_currentUser == null) return false;
+
+    if (!_currentUser!.isAdmin) {
+      _errorMessage = 'Operatör profil bilgileri yalnızca sistem yöneticisi (admin) tarafından değiştirilebilir.';
+      notifyListeners();
+      return false;
+    }
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
