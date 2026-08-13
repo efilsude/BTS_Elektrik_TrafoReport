@@ -13,7 +13,7 @@ void main() {
     kapakSheet.updateCell(
       d12Index,
       DateCellValue(year: 2026, month: 8, day: 3),
-      cellStyle: const CellStyle(), // Initial default format
+      cellStyle: CellStyle(), // Initial default format
     );
 
     // 2. Setup İZOLASYON sheet with unformatted H18 cell and initial narrow width
@@ -23,7 +23,7 @@ void main() {
     izoSheet.updateCell(
       h18Index,
       DoubleCellValue(2500.87),
-      cellStyle: const CellStyle(), // Initial General format
+      cellStyle: CellStyle(), // Initial General format
     );
 
     // 3. Setup AG SARGI sheet with unformatted G24 cell and initial width
@@ -33,7 +33,7 @@ void main() {
     agSheet.updateCell(
       g24Index,
       DoubleCellValue(24.123456),
-      cellStyle: const CellStyle(), // Initial General format
+      cellStyle: CellStyle(), // Initial General format
     );
 
     // Verify BEFORE calling fix: widths and formats are unadjusted

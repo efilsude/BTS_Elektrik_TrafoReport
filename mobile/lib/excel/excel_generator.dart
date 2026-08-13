@@ -389,6 +389,10 @@ class ExcelGenerator {
 
       if (sheet == null) continue;
 
+      if (normTarget == 'ANA SAYFA') {
+        _processChecklistPairs(sheet, transformerType, dataDict);
+      }
+
       final Map<String, String> cellMap = typeMapping[targetSheetName]!;
 
       cellMap.forEach((String cellRef, String fieldKey) {
@@ -608,5 +612,42 @@ class ExcelGenerator {
         }
       }
     }
+  }
+
+  /// Sets Evet/Hayır checkmarks for ANA SAYFA checklist items and clears residual sample checkmarks and divider cells
+  static void _processChecklistPairs(Sheet sheet, String transformerType, Map<String, dynamic> dataDict) {
+    for (final String cref in <String>['C61', 'F61', 'J61', 'C63', 'F63', 'J63']) {
+      sheet.updateCell(CellIndex.indexByString(cref), TextCellValue(''));
+    }
+
+    final Map<String, Map<String, String>> pairs =
+        ExcelCellMapping.checklistPairs[transformerType] ??
+            ExcelCellMapping.checklistPairs['hermetik']!;
+
+    pairs.forEach((String key, Map<String, String> pair) {
+      final CellIndex evetIdx = CellIndex.indexByString(pair['evet']!);
+      final CellIndex hayirIdx = CellIndex.indexByString(pair['hayir']!);
+
+      final dynamic val = dataDict[key];
+      if (val == null) {
+        sheet.updateCell(evetIdx, TextCellValue(''));
+        sheet.updateCell(hayirIdx, TextCellValue(''));
+      } else {
+        final String sVal = val.toString().trim().toLowerCase();
+        final bool isTrue = (val == true || sVal == 'true' || sVal == 'ü' || sVal == '1' || sVal == 'evet');
+        final bool isFalse = (val == false || sVal == 'false' || sVal == '0' || sVal == 'hayir' || sVal == 'hayır');
+
+        if (isTrue) {
+          sheet.updateCell(evetIdx, TextCellValue('ü'));
+          sheet.updateCell(hayirIdx, TextCellValue(''));
+        } else if (isFalse) {
+          sheet.updateCell(evetIdx, TextCellValue(''));
+          sheet.updateCell(hayirIdx, TextCellValue('ü'));
+        } else {
+          sheet.updateCell(evetIdx, TextCellValue(''));
+          sheet.updateCell(hayirIdx, TextCellValue(''));
+        }
+      }
+    });
   }
 }

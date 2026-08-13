@@ -52,38 +52,6 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "I21": "tank_mark_hermetik",
             "P21": "tank_mark_gt",
             "U21": "tank_mark_kuru",
-            "J27": "checklist_1",
-            "J28": "checklist_2",
-            "J29": "checklist_3",
-            "J30": "checklist_4",
-            "J31": "checklist_5",
-            "J32": "checklist_6",
-            "J33": "checklist_7",
-            "J34": "checklist_8",
-            "J35": "checklist_9",
-            "J36": "checklist_10",
-            "J37": "checklist_11",
-            "J38": "checklist_12",
-            "J39": "checklist_13",
-            "J40": "checklist_14",
-            "J41": "checklist_15",
-            "J42": "checklist_16",
-            "U27": "checklist_17",
-            "U28": "checklist_18",
-            "U29": "checklist_19",
-            "U30": "checklist_20",
-            "U31": "checklist_21",
-            "U32": "checklist_22",
-            "U33": "checklist_23",
-            "U34": "checklist_24",
-            "U35": "checklist_25",
-            "U36": "checklist_26",
-            "U37": "checklist_27",
-            "U38": "checklist_28",
-            "U39": "checklist_29",
-            "U40": "checklist_30",
-            "U41": "checklist_31",
-            "U42": "checklist_32",
             "C55": "og_rab",
             "C57": "og_rbc",
             "C59": "og_rca",
@@ -93,12 +61,6 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O55": "ag_rab",
             "O57": "ag_rbc",
             "O59": "ag_rca",
-            "C61": "ground_r_trafo_body",
-            "F61": "ground_r_neutral",
-            "J61": "ground_r_tank",
-            "C63": "ground_r_og_lightning",
-            "F63": "ground_r_panel",
-            "J63": "ground_r_fence",
             "B73": "notes",
             "F80": "operator_title",
             "F81": "sicil_no",
@@ -237,38 +199,6 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "I19": "tank_mark_hermetik",
             "P19": "tank_mark_gt",
             "U19": "tank_mark_kuru",
-            "J24": "checklist_1",
-            "J25": "checklist_2",
-            "J26": "checklist_3",
-            "J27": "checklist_4",
-            "J28": "checklist_5",
-            "J29": "checklist_6",
-            "J30": "checklist_7",
-            "J31": "checklist_8",
-            "J32": "checklist_9",
-            "J33": "checklist_10",
-            "J34": "checklist_11",
-            "J35": "checklist_12",
-            "J36": "checklist_13",
-            "J37": "checklist_14",
-            "J38": "checklist_15",
-            "J39": "checklist_16",
-            "U24": "checklist_17",
-            "U25": "checklist_18",
-            "U26": "checklist_19",
-            "U27": "checklist_20",
-            "U28": "checklist_21",
-            "U29": "checklist_22",
-            "U30": "checklist_23",
-            "U31": "checklist_24",
-            "U32": "checklist_25",
-            "U33": "checklist_26",
-            "U34": "checklist_27",
-            "U35": "checklist_28",
-            "U36": "checklist_29",
-            "U37": "checklist_30",
-            "U38": "checklist_31",
-            "U39": "checklist_32",
             "C49": "og_rab",
             "C51": "og_rbc",
             "C53": "og_rca",
@@ -420,38 +350,6 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "I21": "tank_mark_hermetik",
             "P21": "tank_mark_gt",
             "U21": "tank_mark_kuru",
-            "J27": "checklist_1",
-            "J28": "checklist_2",
-            "J29": "checklist_3",
-            "J30": "checklist_4",
-            "J31": "checklist_5",
-            "J32": "checklist_6",
-            "J33": "checklist_7",
-            "J34": "checklist_8",
-            "J35": "checklist_9",
-            "J36": "checklist_10",
-            "J37": "checklist_11",
-            "J38": "checklist_12",
-            "J39": "checklist_13",
-            "J40": "checklist_14",
-            "J41": "checklist_15",
-            "J42": "checklist_16",
-            "U27": "checklist_17",
-            "U28": "checklist_18",
-            "U29": "checklist_19",
-            "U30": "checklist_20",
-            "U31": "checklist_21",
-            "U32": "checklist_22",
-            "U33": "checklist_23",
-            "U34": "checklist_24",
-            "U35": "checklist_25",
-            "U36": "checklist_26",
-            "U37": "checklist_27",
-            "U38": "checklist_28",
-            "U39": "checklist_29",
-            "U40": "checklist_30",
-            "U41": "checklist_31",
-            "U42": "checklist_32",
             "C55": "og_rab",
             "C57": "og_rbc",
             "C59": "og_rca",
@@ -653,6 +551,94 @@ SHEET_SIGNATURE_ANCHORS = {
         "HERMETİK YAĞ DİLEKÇESİ": "J53",
     }
 }
+
+CHECKLIST_PAIRS = {
+    "HERMETIK": {
+        "checklist_1": {"evet": "I27", "hayir": "J27"},
+        "checklist_2": {"evet": "I29", "hayir": "J29"},
+        "checklist_3": {"evet": "I31", "hayir": "J31"},
+        "checklist_4": {"evet": "I33", "hayir": "J33"},
+        "checklist_5": {"evet": "I35", "hayir": "J35"},
+        "checklist_6": {"evet": "I37", "hayir": "J37"},
+        "checklist_7": {"evet": "I39", "hayir": "J39"},
+        "checklist_8": {"evet": "I41", "hayir": "J41"},
+        "checklist_9": {"evet": "R27", "hayir": "S27"},
+        "checklist_10": {"evet": "R29", "hayir": "S29"},
+        "checklist_11": {"evet": "R31", "hayir": "S31"},
+        "checklist_12": {"evet": "R33", "hayir": "S33"},
+        "checklist_13": {"evet": "R35", "hayir": "S35"},
+        "checklist_14": {"evet": "R37", "hayir": "S37"},
+        "checklist_15": {"evet": "R39", "hayir": "S39"},
+        "checklist_16": {"evet": "R41", "hayir": "S41"},
+    },
+    "KURU_TIP": {
+        "checklist_1": {"evet": "I26", "hayir": "J26"},
+        "checklist_2": {"evet": "I28", "hayir": "J28"},
+        "checklist_3": {"evet": "I30", "hayir": "J30"},
+        "checklist_4": {"evet": "I32", "hayir": "J32"},
+        "checklist_5": {"evet": "I34", "hayir": "J34"},
+        "checklist_6": {"evet": "I36", "hayir": "J36"},
+        "checklist_7": {"evet": "R26", "hayir": "S26"},
+        "checklist_8": {"evet": "R28", "hayir": "S28"},
+        "checklist_9": {"evet": "R30", "hayir": "S30"},
+        "checklist_10": {"evet": "R32", "hayir": "S32"},
+        "checklist_11": {"evet": "R34", "hayir": "S34"},
+        "checklist_12": {"evet": "R36", "hayir": "S36"},
+    },
+    "GT": {
+        "checklist_1": {"evet": "I27", "hayir": "J27"},
+        "checklist_2": {"evet": "I29", "hayir": "J29"},
+        "checklist_3": {"evet": "I31", "hayir": "J31"},
+        "checklist_4": {"evet": "I33", "hayir": "J33"},
+        "checklist_5": {"evet": "I35", "hayir": "J35"},
+        "checklist_6": {"evet": "I37", "hayir": "J37"},
+        "checklist_7": {"evet": "I39", "hayir": "J39"},
+        "checklist_8": {"evet": "I41", "hayir": "J41"},
+        "checklist_9": {"evet": "R27", "hayir": "S27"},
+        "checklist_10": {"evet": "R29", "hayir": "S29"},
+        "checklist_11": {"evet": "R31", "hayir": "S31"},
+        "checklist_12": {"evet": "R33", "hayir": "S33"},
+        "checklist_13": {"evet": "R35", "hayir": "S35"},
+        "checklist_14": {"evet": "R37", "hayir": "S37"},
+        "checklist_15": {"evet": "R39", "hayir": "S39"},
+        "checklist_16": {"evet": "R41", "hayir": "S41"},
+    }
+}
+
+
+def process_checklist_pairs(ws, report_type, data_dict):
+    """
+    Sets Evet/Hayır checkmarks for checklist items and clears residual template sample checkmarks.
+    Also clears 3.0 pt divider row cells C61, F61, J61, C63, F63, J63 on ANA SAYFA to prevent ghost text.
+    """
+    for cref in ["C61", "F61", "J61", "C63", "F63", "J63"]:
+        try:
+            cell = get_writable_cell(ws, cref)
+            cell.value = None
+        except Exception:
+            pass
+
+    pairs_map = CHECKLIST_PAIRS.get(report_type, CHECKLIST_PAIRS["HERMETIK"])
+    for key, pair in pairs_map.items():
+        evet_cell = get_writable_cell(ws, pair["evet"])
+        hayir_cell = get_writable_cell(ws, pair["hayir"])
+
+        val = data_dict.get(key)
+        if val is None:
+            evet_cell.value = None
+            hayir_cell.value = None
+        else:
+            is_true = (val is True or str(val).strip().lower() in ["true", "ü", "1", "evet"])
+            is_false = (val is False or str(val).strip().lower() in ["false", "0", "hayir", "hayır"])
+            if is_true:
+                evet_cell.value = "ü"
+                hayir_cell.value = None
+            elif is_false:
+                evet_cell.value = None
+                hayir_cell.value = "ü"
+            else:
+                evet_cell.value = None
+                hayir_cell.value = None
 
 
 def process_sheet_signature(ws, target_anchor: Optional[str], sig_path: Optional[str]):
@@ -870,6 +856,9 @@ def main():
 
         if matched_sheet:
             ws = wb[matched_sheet]
+            if target_sheet_name.strip() == "ANA SAYFA":
+                process_checklist_pairs(ws, mapped_type, data_dict)
+
             for cell_ref, field_key in cell_map.items():
                 if field_key.startswith("TODO_VERIFY"):
                     continue
