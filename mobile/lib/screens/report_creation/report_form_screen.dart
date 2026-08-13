@@ -606,6 +606,29 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     service.updateField('summary_text', proposal);
   }
 
+  void _showProfileWarningDialog(String message) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: <Widget>[
+            Icon(Icons.person_off_outlined, color: AppTheme.warningColor),
+            SizedBox(width: 8),
+            Text('Profil Bilgisi Eksik', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(message, style: const TextStyle(fontSize: 14, height: 1.4)),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Tamam'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _finalizeReport() async {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
     final Report? report = service.activeReport;
@@ -636,26 +659,30 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final User? currentUser = authService.currentUser;
 
     if (currentUser == null) {
-      throw Exception('Oturum açmış kullanıcı bilgisi bulunamadı. Lütfen sisteme giriş yapın.');
+      _showProfileWarningDialog('Oturum açmış kullanıcı bilgisi bulunamadı. Lütfen sisteme giriş yapın.');
+      return;
     }
 
     final String opName = currentUser.fullName.trim();
     final String opTitle = (currentUser.operatorTitle ?? '').trim();
     final String sicilNo = (currentUser.sicilNo ?? '').trim();
     final String ekipnetNo = (currentUser.ekipnetNo ?? '').trim();
+    final String diplomaNo = (currentUser.diplomaNo ?? '').trim();
     final String? signaturePath = currentUser.signaturePath ?? await authService.getSignaturePath();
 
-    if (opName.isEmpty) {
-      throw Exception('Profilinizde Operatör Adı (Ad Soyad) eksik. Lütfen profil bilgilerinizi güncelleyin.');
-    }
-    if (opTitle.isEmpty) {
-      throw Exception('Profilinizde Operatör Unvanı eksik. Lütfen profil bilgilerinizi güncelleyin.');
+    if (opName.isEmpty || opTitle.isEmpty) {
+      _showProfileWarningDialog(
+        'Raporu kesinleştirmek için profilinizde Operatör Adı (Ad Soyad) ve Operatör Unvanı bilgilerinin eksiksiz girilmiş olması zorunludur.\n\n'
+        'Lütfen profil sayfanızdan bilgilerinizi güncelleyin.',
+      );
+      return;
     }
 
     service.updateField('operator_name', opName);
     service.updateField('operator_title', opTitle);
     service.updateField('sicil_no', sicilNo);
     service.updateField('ekipnet_no', ekipnetNo);
+    service.updateField('diploma_no', diplomaNo);
     service.updateField('creator_display_name', '$opName ($opTitle)');
 
     if (_notesController.text.trim().isNotEmpty) {
@@ -666,7 +693,11 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     }
 
     try {
-      final File? excelFile = await service.finalizeReport(report.id, signaturePath: signaturePath);
+      final File? excelFile = await service.finalizeReport(
+        report.id,
+        currentUser: currentUser,
+        signaturePath: signaturePath,
+      );
 
       if (mounted && excelFile != null) {
         _showPostProductionDialog(report.title, report.id, excelFile);

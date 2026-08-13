@@ -45,6 +45,11 @@ class ExcelGenerator {
     // Operator profile fields injection
     final String opName = dataDict['operator_name']?.toString().trim() ?? report.creatorDisplayName ?? '';
     final String opTitle = dataDict['operator_title']?.toString().trim() ?? '';
+    
+    if (opName.isEmpty) {
+      throw Exception('Excel üretimi başarısız: Operatör Adı (operator_name) eksik. Lütfen profil bilgilerinizi doldurun.');
+    }
+
     dataDict['operator_name'] = opName;
     dataDict['operator_title'] = opTitle;
     dataDict['sicil_no'] = dataDict['sicil_no']?.toString().trim() ?? '';

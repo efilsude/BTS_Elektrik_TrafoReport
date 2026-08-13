@@ -290,7 +290,12 @@ class ReportService extends ChangeNotifier {
   }
 
   /// Finalize report locally in SQLite and generate native Excel file
-  Future<File?> finalizeReport(String reportId, {String? signaturePath}) async {
+  Future<File?> finalizeReport(
+    String reportId, {
+    User? currentUser,
+    String? signaturePath,
+    Map<String, dynamic>? profileMap,
+  }) async {
     _isLoading = true;
     notifyListeners();
 
@@ -302,19 +307,67 @@ class ReportService extends ChangeNotifier {
       if (reportToFinalize == null) {
         _isLoading = false;
         notifyListeners();
-        return null;
+        throw Exception('Kesinleştirilecek rapor kaydı bulunamadı (ID: $reportId).');
       }
 
-      // Generate filled native Excel file from asset template
-      final File excelFile = await ExcelGenerator.generateReportExcel(
-        report: reportToFinalize,
-        signaturePath: signaturePath,
+      final Map<String, dynamic> updatedData = Map<String, dynamic>.from(reportToFinalize.dataJson);
+
+      // Inject profile fields from currentUser or profileMap
+      if (currentUser != null) {
+        final String opName = currentUser.fullName.trim();
+        final String opTitle = (currentUser.operatorTitle ?? '').trim();
+        final String sicilNo = (currentUser.sicilNo ?? '').trim();
+        final String ekipnetNo = (currentUser.ekipnetNo ?? '').trim();
+        final String diplomaNo = (currentUser.diplomaNo ?? '').trim();
+        final String? sigPath = signaturePath ?? currentUser.signaturePath;
+
+        if (opName.isNotEmpty) updatedData['operator_name'] = opName;
+        if (opTitle.isNotEmpty) updatedData['operator_title'] = opTitle;
+        if (sicilNo.isNotEmpty) updatedData['sicil_no'] = sicilNo;
+        if (ekipnetNo.isNotEmpty) updatedData['ekipnet_no'] = ekipnetNo;
+        if (diplomaNo.isNotEmpty) updatedData['diploma_no'] = diplomaNo;
+        if (sigPath != null && sigPath.isNotEmpty) updatedData['signature_path'] = sigPath;
+      }
+
+      if (profileMap != null) {
+        profileMap.forEach((String k, dynamic v) {
+          if (v != null && v.toString().trim().isNotEmpty) {
+            updatedData[k] = v;
+          }
+        });
+      }
+
+      if (signaturePath != null && signaturePath.isNotEmpty) {
+        updatedData['signature_path'] = signaturePath;
+      }
+
+      final String opName = (updatedData['operator_name']?.toString() ?? reportToFinalize.creatorDisplayName ?? '').trim();
+      final String opTitle = (updatedData['operator_title']?.toString() ?? '').trim();
+
+      if (opName.isEmpty) {
+        throw Exception('Raporu kesinleştirmek için profilinizde Operatör Adı (Ad Soyad) eksik. Lütfen profil bilgilerinizi güncelleyin.');
+      }
+      if (opTitle.isEmpty) {
+        throw Exception('Raporu kesinleştirmek için profilinizde Operatör Unvanı eksik. Lütfen profil bilgilerinizi güncelleyin.');
+      }
+
+      final String creatorDisplayName = opTitle.isNotEmpty ? '$opName ($opTitle)' : opName;
+      updatedData['creator_display_name'] = creatorDisplayName;
+
+      final Report reportToGenerate = reportToFinalize.copyWith(
+        creatorDisplayName: creatorDisplayName,
+        dataJson: updatedData,
       );
 
-      final Map<String, dynamic> updatedData = Map<String, dynamic>.from(reportToFinalize.dataJson);
+      // Generate filled native Excel file from template
+      final File excelFile = await ExcelGenerator.generateReportExcel(
+        report: reportToGenerate,
+        signaturePath: updatedData['signature_path']?.toString(),
+      );
+
       updatedData['excel_path'] = excelFile.path;
 
-      final Report finalizedReport = reportToFinalize.copyWith(
+      final Report finalizedReport = reportToGenerate.copyWith(
         status: 'finalized',
         dataJson: updatedData,
         updatedAt: DateTime.now(),
