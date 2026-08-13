@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/report_model.dart';
+import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/report_service.dart';
 import '../theme/app_theme.dart';
@@ -41,19 +42,20 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
   Future<void> _loadReports() async {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
     
-    String? typeParam;
-    if (_selectedTransformerType == 'Hermetik') typeParam = 'HERMETIK';
-    if (_selectedTransformerType == 'Kuru Tip') typeParam = 'KURU_TIP';
-    if (_selectedTransformerType == 'Genleşme Tanklı (GT)') typeParam = 'GT';
+    String? transformerTypeParam;
+    if (_selectedTransformerType == 'Hermetik') transformerTypeParam = 'hermetik';
+    if (_selectedTransformerType == 'Kuru Tip') transformerTypeParam = 'kuru_tip';
+    if (_selectedTransformerType == 'Genleşme Tanklı (GT)') transformerTypeParam = 'gt';
 
-    String? subTypeParam;
-    if (_selectedReportType == 'Bakım') subTypeParam = 'maintenance';
-    if (_selectedReportType == 'Yalnızca Test') subTypeParam = 'test';
+    String? reportTypeParam;
+    if (_selectedReportType == 'Bakım') reportTypeParam = 'bakim';
+    if (_selectedReportType == 'Yalnızca Test') reportTypeParam = 'test';
 
     final List<Report> reports = await service.getReports(
       search: _searchController.text,
-      reportType: typeParam,
-      maintenanceType: subTypeParam,
+      reportType: reportTypeParam,
+      transformerType: transformerTypeParam,
+      status: 'finalized', // Filter for finalized reports ONLY in Report Pool!
     );
 
     if (mounted) {
@@ -64,9 +66,24 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
     }
   }
 
+  String _getTechnicianDisplayName(Report report) {
+    final String opName = (report.dataJson['operator_name']?.toString() ?? '').trim();
+    final String opTitle = (report.dataJson['operator_title']?.toString() ?? '').trim();
+    final String creator = (report.creatorDisplayName ?? '').trim();
+    if (opName.isNotEmpty) {
+      return opTitle.isNotEmpty ? '$opName ($opTitle)' : opName;
+    }
+    if (creator.isNotEmpty && creator != 'Bilinmeyen') {
+      return creator;
+    }
+    return 'Belirtilmedi';
+  }
+
   Future<void> _downloadExcel(Report report) async {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
-    
+    final AuthService authService = Provider.of<AuthService>(context, listen: false);
+    final User? currentUser = authService.currentUser;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('"${report.title}.xlsx" dosyası hazırlanıyor...'),
@@ -74,17 +91,52 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
       ),
     );
 
-    final File? downloadedFile = await service.downloadExcelFile(report.id, report.title);
-
-    if (downloadedFile != null && mounted) {
-      _showPostProductionModal(context, downloadedFile, report.title);
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Excel dosyası indirilirken hata oluştu.', style: GoogleFonts.inter()),
-          backgroundColor: AppTheme.errorColor,
-        ),
+    try {
+      final File? downloadedFile = await service.downloadExcelFile(
+        report.id,
+        report.title,
+        currentUser: currentUser,
       );
+
+      if (downloadedFile != null && mounted) {
+        _showPostProductionModal(context, downloadedFile, report.title);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Excel dosyası oluşturulamadı.', style: GoogleFonts.inter()),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        final String rawErr = e.toString().replaceFirst('Exception: ', '');
+        showDialog<void>(
+          context: context,
+          builder: (BuildContext ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Row(
+              children: <Widget>[
+                Icon(Icons.error_outline, color: AppTheme.errorColor),
+                SizedBox(width: 8),
+                Text('Excel Üretim Hatası', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: SelectableText(
+                rawErr,
+                style: const TextStyle(fontSize: 13, height: 1.4),
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Tamam'),
+              ),
+            ],
+          ),
+        );
+      }
     }
   }
 
@@ -131,9 +183,17 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
                 children: <Widget>[
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.of(ctx).pop();
-                        service.openExcelFile(excelFile);
+                        final String? errorMsg = await service.openExcelFile(excelFile);
+                        if (errorMsg != null && context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Dosya açılamadı: $errorMsg'),
+                              backgroundColor: AppTheme.errorColor,
+                            ),
+                          );
+                        }
                       },
                       icon: const Icon(Icons.file_open_outlined),
                       label: const Text('Excel\'i Aç'),
@@ -190,9 +250,9 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
                   _buildDetailRow('Trafo Etiketi:', report.trafoLabel),
                   _buildDetailRow('Trafo Tipi:', report.transformerType.toUpperCase()),
                   _buildDetailRow('Rapor Kapsamı:', report.reportType.toUpperCase()),
-                  _buildDetailRow('Durum:', report.status == 'final' ? 'Kesinleşti' : 'Taslak'),
+                  _buildDetailRow('Durum:', report.status == 'finalized' ? 'Kesinleşti' : 'Taslak'),
                   _buildDetailRow('Test Tarihi:', data['test_date']?.toString() ?? '-'),
-                  _buildDetailRow('Teknisyen:', report.creatorDisplayName ?? data['operator_name']?.toString() ?? '-'),
+                  _buildDetailRow('Teknisyen:', _getTechnicianDisplayName(report)),
                   const Divider(height: 24),
                   Text('Rapor Detay Verileri (data_json):', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
@@ -387,7 +447,7 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
                               Icon(Icons.folder_open_outlined, size: 64, color: AppTheme.textLight.withOpacity(0.5)),
                               const SizedBox(height: 16),
                               Text(
-                                'Henüz rapor bulunmuyor.',
+                                'Henüz kesinleşmiş rapor bulunmuyor.',
                                 style: GoogleFonts.inter(color: AppTheme.textLight, fontSize: 16, fontWeight: FontWeight.w600),
                               ),
                             ],
@@ -437,7 +497,7 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
                       : 'GT';
 
               final String date = report.dataJson['test_date']?.toString() ?? '';
-              final String creator = report.creatorDisplayName ?? report.dataJson['operator_name']?.toString() ?? 'Bilinmeyen';
+              final String creator = _getTechnicianDisplayName(report);
 
               return TableRow(
                 children: <Widget>[
@@ -505,7 +565,7 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
                 : 'Genleşme Tanklı';
 
         final String date = report.dataJson['test_date']?.toString() ?? '';
-        final String creator = report.creatorDisplayName ?? report.dataJson['operator_name']?.toString() ?? 'Teknisyen';
+        final String creator = _getTechnicianDisplayName(report);
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
@@ -559,17 +619,17 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
                     ],
                   ),
                 ),
-                if (isAdmin) ...<PopupMenuEntry<String>>[
-                  const PopupMenuItem<String>(
-                    value: 'edit',
-                    child: Row(
-                      children: <Widget>[
-                        Icon(Icons.edit_outlined, size: 20),
-                        SizedBox(width: 8),
-                        Text('Düzenle (Admin)'),
-                      ],
-                    ),
+                const PopupMenuItem<String>(
+                  value: 'edit',
+                  child: Row(
+                    children: <Widget>[
+                      Icon(Icons.edit_outlined, size: 20),
+                      SizedBox(width: 8),
+                      Text('Düzenle'),
+                    ],
                   ),
+                ),
+                if (isAdmin)
                   const PopupMenuItem<String>(
                     value: 'delete',
                     child: Row(
@@ -580,7 +640,6 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
                       ],
                     ),
                   ),
-                ],
               ],
             ),
           ),
@@ -594,12 +653,10 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Text(
         text,
-        style: GoogleFonts.inter(
-          fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
-          color: isHeader ? AppTheme.textLight : AppTheme.textDark,
-          fontSize: isHeader ? 13 : 14,
-        ),
         textAlign: align,
+        style: isHeader
+            ? GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppTheme.textDark, fontSize: 13)
+            : GoogleFonts.inter(color: AppTheme.textDark, fontSize: 13),
       ),
     );
   }

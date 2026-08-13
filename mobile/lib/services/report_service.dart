@@ -9,6 +9,7 @@ import '../database/database_helper.dart';
 import '../excel/cell_mapping.dart';
 import '../excel/excel_generator.dart';
 import '../models/report_model.dart';
+import '../models/user_model.dart';
 
 class ReportService extends ChangeNotifier {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
@@ -256,6 +257,7 @@ class ReportService extends ChangeNotifier {
   Future<List<Report>> getReports({
     String? search,
     String? reportType,
+    String? transformerType,
     String? maintenanceType,
     String? status,
   }) async {
@@ -264,6 +266,7 @@ class ReportService extends ChangeNotifier {
 
       return allReports.where((Report r) {
         if (reportType != null && reportType.isNotEmpty && r.reportType != reportType) return false;
+        if (transformerType != null && transformerType.isNotEmpty && r.transformerType != transformerType) return false;
         if (maintenanceType != null && maintenanceType.isNotEmpty && r.subType != maintenanceType) return false;
         if (status != null && status.isNotEmpty && r.status != status) return false;
         if (search != null && search.trim().isNotEmpty) {
@@ -344,29 +347,72 @@ class ReportService extends ChangeNotifier {
     return await _dbHelper.getReportById(reportId);
   }
 
-  /// Download / Get generated Excel file on device
-  Future<File?> downloadExcelFile(String reportId, String title) async {
+  /// Download / Get generated Excel file on device (injects profile if regeneration is required)
+  Future<File?> downloadExcelFile(String reportId, String title, {User? currentUser}) async {
     final Report? report = await getReportById(reportId);
-    if (report == null) return null;
+    if (report == null) {
+      throw Exception('Rapor kaydı bulunamadı (ID: $reportId).');
+    }
 
     final String? excelPath = report.dataJson['excel_path'] as String?;
     if (excelPath != null && await File(excelPath).exists()) {
       return File(excelPath);
     }
 
-    // Re-generate if file missing
-    return await ExcelGenerator.generateReportExcel(report: report);
+    // Re-generate if file missing on disk
+    final Map<String, dynamic> updatedData = Map<String, dynamic>.from(report.dataJson);
+
+    if (currentUser != null) {
+      final String opName = currentUser.fullName.trim();
+      final String opTitle = (currentUser.operatorTitle ?? '').trim();
+      final String sicilNo = (currentUser.sicilNo ?? '').trim();
+      final String ekipnetNo = (currentUser.ekipnetNo ?? '').trim();
+      final String diplomaNo = (currentUser.diplomaNo ?? '').trim();
+      final String? sigPath = currentUser.signaturePath;
+
+      if (opName.isNotEmpty) updatedData['operator_name'] = opName;
+      if (opTitle.isNotEmpty) updatedData['operator_title'] = opTitle;
+      if (sicilNo.isNotEmpty) updatedData['sicil_no'] = sicilNo;
+      if (ekipnetNo.isNotEmpty) updatedData['ekipnet_no'] = ekipnetNo;
+      if (diplomaNo.isNotEmpty) updatedData['diploma_no'] = diplomaNo;
+      if (sigPath != null && sigPath.isNotEmpty) updatedData['signature_path'] = sigPath;
+    }
+
+    final String opName = (updatedData['operator_name']?.toString() ?? report.creatorDisplayName ?? '').trim();
+    if (opName.isEmpty) {
+      throw Exception('Excel raporu üretmek için profilinizde Operatör Adı (Ad Soyad) eksik. Lütfen profil bilgilerinizi güncelleyin.');
+    }
+
+    final Report reportToGenerate = report.copyWith(dataJson: updatedData);
+
+    final File excelFile = await ExcelGenerator.generateReportExcel(
+      report: reportToGenerate,
+      signaturePath: updatedData['signature_path']?.toString(),
+    );
+
+    // Persist regenerated excel_path back to SQLite DB
+    updatedData['excel_path'] = excelFile.path;
+    final Report updatedReport = reportToGenerate.copyWith(
+      dataJson: updatedData,
+      updatedAt: DateTime.now(),
+    );
+    await _dbHelper.saveOrUpdateReport(updatedReport);
+
+    return excelFile;
   }
 
-  /// Open Excel file on device using native intent
-  Future<void> openExcelFile(File file) async {
+  /// Open Excel file on device using native intent and returns error message if failed
+  Future<String?> openExcelFile(File file) async {
     try {
       final OpenResult result = await OpenFilex.open(file.path);
       if (result.type != ResultType.done) {
         debugPrint('[TrafoReport] Dosya açılamadı: ${result.message}');
+        return result.message;
       }
+      return null;
     } catch (e) {
       debugPrint('[TrafoReport] Dosya açma hatası: $e');
+      return e.toString();
     }
   }
 
