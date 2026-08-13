@@ -1066,6 +1066,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   // Step 1: Genel Bilgiler
   Widget _buildGeneralStep(Report report) {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
+    final AuthService authService = Provider.of<AuthService>(context);
+    final User? currentUser = authService.currentUser;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1133,65 +1135,43 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           ],
         ),
         const SizedBox(height: 24),
-        _buildSectionHeader('Operatör ve Cihaz Bilgileri', 'Kapak sayfasında yer alan imza sahibi operatör ve cihaz kayıtları (Operatör bilgileri oturum açan profilden çekilir).'),
-        const SizedBox(height: 16),
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: TextFormField(
-                controller: _operatorNameController,
-                readOnly: true,
-                decoration: InputDecoration(
-                  labelText: 'Testi Yapan Personel (Profil)',
-                  prefixIcon: const Icon(Icons.person_outline),
-                  filled: true,
-                  fillColor: Colors.grey.shade100,
+        _buildSectionHeader('Operatör Profil Özeti', 'Rapor kapak ve onay bilgileri oturum açan profilden otomatik alınır (Formda tekrar sorulmaz).'),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+          ),
+          child: Row(
+            children: <Widget>[
+              CircleAvatar(
+                backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                child: const Icon(Icons.person_rounded, color: AppTheme.primaryColor),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      currentUser?.fullName.isNotEmpty == true ? currentUser!.fullName : 'Operatör Adı Girilmemiş',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textDark),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Unvan: ${currentUser?.operatorTitle ?? "Belirtilmedi"} | Sicil: ${currentUser?.sicilNo ?? "-"} | EKİPNET: ${currentUser?.ekipnetNo ?? "-"}',
+                      style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textLight),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: _operatorTitleController,
-                readOnly: true,
-                decoration: InputDecoration(
-                  labelText: 'Unvan (Profil)',
-                  prefixIcon: const Icon(Icons.badge_outlined),
-                  filled: true,
-                  fillColor: Colors.grey.shade100,
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-        const SizedBox(height: 16),
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: TextFormField(
-                controller: _sicilNoController,
-                readOnly: true,
-                decoration: InputDecoration(
-                  labelText: 'Sicil No (Profil)',
-                  filled: true,
-                  fillColor: Colors.grey.shade100,
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: _ekipnetNoController,
-                readOnly: true,
-                decoration: InputDecoration(
-                  labelText: 'EKİPNET Kayıt No (Profil)',
-                  filled: true,
-                  fillColor: Colors.grey.shade100,
-                ),
-              ),
-            ),
-          ],
-        ),
+        const SizedBox(height: 24),
+        _buildSectionHeader('Test Cihazı Bilgileri', 'Test sırasında kullanılan ikincil cihaz kayıtları.'),
         const SizedBox(height: 16),
         Row(
           children: <Widget>[

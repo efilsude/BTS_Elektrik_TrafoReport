@@ -205,12 +205,15 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  /// Create a new local user (Employee or Admin) from Admin Panel
+  /// Create a new local user (Employee or Admin) from Admin Panel or Registration
   Future<bool> createLocalUser({
     required String fullName,
     required String phone,
     String? email,
+    String? operatorTitle,
     String? sicilNo,
+    String? ekipnetNo,
+    String? diplomaNo,
     required String password,
     required String role,
   }) async {
@@ -227,20 +230,33 @@ class AuthService extends ChangeNotifier {
         return false;
       }
 
-      await _dbHelper.createUser(
+      final User newUser = await _dbHelper.createUser(
         fullName: fullName,
         phone: phone,
         email: email,
+        operatorTitle: operatorTitle,
         sicilNo: sicilNo,
+        ekipnetNo: ekipnetNo,
+        diplomaNo: diplomaNo,
         password: password,
         role: role,
       );
+
+      // Auto login newly registered user if no active session
+      if (_currentUser == null) {
+        _currentUser = newUser;
+        await _storageService.saveUser(_currentUser!);
+        await _storageService.saveTokens(
+          accessToken: 'local_session_${newUser.id}',
+          refreshToken: 'local_refresh_${newUser.id}',
+        );
+      }
 
       _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = 'Kullanıcı oluşturulurken hata oluştu.';
+      _errorMessage = 'Kullanıcı oluşturulurken hata oluştu: ${e.toString()}';
       _isLoading = false;
       notifyListeners();
       return false;
@@ -422,12 +438,76 @@ class AuthService extends ChangeNotifier {
     return await _dbHelper.getUserSignaturePath(_currentUser!.id);
   }
 
+  /// Update currently logged in user profile fields
+  Future<bool> updateUserProfile({
+    required String fullName,
+    required String operatorTitle,
+    String? phone,
+    String? email,
+    String? sicilNo,
+    String? ekipnetNo,
+    String? diplomaNo,
+  }) async {
+    if (_currentUser == null) return false;
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final bool success = await _dbHelper.updateUser(
+        id: _currentUser!.id,
+        fullName: fullName,
+        phone: phone ?? _currentUser!.phone,
+        email: email ?? _currentUser!.email,
+        sicilNo: sicilNo,
+        operatorTitle: operatorTitle,
+        ekipnetNo: ekipnetNo,
+        diplomaNo: diplomaNo,
+        role: _currentUser!.role,
+      );
+
+      if (success) {
+        final User? updated = await _dbHelper.getUserById(_currentUser!.id);
+        if (updated != null) {
+          final String? sigPath = await _dbHelper.getUserSignaturePath(_currentUser!.id);
+          _currentUser = User(
+            id: updated.id,
+            fullName: updated.fullName,
+            phone: updated.phone,
+            email: updated.email,
+            sicilNo: updated.sicilNo,
+            operatorTitle: updated.operatorTitle,
+            ekipnetNo: updated.ekipnetNo,
+            diplomaNo: updated.diplomaNo,
+            signaturePath: sigPath ?? updated.signaturePath,
+            role: updated.role,
+            isActive: updated.isActive,
+            hasSignature: sigPath != null && sigPath.isNotEmpty,
+          );
+          await _storageService.saveUser(_currentUser!);
+        }
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Register wrapper method for existing forms
   Future<bool> register({
     required String fullName,
     required String email,
     required String phone,
-    required String? sicilNo,
+    required String operatorTitle,
+    String? sicilNo,
+    String? ekipnetNo,
+    String? diplomaNo,
     required String inviteCode,
     required String verificationCode,
     required String password,
@@ -437,7 +517,10 @@ class AuthService extends ChangeNotifier {
       fullName: fullName,
       phone: phone,
       email: email,
+      operatorTitle: operatorTitle,
       sicilNo: sicilNo,
+      ekipnetNo: ekipnetNo,
+      diplomaNo: diplomaNo,
       password: password,
       role: isAdminMode ? 'admin' : 'employee',
     );

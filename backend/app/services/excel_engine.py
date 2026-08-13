@@ -26,10 +26,10 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D12": "report_date",
             "D14": "test_date",
             "A29": "summary_text",
+            "D52": "operator_name",
             "D55": "operator_title",
             "D56": "sicil_no",
             "D57": "ekipnet_no",
-            "G52": "operator_name",
         },
         "ANA SAYFA": {
             "G11": "brand",
@@ -457,10 +457,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
 # Global fallback mapping
 CELL_MAPPING = TYPE_CELL_MAPPINGS["HERMETIK"]
 
-
 SHEET_SIGNATURE_ANCHORS = {
     "HERMETIK": {
-        "KAPAK SAYFASI": "G52",
         "ANA SAYFA": "K78",
         "ANA SAYFA KESİCİ": "K75",
         "OG SARGI MEVCUT KADEME": "J46",
@@ -478,8 +476,7 @@ SHEET_SIGNATURE_ANCHORS = {
         "HERMETİK YAĞ DİLEKÇESİ": "J53",
     },
     "KURU_TIP": {
-        "KAPAK SAYFASI": "G52",
-        "ANA SAYFA": "K78",
+        "ANA SAYFA": "K73",
         "ANA SAYFA KESİCİ": "K75",
         "OG SARGI MEVCUT KADEME": "J46",
         "AG SARGI": "J46",
@@ -495,7 +492,6 @@ SHEET_SIGNATURE_ANCHORS = {
         "AKIM TRAFOLARI": "J45",
     },
     "GT": {
-        "KAPAK SAYFASI": "G52",
         "ANA SAYFA": "K78",
         "ANA SAYFA KESİCİ": "K75",
         "OG SARGI MEVCUT KADEME": "J46",
@@ -599,9 +595,34 @@ def process_checklist_pairs(ws, report_type, data_dict):
 
 def process_sheet_signature(ws, target_anchor: Optional[str], sig_path: Optional[str]):
     """
-    Cleans old sample signature images from worksheet (row >= 30, col 5..13, width > 350 or height > 180)
+    Cleans old sample signature images from worksheet (row >= 30, col 5..13)
     and inserts the user signature image at target_anchor if sig_path exists.
+    For KAPAK SAYFASI: Skip signature insertion completely and clean right side artifacts.
     """
+    if ws.title == "KAPAK SAYFASI":
+        if hasattr(ws, '_images') and ws._images:
+            filtered = []
+            for img in ws._images:
+                is_right_side = False
+                if hasattr(img, 'anchor') and hasattr(img.anchor, '_from'):
+                    c = img.anchor._from.col
+                    r = img.anchor._from.row
+                    if r >= 30 and c >= 5:
+                        is_right_side = True
+                if not is_right_side:
+                    filtered.append(img)
+            ws._images = filtered
+        # Clean any sample texts in rows 53..57, cols G..M
+        for r in range(53, 58):
+            for c_let in ["G", "H", "I", "J", "K", "L", "M"]:
+                cell = ws[f"{c_let}{r}"]
+                if type(cell).__name__ != 'MergedCell':
+                    if cell.value is not None and isinstance(cell.value, str):
+                        cval_u = cell.value.upper()
+                        if any(term in cval_u for term in ["HİLMİ", "HILMI", "EMO", "DIPLOMA"]):
+                            cell.value = None
+        return
+
     if hasattr(ws, '_images') and ws._images:
         filtered = []
         for img in ws._images:

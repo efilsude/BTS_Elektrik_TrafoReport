@@ -18,9 +18,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final GlobalKey<FormState> _formKeyStep2 = GlobalKey<FormState>();
 
   final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _operatorTitleController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _sicilNoController = TextEditingController();
+  final TextEditingController _ekipnetNoController = TextEditingController();
+  final TextEditingController _diplomaNoController = TextEditingController();
   final TextEditingController _inviteCodeController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
@@ -39,9 +42,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _resendTimer?.cancel();
     _fullNameController.dispose();
+    _operatorTitleController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _sicilNoController.dispose();
+    _ekipnetNoController.dispose();
+    _diplomaNoController.dispose();
     _inviteCodeController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -207,7 +213,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       fullName: _fullNameController.text.trim(),
       email: _emailController.text.trim(),
       phone: _phoneController.text.trim(),
+      operatorTitle: _operatorTitleController.text.trim(),
       sicilNo: _sicilNoController.text.trim().isEmpty ? null : _sicilNoController.text.trim(),
+      ekipnetNo: _ekipnetNoController.text.trim().isEmpty ? null : _ekipnetNoController.text.trim(),
+      diplomaNo: _diplomaNoController.text.trim().isEmpty ? null : _diplomaNoController.text.trim(),
       inviteCode: _inviteCodeController.text.trim(),
       verificationCode: _verificationCodeController.text.trim(),
       password: _passwordController.text,
@@ -471,6 +480,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           const SizedBox(height: 16),
 
+          // Unvan (Mandatory)
+          TextFormField(
+            controller: _operatorTitleController,
+            decoration: const InputDecoration(
+              labelText: 'Unvan (Elektrik Mühendisi vb.) *',
+              prefixIcon: Icon(Icons.work_outline_rounded),
+              hintText: 'Elektrik Mühendisi',
+            ),
+            validator: (String? value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Unvan bilgisi zorunludur';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+
           // Sicil No (Optional)
           TextFormField(
             controller: _sicilNoController,
@@ -478,6 +504,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
               labelText: 'Sicil No (İsteğe Bağlı)',
               prefixIcon: Icon(Icons.assignment_ind_outlined),
               hintText: '12345',
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // EKİPNET No (Optional)
+          TextFormField(
+            controller: _ekipnetNoController,
+            decoration: const InputDecoration(
+              labelText: 'EKİPNET Kayıt No (İsteğe Bağlı)',
+              prefixIcon: Icon(Icons.verified_outlined),
+              hintText: 'EKP-98765',
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Diploma No (Optional)
+          TextFormField(
+            controller: _diplomaNoController,
+            decoration: const InputDecoration(
+              labelText: 'Diploma / Oda Sicil No (İsteğe Bağlı)',
+              prefixIcon: Icon(Icons.school_outlined),
+              hintText: 'DIP-54321',
             ),
           ),
           const SizedBox(height: 16),

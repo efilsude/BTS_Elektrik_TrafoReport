@@ -335,6 +335,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 24),
 
+            if (user != null) ...<Widget>[
+              _ProfileOperatorEditCard(user: user),
+              const SizedBox(height: 24),
+            ],
+
             // Backup and Restore Card (Task B)
             Card(
               child: Padding(
@@ -599,6 +604,170 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileOperatorEditCard extends StatefulWidget {
+  final User user;
+  const _ProfileOperatorEditCard({required this.user});
+
+  @override
+  State<_ProfileOperatorEditCard> createState() => _ProfileOperatorEditCardState();
+}
+
+class _ProfileOperatorEditCardState extends State<_ProfileOperatorEditCard> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  late TextEditingController _fullNameController;
+  late TextEditingController _operatorTitleController;
+  late TextEditingController _sicilNoController;
+  late TextEditingController _ekipnetNoController;
+  late TextEditingController _diplomaNoController;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fullNameController = TextEditingController(text: widget.user.fullName);
+    _operatorTitleController = TextEditingController(text: widget.user.operatorTitle ?? '');
+    _sicilNoController = TextEditingController(text: widget.user.sicilNo ?? '');
+    _ekipnetNoController = TextEditingController(text: widget.user.ekipnetNo ?? '');
+    _diplomaNoController = TextEditingController(text: widget.user.diplomaNo ?? '');
+  }
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _operatorTitleController.dispose();
+    _sicilNoController.dispose();
+    _ekipnetNoController.dispose();
+    _diplomaNoController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSaving = true);
+
+    final AuthService authService = Provider.of<AuthService>(context, listen: false);
+    final bool success = await authService.updateUserProfile(
+      fullName: _fullNameController.text.trim(),
+      operatorTitle: _operatorTitleController.text.trim(),
+      sicilNo: _sicilNoController.text.trim().isEmpty ? null : _sicilNoController.text.trim(),
+      ekipnetNo: _ekipnetNoController.text.trim().isEmpty ? null : _ekipnetNoController.text.trim(),
+      diplomaNo: _diplomaNoController.text.trim().isEmpty ? null : _diplomaNoController.text.trim(),
+    );
+
+    if (mounted) {
+      setState(() => _isSaving = false);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Operatör profil bilgileriniz başarıyla güncellendi.', style: GoogleFonts.inter()),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authService.errorMessage ?? 'Profil güncellenirken hata oluştu.', style: GoogleFonts.inter()),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  const Icon(Icons.badge_outlined, color: AppTheme.primaryColor),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Operatör Profil Bilgileri',
+                    style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Rapor kapak ve onay sayfalarında yer alacak imza sahibi operatör bilgileri.',
+                style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textLight),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _fullNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Ad Soyad (Operatör Adı) *',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
+                validator: (String? val) => val == null || val.trim().isEmpty ? 'Ad Soyad zorunludur' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _operatorTitleController,
+                decoration: const InputDecoration(
+                  labelText: 'Unvan (Elektrik Mühendisi vb.) *',
+                  prefixIcon: Icon(Icons.work_outline_rounded),
+                ),
+                validator: (String? val) => val == null || val.trim().isEmpty ? 'Unvan zorunludur' : null,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: TextFormField(
+                      controller: _sicilNoController,
+                      decoration: const InputDecoration(
+                        labelText: 'Sicil No (İsteğe Bağlı)',
+                        prefixIcon: Icon(Icons.assignment_ind_outlined),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _ekipnetNoController,
+                      decoration: const InputDecoration(
+                        labelText: 'EKİPNET No (İsteğe Bağlı)',
+                        prefixIcon: Icon(Icons.verified_outlined),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _diplomaNoController,
+                decoration: const InputDecoration(
+                  labelText: 'Diploma / Oda Sicil No (İsteğe Bağlı)',
+                  prefixIcon: Icon(Icons.school_outlined),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton.icon(
+                  onPressed: _isSaving ? null : _saveProfile,
+                  icon: _isSaving
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Icon(Icons.save_outlined, size: 18),
+                  label: const Text('Profili Kaydet'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
