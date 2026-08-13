@@ -29,11 +29,11 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D11": "address",
             "D12": "report_date",
             "D14": "test_date",
-            "A31": "summary_text",
-            "D56": "operator_title",
-            "D57": "sicil_no",
-            "D58": "ekipnet_no",
-            "G56": "operator_name",
+            "A29": "summary_text",
+            "D55": "operator_title",
+            "D56": "sicil_no",
+            "D57": "ekipnet_no",
+            "G52": "operator_name",
         },
         "ANA SAYFA": {
             "G11": "brand",
@@ -62,10 +62,10 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O57": "ag_rbc",
             "O59": "ag_rca",
             "B73": "notes",
-            "F80": "operator_title",
-            "F81": "sicil_no",
-            "F82": "ekipnet_no",
-            "K79": "operator_name",
+            "F81": "operator_title",
+            "F82": "sicil_no",
+            "F83": "ekipnet_no",
+            "K78": "operator_name",
         },
         "OG SARGI MEVCUT KADEME": {
             "D11": "operator_name",
@@ -180,11 +180,11 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D11": "address",
             "D12": "report_date",
             "D14": "test_date",
-            "A31": "summary_text",
-            "D56": "operator_title",
-            "D57": "sicil_no",
-            "D58": "ekipnet_no",
-            "G56": "operator_name",
+            "A29": "summary_text",
+            "D55": "operator_title",
+            "D56": "sicil_no",
+            "D57": "ekipnet_no",
+            "G52": "operator_name",
         },
         "ANA SAYFA": {
             "G11": "brand",
@@ -331,11 +331,11 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D11": "address",
             "D12": "report_date",
             "D14": "test_date",
-            "A31": "summary_text",
-            "D56": "operator_title",
-            "D57": "sicil_no",
-            "D58": "ekipnet_no",
-            "G56": "operator_name",
+            "A29": "summary_text",
+            "D55": "operator_title",
+            "D56": "sicil_no",
+            "D57": "ekipnet_no",
+            "G52": "operator_name",
         },
         "ANA SAYFA": {
             "G11": "brand",
@@ -363,11 +363,6 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O55": "ag_rab",
             "O57": "ag_rbc",
             "O59": "ag_rca",
-            "C61": "ground_r_trafo_body",
-            "F61": "ground_r_neutral",
-            "J61": "ground_r_tank",
-            "C63": "ground_r_og_lightning",
-            "F63": "ground_r_panel",
             "J63": "ground_r_fence",
             "B73": "notes",
             "F80": "operator_title",
@@ -509,8 +504,8 @@ def format_date_display(date_input: Optional[str]) -> str:
         pass
 SHEET_SIGNATURE_ANCHORS = {
     "HERMETIK": {
-        "KAPAK SAYFASI": "G56",
-        "ANA SAYFA": "K79",
+        "KAPAK SAYFASI": "G52",
+        "ANA SAYFA": "K78",
         "ANA SAYFA KESİCİ": "K75",
         "OG SARGI MEVCUT KADEME": "J46",
         "AG SARGI": "J46",
@@ -527,8 +522,8 @@ SHEET_SIGNATURE_ANCHORS = {
         "HERMETİK YAĞ DİLEKÇESİ": "J53",
     },
     "KURU_TIP": {
-        "KAPAK SAYFASI": "G56",
-        "ANA SAYFA": "K73",
+        "KAPAK SAYFASI": "G52",
+        "ANA SAYFA": "K78",
         "ANA SAYFA KESİCİ": "K75",
         "OG SARGI MEVCUT KADEME": "J46",
         "AG SARGI": "J46",
@@ -544,8 +539,8 @@ SHEET_SIGNATURE_ANCHORS = {
         "AKIM TRAFOLARI": "J45",
     },
     "GT": {
-        "KAPAK SAYFASI": "G56",
-        "ANA SAYFA": "K79",
+        "KAPAK SAYFASI": "G52",
+        "ANA SAYFA": "K78",
         "ANA SAYFA KESİCİ": "K75",
         "OG SARGI MEVCUT KADEME": "J46",
         "AG SARGI": "J46",
@@ -949,6 +944,20 @@ def main():
                     ws_kapak.add_image(img, cell_ref)
                 except Exception as e:
                     sys.stderr.write(f"Warning: Failed to insert photo at {cell_ref}: {e}\n")
+
+    # 7.5. Breaker Sheet Pruning (remove breaker sheets if has_breaker is False)
+    BREAKER_SHEETS = ["ANA SAYFA KESİCİ", "KESİCİ İZOLASYON", "KESİCİ KONTAK", "AÇMA-KAPAMA"]
+    has_breaker = data_dict.get("has_breaker")
+    if has_breaker is None:
+        has_breaker = data_dict.get("breaker_included")
+    if has_breaker is None:
+        has_breaker = bool(data_dict.get("breaker_brand") or data_dict.get("breaker_iso_r_gnd") or data_dict.get("breaker_contact_r"))
+    
+    is_breaker_enabled = (has_breaker is True or str(has_breaker).strip().lower() in ["true", "1", "yes", "evet"])
+    if not is_breaker_enabled:
+        for b_sheet in BREAKER_SHEETS:
+            if b_sheet in wb.sheetnames:
+                del wb[b_sheet]
 
     # 8. Fail-safe sweep to clear any remaining 'Hilmi', 'Hilmi GÜL', or 'ULUSOY' text
     b_brand = str(data_dict.get("breaker_brand") or "").strip()
