@@ -41,10 +41,35 @@ class ExcelGenerator {
     dataDict['address'] = dataDict['address'] ?? dataDict['location'] ?? '';
     dataDict['report_date'] = ExcelCellMapping.formatDateDisplay(dataDict['report_date'], fallback: report.createdAt);
     dataDict['test_date'] = ExcelCellMapping.formatDateDisplay(dataDict['test_date'], fallback: report.createdAt);
-    dataDict['creator_display_name'] = report.creatorDisplayName ??
-        dataDict['operator_title'] ??
-        dataDict['operator_name'] ??
-        '';
+
+    // Operator profile fields injection
+    final String opName = dataDict['operator_name']?.toString().trim() ?? report.creatorDisplayName ?? '';
+    final String opTitle = dataDict['operator_title']?.toString().trim() ?? '';
+    dataDict['operator_name'] = opName;
+    dataDict['operator_title'] = opTitle;
+    dataDict['sicil_no'] = dataDict['sicil_no']?.toString().trim() ?? '';
+    dataDict['ekipnet_no'] = dataDict['ekipnet_no']?.toString().trim() ?? '';
+    dataDict['diploma_no'] = dataDict['diploma_no']?.toString().trim() ?? '';
+    dataDict['creator_display_name'] = report.creatorDisplayName ?? (opTitle.isNotEmpty ? '$opName ($opTitle)' : opName);
+
+    if (signaturePath != null && signaturePath.isNotEmpty) {
+      dataDict['signature_path'] = signaturePath;
+    }
+
+    // has_breaker boolean net set
+    bool hasBreaker = false;
+    if (dataDict['has_breaker'] != null) {
+      hasBreaker = dataDict['has_breaker'] == true || dataDict['has_breaker'].toString().toLowerCase() == 'true';
+    } else if (dataDict['breaker_included'] != null) {
+      hasBreaker = dataDict['breaker_included'] == true || dataDict['breaker_included'].toString().toLowerCase() == 'true';
+    } else {
+      final bBrand = dataDict['breaker_brand']?.toString().trim();
+      final bIso = dataDict['breaker_iso_r_gnd']?.toString().trim();
+      final bContact = dataDict['breaker_contact_r']?.toString().trim();
+      hasBreaker = (bBrand != null && bBrand.isNotEmpty) || (bIso != null && bIso.isNotEmpty) || (bContact != null && bContact.isNotEmpty);
+    }
+    dataDict['has_breaker'] = hasBreaker;
+    dataDict['breaker_included'] = hasBreaker;
 
     final String transformerType = report.transformerType.toLowerCase().trim();
     if (transformerType == 'hermetik') {
@@ -269,48 +294,57 @@ class ExcelGenerator {
 
   static String? _findTemplatePath(String transformerType) {
     final String normType = transformerType.toLowerCase().trim();
-    String filename;
+    String hybridFilename;
+    String oldFilename;
     if (normType.contains('kuru')) {
-      filename = 'KURU TİP HİLMİ.xlsx';
+      hybridFilename = 'kuru_tip_hybrid.xlsx';
+      oldFilename = 'KURU TİP HİLMİ.xlsx';
     } else if (normType.contains('gt') || normType.contains('tank')) {
-      filename = 'TR BAKIM RAPORU GT HİLMİ.xlsx';
+      hybridFilename = 'gt_hybrid.xlsx';
+      oldFilename = 'TR BAKIM RAPORU GT HİLMİ.xlsx';
     } else {
-      filename = 'HERMETİK TRAFO BAKIM RAPORU HİLMİ.xlsx';
+      hybridFilename = 'hermetik_hybrid.xlsx';
+      oldFilename = 'HERMETİK TRAFO BAKIM RAPORU HİLMİ.xlsx';
     }
 
-    final List<String> dirsToSearch = <String>[];
+    final List<String> candidatePaths = <String>[];
 
     final String? envRepoRoot = Platform.environment['TRAFO_REPO_ROOT'];
     if (envRepoRoot != null && envRepoRoot.isNotEmpty) {
-      dirsToSearch.add(p.join(envRepoRoot, 'backend', 'templates'));
+      candidatePaths.add(p.join(envRepoRoot, 'backend', 'templates', 'hybrid', hybridFilename));
+      candidatePaths.add(p.join(envRepoRoot, 'backend', 'templates', oldFilename));
     }
 
     final String? envToolsDir = Platform.environment['TRAFO_TOOLS_DIR'];
     if (envToolsDir != null && envToolsDir.isNotEmpty) {
-      dirsToSearch.add(p.join(envToolsDir, '..', 'backend', 'templates'));
-      dirsToSearch.add(p.join(envToolsDir, 'templates'));
+      candidatePaths.add(p.join(envToolsDir, '..', 'backend', 'templates', 'hybrid', hybridFilename));
+      candidatePaths.add(p.join(envToolsDir, '..', 'backend', 'templates', oldFilename));
     }
 
     try {
       final Directory exeDir = File(Platform.resolvedExecutable).parent;
-      dirsToSearch.addAll(<String>[
-        p.join(exeDir.path, 'templates'),
-        p.join(exeDir.path, 'backend', 'templates'),
-        p.join(exeDir.path, '..', 'backend', 'templates'),
-        p.join(exeDir.path, '..', '..', 'backend', 'templates'),
+      candidatePaths.addAll(<String>[
+        p.join(exeDir.path, 'backend', 'templates', 'hybrid', hybridFilename),
+        p.join(exeDir.path, 'templates', 'hybrid', hybridFilename),
+        p.join(exeDir.path, '..', 'backend', 'templates', 'hybrid', hybridFilename),
+        p.join(exeDir.path, '..', '..', 'backend', 'templates', 'hybrid', hybridFilename),
+        p.join(exeDir.path, 'backend', 'templates', oldFilename),
+        p.join(exeDir.path, '..', 'backend', 'templates', oldFilename),
       ]);
     } catch (_) {}
 
     final String cwd = Directory.current.path;
-    dirsToSearch.addAll(<String>[
-      p.join(cwd, 'backend', 'templates'),
-      p.join(cwd, 'templates'),
-      p.join(cwd, '..', 'backend', 'templates'),
-      'C:/Users/User/OneDrive/Desktop/BTS_Elektrik/backend/templates',
+    candidatePaths.addAll(<String>[
+      p.join(cwd, 'backend', 'templates', 'hybrid', hybridFilename),
+      p.join(cwd, '..', 'backend', 'templates', 'hybrid', hybridFilename),
+      p.join(cwd, 'backend', 'templates', oldFilename),
+      p.join(cwd, '..', 'backend', 'templates', oldFilename),
+      'C:/Users/User/OneDrive/Desktop/BTS_Elektrik/backend/templates/hybrid/$hybridFilename',
+      'C:/Users/User/OneDrive/Desktop/BTS_Elektrik/backend/templates/$oldFilename',
     ]);
 
-    for (final String dir in dirsToSearch) {
-      final File f = File(p.join(dir, filename));
+    for (final String path in candidatePaths) {
+      final File f = File(path);
       if (f.existsSync()) return f.absolute.path;
     }
 

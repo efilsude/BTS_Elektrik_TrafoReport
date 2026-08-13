@@ -686,8 +686,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           context: context,
           builder: (BuildContext ctx) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: Row(
-              children: const <Widget>[
+            title: const Row(
+              children: <Widget>[
                 Icon(Icons.error_outline, color: AppTheme.errorColor),
                 SizedBox(width: 8),
                 Text('Excel Üretim Hatası', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),

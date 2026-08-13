@@ -365,10 +365,10 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O59": "ag_rca",
             "J63": "ground_r_fence",
             "B73": "notes",
-            "F80": "operator_title",
-            "F81": "sicil_no",
-            "F82": "ekipnet_no",
-            "K79": "operator_name",
+            "F81": "operator_title",
+            "F82": "sicil_no",
+            "F83": "ekipnet_no",
+            "K78": "operator_name",
         },
         "OG SARGI MEVCUT KADEME": {
             "D11": "operator_name",
@@ -721,27 +721,37 @@ def get_writable_cell(ws, cell_ref: str):
 
 
 def resolve_default_template(mapped_type: str, repo_root: str) -> str:
-    """Finds default template file path relative to repo root."""
-    rel_paths = {
-        "HERMETIK": os.path.join("backend", "templates", "HERMETİK TRAFO BAKIM RAPORU HİLMİ.xlsx"),
-        "KURU_TIP": os.path.join("backend", "templates", "KURU TİP HİLMİ.xlsx"),
-        "GT": os.path.join("backend", "templates", "TR BAKIM RAPORU GT HİLMİ.xlsx"),
+    """
+    Resolves template file path in priority order:
+    1. backend/templates/hybrid/{hermetik_hybrid|gt_hybrid|kuru_tip_hybrid}.xlsx
+    2. backend/templates/{HERMETİK...|TR BAKIM...|KURU TİP...}.xlsx
+    3. mobile/assets/templates/{hermetik|gt|kuru_tip}.xlsx
+    """
+    type_filename_map = {
+        "HERMETIK": ("hermetik_hybrid.xlsx", "HERMETİK TRAFO BAKIM RAPORU HİLMİ.xlsx", "hermetik.xlsx"),
+        "GT": ("gt_hybrid.xlsx", "TR BAKIM RAPORU GT HİLMİ.xlsx", "gt.xlsx"),
+        "KURU_TIP": ("kuru_tip_hybrid.xlsx", "KURU TİP HİLMİ.xlsx", "kuru_tip.xlsx"),
     }
-    fallback_rel_paths = {
-        "HERMETIK": os.path.join("mobile", "assets", "templates", "HERMETİK TRAFO BAKIM RAPORU HİLMİ.xlsx"),
-        "KURU_TIP": os.path.join("mobile", "assets", "templates", "KURU TİP HİLMİ.xlsx"),
-        "GT": os.path.join("mobile", "assets", "templates", "TR BAKIM RAPORU GT HİLMİ.xlsx"),
-    }
+    
+    hybrid_fname, old_fname, mobile_fname = type_filename_map.get(mapped_type, type_filename_map["HERMETIK"])
+    
+    candidates = [
+        # Priority 1: Hybrid templates in backend/templates/hybrid
+        os.path.abspath(os.path.join(repo_root, "backend", "templates", "hybrid", hybrid_fname)),
+        # Priority 2: Old templates in backend/templates
+        os.path.abspath(os.path.join(repo_root, "backend", "templates", old_fname)),
+        # Priority 3: Mobile assets templates
+        os.path.abspath(os.path.join(repo_root, "mobile", "assets", "templates", mobile_fname)),
+        os.path.abspath(os.path.join(repo_root, "mobile", "assets", "templates", old_fname)),
+    ]
 
-    t_path = os.path.abspath(os.path.join(repo_root, rel_paths.get(mapped_type, rel_paths["HERMETIK"])))
-    if os.path.exists(t_path):
-        return t_path
+    for cand in candidates:
+        if os.path.exists(cand):
+            sys.stderr.write(f"DEBUG: Resolved template for {mapped_type}: {cand} (exists=True)\n")
+            return cand
 
-    f_path = os.path.abspath(os.path.join(repo_root, fallback_rel_paths.get(mapped_type, fallback_rel_paths["HERMETIK"])))
-    if os.path.exists(f_path):
-        return f_path
-
-    return t_path
+    sys.stderr.write(f"WARNING: No candidate template found for {mapped_type}, falling back to: {candidates[0]}\n")
+    return candidates[0]
 
 
 def main():

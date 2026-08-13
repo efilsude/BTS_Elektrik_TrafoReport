@@ -360,10 +360,10 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O59": "ag_rca",
             "J63": "ground_r_fence",
             "B73": "notes",
-            "F80": "operator_title",
-            "F81": "sicil_no",
-            "F82": "ekipnet_no",
-            "K79": "operator_name",
+            "F81": "operator_title",
+            "F82": "sicil_no",
+            "F83": "ekipnet_no",
+            "K78": "operator_name",
         },
         "OG SARGI MEVCUT KADEME": {
             "D11": "operator_name",
@@ -719,15 +719,31 @@ def generate_report_excel(
         else:
             report_type = "HERMETIK"
 
-    template_rel_path = TEMPLATE_PATHS.get(report_type, TEMPLATE_PATHS["HERMETIK"])
+    type_filename_map = {
+        "HERMETIK": ("hermetik_hybrid.xlsx", "HERMETİK TRAFO BAKIM RAPORU HİLMİ.xlsx", "hermetik.xlsx"),
+        "GT": ("gt_hybrid.xlsx", "TR BAKIM RAPORU GT HİLMİ.xlsx", "gt.xlsx"),
+        "KURU_TIP": ("kuru_tip_hybrid.xlsx", "KURU TİP HİLMİ.xlsx", "kuru_tip.xlsx"),
+    }
     
-    # Try finding template relative to backend directory or project root
-    template_full_path = os.path.abspath(os.path.join(os.getcwd(), template_rel_path))
-    if not os.path.exists(template_full_path):
-        template_full_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", template_rel_path))
+    hybrid_fname, old_fname, mobile_fname = type_filename_map.get(report_type, type_filename_map["HERMETIK"])
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-    if not os.path.exists(template_full_path):
-        raise FileNotFoundError(f"Şablon dosyası bulunamadı: {template_full_path}")
+    candidates = [
+        os.path.abspath(os.path.join(repo_root, "backend", "templates", "hybrid", hybrid_fname)),
+        os.path.abspath(os.path.join(repo_root, "backend", "templates", old_fname)),
+        os.path.abspath(os.path.join(repo_root, "mobile", "assets", "templates", mobile_fname)),
+        os.path.abspath(os.path.join(repo_root, "mobile", "assets", "templates", old_fname)),
+    ]
+
+    template_full_path = None
+    for cand in candidates:
+        if os.path.exists(cand):
+            template_full_path = cand
+            sys.stderr.write(f"DEBUG (backend): Resolved template for {report_type}: {cand} (exists=True)\n")
+            break
+
+    if not template_full_path:
+        raise FileNotFoundError(f"Şablon dosyası bulunamadı: {candidates[0]}")
 
     # Load workbook preserving formulas and styles
     wb = openpyxl.load_workbook(template_full_path, data_only=False)
