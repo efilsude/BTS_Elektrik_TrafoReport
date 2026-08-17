@@ -3,20 +3,6 @@ import '../database/database_helper.dart';
 import '../models/user_model.dart';
 import 'storage_service.dart';
 
-class VerificationResult {
-  final bool success;
-  final String? debugCode;
-  final int? expiresInSeconds;
-  final String? errorMessage;
-
-  VerificationResult({
-    required this.success,
-    this.debugCode,
-    this.expiresInSeconds,
-    this.errorMessage,
-  });
-}
-
 class AuthService extends ChangeNotifier {
   final StorageService _storageService = StorageService();
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
@@ -89,10 +75,9 @@ class AuthService extends ChangeNotifier {
   Future<bool> bootstrapAdmin({
     required String fullName,
     required String phone,
+    required String operatorTitle,
     String? email,
-    String? sicilNo,
     required String password,
-    String? verificationCode, // Kept for signature compatibility
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -111,7 +96,10 @@ class AuthService extends ChangeNotifier {
         fullName: fullName,
         phone: phone,
         email: email,
-        sicilNo: sicilNo,
+        operatorTitle: operatorTitle,
+        sicilNo: null,
+        ekipnetNo: null,
+        diplomaNo: null,
         password: password,
         role: 'admin',
       );
@@ -132,18 +120,6 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-  }
-
-  /// Request Verification (Serverless mock for UI flow compatibility)
-  Future<VerificationResult> requestVerificationBootstrap({required String email}) async {
-    return VerificationResult(success: true, debugCode: '123456', expiresInSeconds: 600);
-  }
-
-  Future<VerificationResult> requestVerificationCode({
-    required String email,
-    required String inviteCode,
-  }) async {
-    return VerificationResult(success: true, debugCode: '123456', expiresInSeconds: 600);
   }
 
   /// Local Login via Phone/Email and Password
@@ -211,9 +187,6 @@ class AuthService extends ChangeNotifier {
     required String phone,
     String? email,
     String? operatorTitle,
-    String? sicilNo,
-    String? ekipnetNo,
-    String? diplomaNo,
     required String password,
     required String role,
   }) async {
@@ -235,9 +208,9 @@ class AuthService extends ChangeNotifier {
         phone: phone,
         email: email,
         operatorTitle: operatorTitle,
-        sicilNo: sicilNo,
-        ekipnetNo: ekipnetNo,
-        diplomaNo: diplomaNo,
+        sicilNo: null,
+        ekipnetNo: null,
+        diplomaNo: null,
         password: password,
         role: role,
       );
@@ -270,9 +243,6 @@ class AuthService extends ChangeNotifier {
     required String phone,
     String? email,
     String? operatorTitle,
-    String? sicilNo,
-    String? ekipnetNo,
-    String? diplomaNo,
     required String role,
     String? newPassword,
   }) async {
@@ -311,9 +281,9 @@ class AuthService extends ChangeNotifier {
         phone: phone,
         email: email,
         operatorTitle: operatorTitle,
-        sicilNo: sicilNo,
-        ekipnetNo: ekipnetNo,
-        diplomaNo: diplomaNo,
+        sicilNo: null,
+        ekipnetNo: null,
+        diplomaNo: null,
         role: role,
         newPassword: newPassword,
       );
@@ -456,9 +426,6 @@ class AuthService extends ChangeNotifier {
     required String operatorTitle,
     String? phone,
     String? email,
-    String? sicilNo,
-    String? ekipnetNo,
-    String? diplomaNo,
   }) async {
     if (_currentUser == null) return false;
 
@@ -478,10 +445,10 @@ class AuthService extends ChangeNotifier {
         fullName: fullName,
         phone: phone ?? _currentUser!.phone,
         email: email ?? _currentUser!.email,
-        sicilNo: sicilNo,
+        sicilNo: null,
         operatorTitle: operatorTitle,
-        ekipnetNo: ekipnetNo,
-        diplomaNo: diplomaNo,
+        ekipnetNo: null,
+        diplomaNo: null,
         role: _currentUser!.role,
       );
 
@@ -494,10 +461,7 @@ class AuthService extends ChangeNotifier {
             fullName: updated.fullName,
             phone: updated.phone,
             email: updated.email,
-            sicilNo: updated.sicilNo,
             operatorTitle: updated.operatorTitle,
-            ekipnetNo: updated.ekipnetNo,
-            diplomaNo: updated.diplomaNo,
             signaturePath: sigPath ?? updated.signaturePath,
             role: updated.role,
             isActive: updated.isActive,
@@ -516,33 +480,6 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-  }
-
-  /// Register wrapper method for existing forms
-  Future<bool> register({
-    required String fullName,
-    required String email,
-    required String phone,
-    required String operatorTitle,
-    String? sicilNo,
-    String? ekipnetNo,
-    String? diplomaNo,
-    required String inviteCode,
-    required String verificationCode,
-    required String password,
-    bool isAdminMode = false,
-  }) async {
-    return await createLocalUser(
-      fullName: fullName,
-      phone: phone,
-      email: email,
-      operatorTitle: operatorTitle,
-      sicilNo: sicilNo,
-      ekipnetNo: ekipnetNo,
-      diplomaNo: diplomaNo,
-      password: password,
-      role: isAdminMode ? 'admin' : 'employee',
-    );
   }
 
   /// Logout

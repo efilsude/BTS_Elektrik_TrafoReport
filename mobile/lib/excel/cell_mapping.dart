@@ -18,7 +18,6 @@ class ExcelCellMapping {
         'D14': 'test_date',
         'A29': 'summary_text',
         'D55': 'operator_title',
-        'D56': 'operator_name',
       },
       'ANA SAYFA': <String, String>{
         'G11': 'brand',
@@ -118,8 +117,6 @@ class ExcelCellMapping {
         'G13': 'breaker_model',
         'O13': 'breaker_year',
         'F76': 'operator_title',
-        'F77': 'sicil_no',
-        'F78': 'ekipnet_no',
         'K75': 'operator_name',
       },
       'KESİCİ İZOLASYON': <String, String>{
@@ -151,10 +148,7 @@ class ExcelCellMapping {
         'O9': 'device_serial',
         'D16': 'ct_ratio',
       },
-      'HERMETİK YAĞ DİLEKÇESİ': <String, String>{
-        'D16': 'oil_test_breakdown_voltage',
-        'D18': 'oil_test_water_content',
-      },
+      'HERMETİK YAĞ DİLEKÇESİ': <String, String>{},
     },
     'kuru_tip': <String, Map<String, String>>{
       'KAPAK SAYFASI': <String, String>{
@@ -165,7 +159,6 @@ class ExcelCellMapping {
         'D14': 'test_date',
         'A29': 'summary_text',
         'D55': 'operator_title',
-        'D56': 'operator_name',
       },
       'ANA SAYFA': <String, String>{
         'G11': 'brand',
@@ -269,8 +262,6 @@ class ExcelCellMapping {
         'G13': 'breaker_model',
         'O13': 'breaker_year',
         'F76': 'operator_title',
-        'F77': 'sicil_no',
-        'F78': 'ekipnet_no',
         'K75': 'operator_name',
       },
       'KESİCİ İZOLASYON': <String, String>{
@@ -312,7 +303,6 @@ class ExcelCellMapping {
         'D14': 'test_date',
         'A29': 'summary_text',
         'D55': 'operator_title',
-        'D56': 'operator_name',
       },
       'ANA SAYFA': <String, String>{
         'G11': 'brand',
@@ -401,8 +391,6 @@ class ExcelCellMapping {
         'G13': 'breaker_model',
         'O13': 'breaker_year',
         'F76': 'operator_title',
-        'F77': 'sicil_no',
-        'F78': 'ekipnet_no',
         'K75': 'operator_name',
       },
       'KESİCİ İZOLASYON': <String, String>{
@@ -427,10 +415,7 @@ class ExcelCellMapping {
         'D16': 'oil_test_breakdown_voltage',
         'D18': 'oil_test_water_content',
       },
-      'HERMETİK YAĞ DİLEKÇESİ': <String, String>{
-        'D16': 'oil_test_breakdown_voltage',
-        'D18': 'oil_test_water_content',
-      },
+      'HERMETİK YAĞ DİLEKÇESİ': <String, String>{},
     },
   };
 

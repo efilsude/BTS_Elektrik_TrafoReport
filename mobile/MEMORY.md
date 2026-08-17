@@ -13,6 +13,24 @@ Format:
 - Bir sonraki oturumda kaldığı yer:
 ```
 
+## 2026-08-17 — Kayıt Yalnızca Admin / Self-Register ve Davet/Doğrulama Kodu Akışı Kaldırıldı
+- **Ne yapıldı:**
+  1. **Çalışan Self-Register Kaldırıldı (`register_screen.dart` & `AuthService`)**:
+     - `register_screen.dart` dosyası tamamen silindi; `login_screen.dart` üzerinden self-register seçeneği kaldırıldı.
+     - `AuthService` içerisindeki gereksiz `VerificationResult`, `requestVerification*` ve mock 123456 doğrulama kodu metotları temizlendi.
+  2. **Admin Panel Tek Kayıt Kapısı (`AdminDashboardScreen`)**:
+     - Kullanıcı ekleme ve düzenleme dialoglarında zorunlu alanlar: Ad Soyad (Operatör Adı), Unvan, Telefon, Şifre (yeni kullanıcıda), Rol (employee / admin).
+     - İsteğe bağlı alanlar: E-posta, Sicil No, EKİPNET No, Diploma / Oda Sicil No.
+     - Davet ve doğrulama kodları UI'dan tamamen kaldırıldı.
+  3. **Bootstrap Form Güncellemesi (`FirstAdminBootstrapScreen`)**:
+     - `Sicil No` alanı bootstrap formundan tamamen kaldırıldı.
+     - Bootstrap formuna Excel kesinleştirme için zorunlu olan `Unvan *` eklendi. `EKİPNET No (Opsiyonel)` ve `Diploma / Oda Sicil No (Opsiyonel)` eklendi.
+     - Sorulan alanlar: Ad Soyad *, Unvan *, Telefon *, E-posta (Opsiyonel), EKİPNET No (Opsiyonel), Diploma / Oda Sicil No (Opsiyonel), Şifre *, Şifre Tekrar *.
+  4. **Login Ekranı Sadeleştirmesi (`LoginScreen`)**:
+     - Kimlik alanı `"Telefon veya E-posta"` olarak güncellendi.
+     - Alt bilgi metni `"Hesap için yöneticinize başvurun."` olarak ayarlandı.
+  5. `flutter analyze` & `flutter test`: **0 Hata**, tüm testler başarıyla geçti.
+
 ## 2026-07-31 — Release APK Build v1.0.2 (build 3 - Cleartext HTTP İzin Düzeltmesi)
 - **Ne yapıldı:**
   - `AndroidManifest.xml` (`android:usesCleartextTraffic="true"` + `networkSecurityConfig`) düzeltmesi sonrası yeni imzalı release APK derlendi.

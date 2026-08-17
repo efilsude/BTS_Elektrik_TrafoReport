@@ -43,6 +43,8 @@ class ReportService extends ChangeNotifier {
       dataJson: <String, dynamic>{
         'report_date': dateStr,
         'test_date': dateStr,
+        'has_breaker': subType == 'kesici',
+        'breaker_included': subType == 'kesici',
         'winding_resistance': <String, dynamic>{},
         'insulation': <String, dynamic>{},
         'ttr': <String, dynamic>{},
@@ -312,20 +314,19 @@ class ReportService extends ChangeNotifier {
 
       final Map<String, dynamic> updatedData = Map<String, dynamic>.from(reportToFinalize.dataJson);
 
+      final bool hasBreaker = updatedData['has_breaker'] == true ||
+          (updatedData['has_breaker'] == null && (updatedData['breaker_included'] == true || reportToFinalize.subType == 'kesici'));
+      updatedData['has_breaker'] = hasBreaker;
+      updatedData['breaker_included'] = hasBreaker;
+
       // Inject profile fields from currentUser or profileMap
       if (currentUser != null) {
         final String opName = currentUser.fullName.trim();
         final String opTitle = (currentUser.operatorTitle ?? '').trim();
-        final String sicilNo = (currentUser.sicilNo ?? '').trim();
-        final String ekipnetNo = (currentUser.ekipnetNo ?? '').trim();
-        final String diplomaNo = (currentUser.diplomaNo ?? '').trim();
         final String? sigPath = signaturePath ?? currentUser.signaturePath;
 
         if (opName.isNotEmpty) updatedData['operator_name'] = opName;
         if (opTitle.isNotEmpty) updatedData['operator_title'] = opTitle;
-        if (sicilNo.isNotEmpty) updatedData['sicil_no'] = sicilNo;
-        if (ekipnetNo.isNotEmpty) updatedData['ekipnet_no'] = ekipnetNo;
-        if (diplomaNo.isNotEmpty) updatedData['diploma_no'] = diplomaNo;
         if (sigPath != null && sigPath.isNotEmpty) updatedData['signature_path'] = sigPath;
       }
 
@@ -418,16 +419,10 @@ class ReportService extends ChangeNotifier {
     if (currentUser != null) {
       final String opName = currentUser.fullName.trim();
       final String opTitle = (currentUser.operatorTitle ?? '').trim();
-      final String sicilNo = (currentUser.sicilNo ?? '').trim();
-      final String ekipnetNo = (currentUser.ekipnetNo ?? '').trim();
-      final String diplomaNo = (currentUser.diplomaNo ?? '').trim();
       final String? sigPath = currentUser.signaturePath;
 
       if (opName.isNotEmpty) updatedData['operator_name'] = opName;
       if (opTitle.isNotEmpty) updatedData['operator_title'] = opTitle;
-      if (sicilNo.isNotEmpty) updatedData['sicil_no'] = sicilNo;
-      if (ekipnetNo.isNotEmpty) updatedData['ekipnet_no'] = ekipnetNo;
-      if (diplomaNo.isNotEmpty) updatedData['diploma_no'] = diplomaNo;
       if (sigPath != null && sigPath.isNotEmpty) updatedData['signature_path'] = sigPath;
     }
 

@@ -16,9 +16,9 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final TextEditingController _fullNameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _operatorTitleController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _sicilNoController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
 
@@ -28,9 +28,9 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
   @override
   void dispose() {
     _fullNameController.dispose();
-    _emailController.dispose();
+    _operatorTitleController.dispose();
     _phoneController.dispose();
-    _sicilNoController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -56,9 +56,9 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
 
     final bool success = await authService.bootstrapAdmin(
       fullName: _fullNameController.text.trim(),
+      operatorTitle: _operatorTitleController.text.trim(),
       phone: _phoneController.text.trim(),
       email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-      sicilNo: _sicilNoController.text.trim().isEmpty ? null : _sicilNoController.text.trim(),
       password: _passwordController.text,
     );
 
@@ -286,6 +286,18 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
           ),
           const SizedBox(height: 16),
 
+          // Unvan
+          TextFormField(
+            controller: _operatorTitleController,
+            decoration: const InputDecoration(
+              labelText: 'Unvan (Elektrik Mühendisi vb.) *',
+              prefixIcon: Icon(Icons.work_rounded),
+            ),
+            validator: (String? val) =>
+                val == null || val.trim().isEmpty ? 'Unvan zorunludur' : null,
+          ),
+          const SizedBox(height: 16),
+
           // Telefon
           TextFormField(
             controller: _phoneController,
@@ -307,16 +319,6 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
             decoration: const InputDecoration(
               labelText: 'E-posta Adresi (Opsiyonel)',
               prefixIcon: Icon(Icons.email_rounded),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Sicil No (Opsiyonel)
-          TextFormField(
-            controller: _sicilNoController,
-            decoration: const InputDecoration(
-              labelText: 'Sicil No (Opsiyonel)',
-              prefixIcon: Icon(Icons.badge_rounded),
             ),
           ),
           const SizedBox(height: 16),

@@ -17,8 +17,7 @@ TEMPLATE_PATHS = {
     "GT": os.path.join("templates", "TR BAKIM RAPORU GT HİLMİ.xlsx")
 }
 
-# Type-specific cell mappings per sheet
-TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
+# Type-specific cell mappings per TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
     "HERMETIK": {
         "KAPAK SAYFASI": {
             "D9": "customer_name",
@@ -28,7 +27,6 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D14": "test_date",
             "A29": "summary_text",
             "D55": "operator_title",
-            "D56": "operator_name",
         },
         "ANA SAYFA": {
             "G11": "brand",
@@ -130,7 +128,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "G50": "breaker_iso_r_gnd",
             "O50": "breaker_contact_r",
             "F76": "operator_title",
-            "F77": "operator_name",
+            "F77": "sicil_no",
+            "F78": "ekipnet_no",
         },
         "KESİCİ İZOLASYON": {
             "D10": "operator_name",
@@ -159,10 +158,7 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O9": "device_serial",
             "D16": "ct_ratio",
         },
-        "HERMETİK YAĞ DİLEKÇESİ": {
-            "D16": "oil_test_breakdown_voltage",
-            "D18": "oil_test_water_content",
-        }
+        "HERMETİK YAĞ DİLEKÇESİ": {}
     },
     "KURU_TIP": {
         "KAPAK SAYFASI": {
@@ -173,7 +169,6 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D14": "test_date",
             "A29": "summary_text",
             "D55": "operator_title",
-            "D56": "operator_name",
         },
         "ANA SAYFA": {
             "G11": "brand",
@@ -279,7 +274,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "G50": "breaker_iso_r_gnd",
             "O50": "breaker_contact_r",
             "F76": "operator_title",
-            "F77": "operator_name",
+            "F77": "sicil_no",
+            "F78": "ekipnet_no",
         },
         "KESİCİ İZOLASYON": {
             "D10": "operator_name",
@@ -318,7 +314,6 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D14": "test_date",
             "A29": "summary_text",
             "D55": "operator_title",
-            "D56": "operator_name",
         },
         "ANA SAYFA": {
             "G11": "brand",
@@ -409,7 +404,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "G50": "breaker_iso_r_gnd",
             "O50": "breaker_contact_r",
             "F76": "operator_title",
-            "F77": "operator_name",
+            "F77": "sicil_no",
+            "F78": "ekipnet_no",
         },
         "KESİCİ İZOLASYON": {
             "D10": "operator_name",
@@ -442,10 +438,7 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D16": "oil_test_breakdown_voltage",
             "D18": "oil_test_water_content",
         },
-        "HERMETİK YAĞ DİLEKÇESİ": {
-            "D16": "oil_test_breakdown_voltage",
-            "D18": "oil_test_water_content",
-        }
+        "HERMETİK YAĞ DİLEKÇESİ": {}
     }
 }
 
@@ -583,19 +576,6 @@ def process_checklist_pairs(ws, report_type, data_dict):
 
 
 def process_sheet_signature(ws, target_anchor: Optional[str], sig_path: Optional[str]):
-    if hasattr(ws, '_images') and ws._images:
-        filtered = []
-        for img in ws._images:
-            is_old_sig = False
-            if hasattr(img, 'anchor') and hasattr(img.anchor, '_from'):
-                c = img.anchor._from.col
-                r = img.anchor._from.row
-                if r >= 30 and c >= 5:
-                    is_old_sig = True
-            if not is_old_sig:
-                filtered.append(img)
-        ws._images = filtered
-
     for r in range(40, min(86, ws.max_row + 1)):
         for c in range(5, 15):
             cell = ws.cell(row=r, column=c)
@@ -611,15 +591,6 @@ def process_sheet_signature(ws, target_anchor: Optional[str], sig_path: Optional
 
 
 def process_kapak_photos(ws_kapak, data_dict, photos: Optional[List[Photo]] = None):
-    if hasattr(ws_kapak, '_images') and ws_kapak._images:
-        filtered = []
-        for img in ws_kapak._images:
-            r = None
-            if hasattr(img, 'anchor') and hasattr(img.anchor, '_from'):
-                r = img.anchor._from.row
-            if r is not None and r <= 2:
-                filtered.append(img)
-        ws_kapak._images = filtered
 
     p_before = data_dict.get("photo_before")
     p_after = data_dict.get("photo_after")
@@ -640,23 +611,23 @@ def process_kapak_photos(ws_kapak, data_dict, photos: Optional[List[Photo]] = No
                     p_extra = p.file_path
 
     photos_to_place = []
-    if p_label and isinstance(p_label, str) and os.path.exists(p_label):
-        photos_to_place.append((p_label, "Trafo Etiket / Plaka"))
     if p_before and isinstance(p_before, str) and os.path.exists(p_before):
         photos_to_place.append((p_before, "Bakım Öncesi"))
     if p_after and isinstance(p_after, str) and os.path.exists(p_after):
         photos_to_place.append((p_after, "Bakım Sonrası"))
+    if p_label and isinstance(p_label, str) and os.path.exists(p_label):
+        photos_to_place.append((p_label, "Trafo Etiket / Plaka"))
     if p_extra and isinstance(p_extra, str) and os.path.exists(p_extra):
         photos_to_place.append((p_extra, "Ek Fotoğraf"))
 
     slots = [
-        ("A32", "A47"),
-        ("G32", "G47"),
-        ("A49", "A64"),
-        ("G49", "G64"),
+        ("A32", "A38", 200, 120),
+        ("G32", "G38", 200, 120),
+        ("A40", "A47", 200, 115),
+        ("G40", "G47", 200, 115),
     ]
 
-    for _, caption_ref in slots:
+    for _, caption_ref, _, _ in slots:
         try:
             cell = get_writable_cell(ws_kapak, caption_ref)
             cell.value = None
@@ -666,13 +637,20 @@ def process_kapak_photos(ws_kapak, data_dict, photos: Optional[List[Photo]] = No
     font_bold = Font(name="Calibri", size=10, bold=True)
     align_center = Alignment(horizontal="center", vertical="center")
 
+    caption_merges = [("A38", "A38:D38"), ("G38", "G38:J38"), ("A47", "A47:D47"), ("G47", "G47:J47")]
+    for cref, mrange in caption_merges:
+        try:
+            ws_kapak.merge_cells(mrange)
+        except Exception:
+            pass
+
     for idx, (p_path, label_text) in enumerate(photos_to_place):
         if idx < len(slots):
-            anchor_cell, caption_ref = slots[idx]
+            anchor_cell, caption_ref, w_px, h_px = slots[idx]
             try:
                 img = OpenPyXLImage(p_path)
-                img.width = 260
-                img.height = 170
+                img.width = w_px
+                img.height = h_px
                 ws_kapak.add_image(img, anchor_cell)
 
                 cell = get_writable_cell(ws_kapak, caption_ref)
@@ -694,47 +672,259 @@ def clean_5070_text(wb):
                         cell.value = None
 
 
-def customize_charts_marker_only(wb):
-    try:
-        from openpyxl.chart.marker import Marker
-        for sname in wb.sheetnames:
-            ws = wb[sname]
-            charts = getattr(ws, '_charts', [])
-            for chart in charts:
-                if type(chart).__name__ in ["ScatterChart", "LineChart"]:
-                    for series in getattr(chart, 'series', []):
-                        if hasattr(series, 'graphicalProperties') and series.graphicalProperties:
-                            if hasattr(series.graphicalProperties, 'line') and series.graphicalProperties.line:
-                                series.graphicalProperties.line.noFill = True
-                        if hasattr(series, 'marker'):
-                            series.marker = Marker(symbol="circle", size=6)
-    except Exception:
-        pass
+def clean_left_personnel_block(wb, op_name: str, op_title: str, test_date: Optional[str] = None, report_date: Optional[str] = None, data_dict: Optional[Dict[str, Any]] = None):
+    """
+    Ensures KAPAK sol kutu has ONLY:
+      - Test Tarihi : {test_date}
+      - Rapor Tarihi : {report_date}
+      - Unvan : {operator_title}
+    (İsim Soyad row at A52 is removed/cleared as requested by user).
 
+    Cleans and standardizes personnel blocks and footers across ALL sub-pages:
+      - UNVAN: written verbatim from operator_title
+      - TEST TARİHİ: test_date
+      - ODA SİCİL NO / EKİPNET NO: written ONLY if valid sicil_no / ekipnet_no exists in data_dict, otherwise CLEARED to prevent showing operator_name/title.
+    """
+    if data_dict is None:
+        data_dict = {}
 
-def clean_left_personnel_block(wb, op_name: str, op_title: str):
+    real_sicil = str(data_dict.get("sicil_no") or "").strip()
+    real_ekipnet = str(data_dict.get("ekipnet_no") or "").strip()
+
+    if real_sicil == op_name or real_sicil == op_title:
+        real_sicil = ""
+    if real_ekipnet == op_name or real_ekipnet == op_title:
+        real_ekipnet = ""
+
     for sname in wb.sheetnames:
         ws = wb[sname]
         if sname == "KAPAK SAYFASI":
-            cell_a52 = get_writable_cell(ws, "A52")
-            if cell_a52.value and op_name.lower() in str(cell_a52.value).lower():
-                cell_a52.value = None
-            get_writable_cell(ws, "A56").value = op_name
-            get_writable_cell(ws, "A57").value = None
-            get_writable_cell(ws, "D57").value = None
-        elif "ANA SAYFA" in sname:
-            get_writable_cell(ws, "B81").value = "Unvan"
-            get_writable_cell(ws, "F81").value = op_title
-            get_writable_cell(ws, "B82").value = "İsim"
-            get_writable_cell(ws, "F82").value = op_name
-            for r in [83, 84]:
+            # Clear A52:F52 (Remove operator_name / İsim Soyad from KAPAK left box)
+            for c_let in ["A", "B", "C", "D", "E", "F"]:
+                try:
+                    get_writable_cell(ws, f"{c_let}52").value = None
+                except Exception:
+                    pass
+
+            get_writable_cell(ws, "A53").value = "Test Tarihi"
+            get_writable_cell(ws, "C53").value = ":"
+            if test_date:
+                s_val = date_to_excel_serial(test_date)
+                cell_d53 = get_writable_cell(ws, "D53")
+                cell_d53.value = s_val if s_val is not None else str(test_date)
+                cell_d53.number_format = "dd.mm.yyyy"
+
+            get_writable_cell(ws, "A54").value = "Rapor Tarihi"
+            get_writable_cell(ws, "C54").value = ":"
+            if report_date:
+                s_val = date_to_excel_serial(report_date)
+                cell_d54 = get_writable_cell(ws, "D54")
+                cell_d54.value = s_val if s_val is not None else str(report_date)
+                cell_d54.number_format = "dd.mm.yyyy"
+
+            get_writable_cell(ws, "A55").value = "Unvan"
+            get_writable_cell(ws, "C55").value = ":"
+            get_writable_cell(ws, "D55").value = op_title
+
+            # Clear A56:F57 residuals
+            for r in [56, 57]:
                 for c_let in ["A", "B", "C", "D", "E", "F"]:
                     try:
-                        cell = get_writable_cell(ws, f"{c_let}{r}")
-                        cell.value = None
+                        get_writable_cell(ws, f"{c_let}{r}").value = None
                     except Exception:
                         pass
 
+        elif "ANA SAYFA" in sname and sname != "ANA SAYFA KESİCİ":
+            get_writable_cell(ws, "B79").value = "Test Tarihi"
+            get_writable_cell(ws, "E79").value = ":"
+            if test_date:
+                s_val = date_to_excel_serial(test_date)
+                cell_f79 = get_writable_cell(ws, "F79")
+                cell_f79.value = s_val if s_val is not None else str(test_date)
+                cell_f79.number_format = "dd.mm.yyyy"
+
+            get_writable_cell(ws, "B80").value = "Rapor Tarihi"
+            get_writable_cell(ws, "E80").value = ":"
+            if report_date:
+                s_val = date_to_excel_serial(report_date)
+                cell_f80 = get_writable_cell(ws, "F80")
+                cell_f80.value = s_val if s_val is not None else str(report_date)
+                cell_f80.number_format = "dd.mm.yyyy"
+
+            get_writable_cell(ws, "B81").value = "Unvan"
+            get_writable_cell(ws, "E81").value = ":"
+            get_writable_cell(ws, "F81").value = op_title
+
+            # Clear rows 82, 83, 84 (A82:F84) - remove operator_name / İsim
+            for r in [82, 83, 84]:
+                for c_let in ["A", "B", "C", "D", "E", "F"]:
+                    try:
+                        get_writable_cell(ws, f"{c_let}{r}").value = None
+                    except Exception:
+                        pass
+
+        # Sweep and clean sub-page personnel footers
+        if sname != "KAPAK SAYFASI":
+            for r in range(1, ws.max_row + 1):
+                col_b_val = str(ws.cell(row=r, column=2).value or "").strip().upper()
+                col_a_val = str(ws.cell(row=r, column=1).value or "").strip().upper()
+                label_val = col_b_val if col_b_val else col_a_val
+                if not label_val:
+                    continue
+
+                if label_val in ["UNVAN", "ÜNVAN"]:
+                    target_cell = get_writable_cell(ws, f"F{r}")
+                    target_cell.value = op_title
+                elif label_val in ["TEST TARİHİ", "TEST TARIHI"]:
+                    target_cell = get_writable_cell(ws, f"F{r}")
+                    target_cell.value = "='KAPAK SAYFASI'!D53"
+                    target_cell.number_format = "dd.mm.yyyy"
+                elif any(kw in label_val for kw in ["ODA SİCİL NO", "ODA SICIL NO", "SICIL NO", "SİCİL NO", "EKİPNET NO", "EKIPNET NO"]):
+                    # Clear entire row label & value cells for sicil_no / ekipnet_no
+                    for c_let in ["A", "B", "C", "D", "E", "F"]:
+                        try:
+                            get_writable_cell(ws, f"{c_let}{r}").value = None
+                        except Exception:
+                            pass
+
+
+
+def fix_subpage_dates(wb, test_date: Optional[str] = None, report_date: Optional[str] = None):
+    """
+    Fixes sub-page OTURUM TARİHİ cells across all worksheets (TOPRAKLAMALAR, HV PF, LV PF, DİĞER, AKIM TRAFOLARI, etc.)
+    by pointing them to 'KAPAK SAYFASI'!D53 formula and applying number_format 'dd.mm.yyyy'.
+    Ensures date cell never evaluates to 0 or '00.01.1900'.
+    """
+    subpage_date_cells = {
+        "OG SARGI MEVCUT KADEME": "J9",
+        "AG SARGI": "J9",
+        "İZOLASYON ": "J9",
+        "Ç.O 34500": "J9",
+        "TOPRAKLAMALAR": "J7",
+        "HV PF": "J9",
+        "LV PF": "J9",
+        "KESİCİ İZOLASYON": "J8",
+        "KESİCİ KONTAK": "J8",
+        "AÇMA-KAPAMA": "J7",
+        "DİĞER": "J7",
+        "AKIM TRAFOLARI": "J7",
+    }
+    for sname in wb.sheetnames:
+        ws = wb[sname]
+        cell_ref = subpage_date_cells.get(sname)
+        if cell_ref:
+            try:
+                cell = get_writable_cell(ws, cell_ref)
+                cell.value = "='KAPAK SAYFASI'!D53"
+                cell.number_format = "dd.mm.yyyy"
+            except Exception:
+                pass
+        else:
+            for r in range(1, 15):
+                for c in range(1, 10):
+                    val = ws.cell(row=r, column=c).value
+                    if val is not None and ("OTURUM TARİHİ" in str(val).upper() or "OTURUM TARIHI" in str(val).upper()):
+                        target_col = c + 8 if c == 2 else c + 2
+                        target_cell = ws.cell(row=r, column=target_col)
+                        if type(target_cell).__name__ != 'MergedCell':
+                            target_cell.value = "='KAPAK SAYFASI'!D53"
+                            target_cell.number_format = "dd.mm.yyyy"
+
+
+def process_oil_petition(wb, data_dict):
+    """
+    Dynamically replaces sample terms (date, brand, power_kva, serial_no)
+    in the body paragraph (B10) of 'HERMETİK YAĞ DİLEKÇESİ' sheet without altering template layout or legal text.
+    Also clears residual D16/D18 values on petition sheet.
+    """
+    for sname in wb.sheetnames:
+        if "YAĞ DİLEKÇESİ" in sname.upper() or "YAG DILEKCESI" in sname.upper():
+            ws = wb[sname]
+
+            # Clear D16 and D18 to eliminate '30,0' artifact
+            for cref in ["D16", "D18"]:
+                try:
+                    get_writable_cell(ws, cref).value = None
+                except Exception:
+                    pass
+
+            # Update customer/location headers
+            try:
+                c_name = data_dict.get("customer_name")
+                if c_name:
+                    get_writable_cell(ws, "J2").value = str(c_name).strip()
+                else:
+                    get_writable_cell(ws, "J2").value = "='KAPAK SAYFASI'!D9"
+
+                addr = data_dict.get("address") or data_dict.get("location")
+                if addr:
+                    get_writable_cell(ws, "J3").value = str(addr).strip()
+                else:
+                    get_writable_cell(ws, "J3").value = "='KAPAK SAYFASI'!D11"
+            except Exception:
+                pass
+
+            # Extract date
+            raw_date = data_dict.get("test_date") or data_dict.get("report_date")
+            formatted_date = None
+            if raw_date:
+                s_d = str(raw_date).strip()
+                if "." in s_d:
+                    formatted_date = s_d
+                elif "-" in s_d:
+                    parts = s_d.split("-")
+                    if len(parts) == 3:
+                        formatted_date = f"{parts[2]}.{parts[1]}.{parts[0]}"
+            if not formatted_date:
+                formatted_date = datetime.now().strftime("%d.%m.%Y")
+
+            brand_val = str(data_dict.get("brand") or "").strip()
+            if not brand_val:
+                brand_val = "ASTOR"
+
+            power_val = data_dict.get("power_kva")
+            if power_val:
+                str_p = str(power_val).strip()
+                if not str_p.lower().endswith("kva"):
+                    str_p += "kVA"
+            else:
+                str_p = "1000kVA"
+
+            serial_val = str(data_dict.get("serial_no") or "").strip()
+            if not serial_val:
+                serial_val = "27-07840"
+
+            canonical_text = (
+                "\n              İşletmenizde bulunan trafoların testini {date} tarihinde yapmış bulunmaktayız.\n"
+                "Test kapsamında istenilen trafo yağ analizi işleminin yapılabilmesi için trafodan yağ numunesi alınması gerekmektedir. "
+                "İşletmenizde bulunan {brand} marka, {power_kva}, '{serial_no}' seri numaralı trafonun hermetik tip olmasından dolayı yağ numunesi alınmamıştır.          \n"
+                "                                                                                                                                                               \n"
+                "              Hermetik tip trafolar atmosfere kapalıdır ve numune alma yerleri mühürlüdür. Mühürlerin açılıp numune alınması durumunda trafonun hermetik özelliği bozulacağından dolayı, fabrika standartlarına göre arıza durumu olmadığı sürece hiçbir şekilde hermetik trafolardan yağ numunesi alınamaz.\n\n"
+                "              \n"
+                "              Bilgilerinize sunarız.\n\n"
+            )
+
+            cell_b10 = get_writable_cell(ws, "B10")
+            current_val = cell_b10.value
+
+            if current_val and isinstance(current_val, str) and ("işletmenizde bulunan" in current_val.lower() or "trafo" in current_val.lower()):
+                text = current_val
+                text = re.sub(r"\b\d{2}\.\d{2}\.\d{4}\b", formatted_date, text)
+                if brand_val != "ASTOR":
+                    text = text.replace("ASTOR", brand_val)
+                if str_p != "1000kVA":
+                    text = text.replace("1000kVA", str_p).replace("1000 kVA", str_p)
+                if serial_val != "27-07840":
+                    text = text.replace("27-07840", serial_val)
+                cell_b10.value = text
+            else:
+                text = canonical_text.format(
+                    date=formatted_date,
+                    brand=brand_val,
+                    power_kva=str_p,
+                    serial_no=serial_val
+                )
+                cell_b10.value = text
 
 def apply_format_and_column_width_fixes(wb):
     for sname in ["KAPAK SAYFASI", "ANA SAYFA"]:
@@ -866,8 +1056,12 @@ def generate_excel_report(report: Report, photos: List[Photo], output_path: str)
         process_kapak_photos(wb["KAPAK SAYFASI"], data_dict, photos)
 
     clean_5070_text(wb)
-    clean_left_personnel_block(wb, op_name, op_title)
-    customize_charts_marker_only(wb)
+    test_date_val = data_dict.get("test_date")
+    report_date_val = data_dict.get("report_date")
+    clean_left_personnel_block(wb, op_name, op_title, test_date=test_date_val, report_date=report_date_val, data_dict=data_dict)
+    fix_subpage_dates(wb, test_date=test_date_val, report_date=report_date_val)
+    process_oil_petition(wb, data_dict)
+    # Note: customize_charts_marker_only is permanently disabled at runtime to prevent drawing5 corruption
 
     BREAKER_SHEETS = ["ANA SAYFA KESİCİ", "KESİCİ İZOLASYON", "KESİCİ KONTAK", "AÇMA-KAPAMA"]
     has_breaker = data_dict.get("has_breaker")
@@ -903,4 +1097,5 @@ def generate_excel_report(report: Report, photos: List[Photo], output_path: str)
 
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     wb.save(output_path)
+    fix_xlsx_rels(output_path)
     return output_path

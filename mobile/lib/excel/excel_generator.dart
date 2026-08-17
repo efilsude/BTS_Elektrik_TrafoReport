@@ -52,9 +52,6 @@ class ExcelGenerator {
 
     dataDict['operator_name'] = opName;
     dataDict['operator_title'] = opTitle;
-    dataDict['sicil_no'] = dataDict['sicil_no']?.toString().trim() ?? '';
-    dataDict['ekipnet_no'] = dataDict['ekipnet_no']?.toString().trim() ?? '';
-    dataDict['diploma_no'] = dataDict['diploma_no']?.toString().trim() ?? '';
     dataDict['creator_display_name'] = report.creatorDisplayName ?? (opTitle.isNotEmpty ? '$opName ($opTitle)' : opName);
 
     if (signaturePath != null && signaturePath.isNotEmpty) {
@@ -166,6 +163,8 @@ class ExcelGenerator {
         transformerType,
         '--output',
         outputPath,
+        '--has-breaker',
+        hasBreaker ? 'true' : 'false',
       ];
 
       if (templatePath != null) {
@@ -484,6 +483,58 @@ class ExcelGenerator {
           }
         }
       });
+    }
+
+    final Sheet? kapak = excel.tables['KAPAK SAYFASI'];
+    if (kapak != null) {
+      kapak.updateCell(CellIndex.indexByString('D52'), TextCellValue(''));
+      kapak.updateCell(CellIndex.indexByString('D56'), TextCellValue(''));
+      final String opTitleVal = dataDict['operator_title']?.toString().trim() ?? '';
+      if (opTitleVal.isNotEmpty) {
+        kapak.updateCell(CellIndex.indexByString('D55'), TextCellValue(opTitleVal));
+      }
+    }
+
+    final Sheet? anaSayfa = excel.tables['ANA SAYFA'];
+    if (anaSayfa != null) {
+      anaSayfa.updateCell(CellIndex.indexByString('B82'), TextCellValue(''));
+      anaSayfa.updateCell(CellIndex.indexByString('F82'), TextCellValue(''));
+      final String opTitleVal = dataDict['operator_title']?.toString().trim() ?? '';
+      if (opTitleVal.isNotEmpty) {
+        anaSayfa.updateCell(CellIndex.indexByString('F81'), TextCellValue(opTitleVal));
+      }
+    }
+
+    final String opTitleVal = dataDict['operator_title']?.toString().trim() ?? '';
+
+    for (final String sName in excel.tables.keys) {
+      if (sName == 'KAPAK SAYFASI') continue;
+      final Sheet? s = excel.tables[sName];
+      if (s == null) continue;
+
+      for (int r = 0; r < s.maxRows; r++) {
+        final Data? cellA = s.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: r));
+        final Data? cellB = s.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: r));
+        final String labelA = cellA?.value?.toString().trim().toUpperCase() ?? '';
+        final String labelB = cellB?.value?.toString().trim().toUpperCase() ?? '';
+        final String label = labelB.isNotEmpty ? labelB : labelA;
+        if (label.isEmpty) continue;
+
+        final CellIndex colFIndex = CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: r);
+        if (label == 'UNVAN' || label == 'ÜNVAN') {
+          if (opTitleVal.isNotEmpty) {
+            s.updateCell(colFIndex, TextCellValue(opTitleVal));
+          }
+        } else if (label.contains('ODA SİCİL NO') || label.contains('ODA SICIL NO') || label.contains('SİCİL NO') || label.contains('SICIL NO') || label.contains('EKİPNET NO') || label.contains('EKIPNET NO')) {
+          if (labelB.isNotEmpty) {
+            s.updateCell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: r), TextCellValue(''));
+          } else if (labelA.isNotEmpty) {
+            s.updateCell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: r), TextCellValue(''));
+          }
+          s.updateCell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: r), TextCellValue(''));
+          s.updateCell(colFIndex, TextCellValue(''));
+        }
+      }
     }
 
     final String? effectiveSigPath = signaturePath ??

@@ -245,13 +245,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 24),
 
-                            // Telefon / E-posta / Sicil No Field
+                            // Telefon / E-posta Field
                             TextFormField(
                               controller: _identifierController,
                               keyboardType: TextInputType.text,
                               decoration: const InputDecoration(
-                                labelText: 'Telefon, E-posta veya Sicil No',
-                                hintText: '05XXXXXXXXX veya 12345',
+                                labelText: 'Telefon veya E-posta',
+                                hintText: '05XXXXXXXXX veya e-posta',
                                 prefixIcon: Icon(Icons.person_outline),
                               ),
                               validator: (String? value) {
@@ -306,9 +306,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 20),
 
-                            // Information note about offline admin user creation
+                            // Information note
                             Text(
-                              'Hesabınız yoksa sistem yöneticiniz sizi Yönetici Panelinden eklemelidir.',
+                              'Hesap için yöneticinize başvurun.',
                               style: GoogleFonts.inter(
                                 fontSize: 12,
                                 color: AppTheme.textLight,

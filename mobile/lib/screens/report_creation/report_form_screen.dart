@@ -34,8 +34,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   final TextEditingController _deviceModelController = TextEditingController();
   final TextEditingController _deviceSerialController = TextEditingController();
   final TextEditingController _operatorTitleController = TextEditingController();
-  final TextEditingController _sicilNoController = TextEditingController();
-  final TextEditingController _ekipnetNoController = TextEditingController();
 
   // Step 2: Etiket Bilgileri Controllers
   final TextEditingController _brandController = TextEditingController();
@@ -140,8 +138,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     _deviceModelController.dispose();
     _deviceSerialController.dispose();
     _operatorTitleController.dispose();
-    _sicilNoController.dispose();
-    _ekipnetNoController.dispose();
 
     _brandController.dispose();
     _powerController.dispose();
@@ -240,8 +236,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
       _operatorNameController.text = curUser?.fullName ?? data['operator_name']?.toString() ?? '';
       _operatorTitleController.text = curUser?.operatorTitle ?? data['operator_title']?.toString() ?? '';
-      _sicilNoController.text = curUser?.sicilNo ?? data['sicil_no']?.toString() ?? '';
-      _ekipnetNoController.text = curUser?.ekipnetNo ?? data['ekipnet_no']?.toString() ?? '';
 
       _deviceModelController.text = data['device_model']?.toString() ?? '';
       _deviceSerialController.text = data['device_serial']?.toString() ?? '';
@@ -665,9 +659,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
     final String opName = currentUser.fullName.trim();
     final String opTitle = (currentUser.operatorTitle ?? '').trim();
-    final String sicilNo = (currentUser.sicilNo ?? '').trim();
-    final String ekipnetNo = (currentUser.ekipnetNo ?? '').trim();
-    final String diplomaNo = (currentUser.diplomaNo ?? '').trim();
     final String? signaturePath = currentUser.signaturePath ?? await authService.getSignaturePath();
 
     if (opName.isEmpty || opTitle.isEmpty) {
@@ -678,11 +669,12 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       return;
     }
 
+    final bool hasBreaker = report.dataJson['has_breaker'] == true ||
+        (report.dataJson['has_breaker'] == null && (report.dataJson['breaker_included'] == true || report.subType == 'kesici'));
+    service.updateField('has_breaker', hasBreaker);
+    service.updateField('breaker_included', hasBreaker);
     service.updateField('operator_name', opName);
     service.updateField('operator_title', opTitle);
-    service.updateField('sicil_no', sicilNo);
-    service.updateField('ekipnet_no', ekipnetNo);
-    service.updateField('diploma_no', diplomaNo);
     service.updateField('creator_display_name', '$opName ($opTitle)');
 
     if (_notesController.text.trim().isNotEmpty) {
@@ -857,7 +849,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       return const Scaffold(body: Center(child: Text('Aktif Rapor Bulunamadı.')));
     }
 
-    final bool isKesici = report.subType == 'kesici';
+    final bool isKesici = report.dataJson['has_breaker'] == true ||
+        (report.dataJson['has_breaker'] == null && (report.dataJson['breaker_included'] == true || report.subType == 'kesici'));
     final String type = report.transformerType.toLowerCase().trim();
     final bool isKuru = type == 'kuru_tip';
 
@@ -1161,7 +1154,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Unvan: ${currentUser?.operatorTitle ?? "Belirtilmedi"} | Sicil: ${currentUser?.sicilNo ?? "-"} | EKİPNET: ${currentUser?.ekipnetNo ?? "-"}',
+                      'Unvan: ${currentUser?.operatorTitle ?? "Belirtilmedi"}',
                       style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textLight),
                     ),
                   ],
@@ -1777,20 +1770,70 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       children: <Widget>[
         _buildSectionHeader('Kesici Test Paketi', 'AG/OG Kesici kontak direnci ve açma/kapama süreleri.'),
         const SizedBox(height: 24),
-        TextFormField(
-          controller: _breakerBrandController,
-          decoration: const InputDecoration(labelText: 'Kesici Markası', hintText: 'Örn: ABB / Siemens'),
-          onChanged: (String val) => service.updateField('breaker_brand', val),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _breakerBrandController,
+                decoration: const InputDecoration(labelText: 'Kesici Markası', hintText: 'Örn: ABB / Siemens'),
+                onChanged: (String val) => service.updateField('breaker_brand', val),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _breakerModelController,
+                decoration: const InputDecoration(labelText: 'Kesici Tipi / Modeli', hintText: 'Örn: VD4'),
+                onChanged: (String val) => service.updateField('breaker_model', val),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
-        TextFormField(
-          controller: _breakerContactController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'Kontak Direnci (µΩ) *', suffixText: 'µΩ', hintText: 'Max 150 µΩ'),
-          onChanged: (String val) {
-            service.updateField('breaker_contact_r', val);
-            service.updateField('breaker.contact_resistance', val);
-          },
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _breakerSerialController,
+                decoration: const InputDecoration(labelText: 'Seri Numarası', hintText: 'Örn: 2196'),
+                onChanged: (String val) => service.updateField('breaker_serial_no', val),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _breakerYearController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'İmal Yılı', hintText: 'Örn: 2023'),
+                onChanged: (String val) => service.updateField('breaker_year', val),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _breakerIsoGndController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'İzolasyon Direnci (GΩ)', suffixText: 'GΩ', hintText: 'Örn: 20000'),
+                onChanged: (String val) => service.updateField('breaker_iso_r_gnd', val),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _breakerContactController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'Kontak Direnci (µΩ)', suffixText: 'µΩ', hintText: 'Max 150 µΩ'),
+                onChanged: (String val) {
+                  service.updateField('breaker_contact_r', val);
+                  service.updateField('breaker.contact_resistance', val);
+                },
+              ),
+            ),
+          ],
         ),
         if (contact != null)
           _buildInstantFeedbackRow(

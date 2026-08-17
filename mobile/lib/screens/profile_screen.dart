@@ -622,9 +622,6 @@ class _ProfileOperatorEditCardState extends State<_ProfileOperatorEditCard> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late TextEditingController _fullNameController;
   late TextEditingController _operatorTitleController;
-  late TextEditingController _sicilNoController;
-  late TextEditingController _ekipnetNoController;
-  late TextEditingController _diplomaNoController;
   bool _isSaving = false;
 
   @override
@@ -632,18 +629,12 @@ class _ProfileOperatorEditCardState extends State<_ProfileOperatorEditCard> {
     super.initState();
     _fullNameController = TextEditingController(text: widget.user.fullName);
     _operatorTitleController = TextEditingController(text: widget.user.operatorTitle ?? '');
-    _sicilNoController = TextEditingController(text: widget.user.sicilNo ?? '');
-    _ekipnetNoController = TextEditingController(text: widget.user.ekipnetNo ?? '');
-    _diplomaNoController = TextEditingController(text: widget.user.diplomaNo ?? '');
   }
 
   @override
   void dispose() {
     _fullNameController.dispose();
     _operatorTitleController.dispose();
-    _sicilNoController.dispose();
-    _ekipnetNoController.dispose();
-    _diplomaNoController.dispose();
     super.dispose();
   }
 
@@ -655,9 +646,6 @@ class _ProfileOperatorEditCardState extends State<_ProfileOperatorEditCard> {
     final bool success = await authService.updateUserProfile(
       fullName: _fullNameController.text.trim(),
       operatorTitle: _operatorTitleController.text.trim(),
-      sicilNo: _sicilNoController.text.trim().isEmpty ? null : _sicilNoController.text.trim(),
-      ekipnetNo: _ekipnetNoController.text.trim().isEmpty ? null : _ekipnetNoController.text.trim(),
-      diplomaNo: _diplomaNoController.text.trim().isEmpty ? null : _diplomaNoController.text.trim(),
     );
 
     if (mounted) {
@@ -759,47 +747,6 @@ class _ProfileOperatorEditCardState extends State<_ProfileOperatorEditCard> {
                   fillColor: !isAdmin ? Colors.grey.shade100 : null,
                 ),
                 validator: (String? val) => val == null || val.trim().isEmpty ? 'Unvan zorunludur' : null,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: TextFormField(
-                      controller: _sicilNoController,
-                      enabled: isAdmin,
-                      decoration: InputDecoration(
-                        labelText: 'Sicil No (İsteğe Bağlı)',
-                        prefixIcon: const Icon(Icons.assignment_ind_outlined),
-                        filled: !isAdmin,
-                        fillColor: !isAdmin ? Colors.grey.shade100 : null,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _ekipnetNoController,
-                      enabled: isAdmin,
-                      decoration: InputDecoration(
-                        labelText: 'EKİPNET No (İsteğe Bağlı)',
-                        prefixIcon: const Icon(Icons.verified_outlined),
-                        filled: !isAdmin,
-                        fillColor: !isAdmin ? Colors.grey.shade100 : null,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _diplomaNoController,
-                enabled: isAdmin,
-                decoration: InputDecoration(
-                  labelText: 'Diploma / Oda Sicil No (İsteğe Bağlı)',
-                  prefixIcon: const Icon(Icons.school_outlined),
-                  filled: !isAdmin,
-                  fillColor: !isAdmin ? Colors.grey.shade100 : null,
-                ),
               ),
               if (isAdmin) ...<Widget>[
                 const SizedBox(height: 20),
