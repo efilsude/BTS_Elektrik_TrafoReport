@@ -1,7 +1,12 @@
+import io
 import os
 import re
+import sys
+import zipfile
+import xml.etree.ElementTree as ET
 from datetime import datetime
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
+
 import openpyxl
 from openpyxl.drawing.image import Image as OpenPyXLImage
 from openpyxl.styles import Font, Alignment
@@ -10,14 +15,8 @@ from app.core.config import settings
 from app.models.report import Report
 from app.models.photo import Photo
 
-# Template file mappings
-TEMPLATE_PATHS = {
-    "HERMETIK": os.path.join("templates", "HERMETİK TRAFO BAKIM RAPORU HİLMİ.xlsx"),
-    "KURU_TIP": os.path.join("templates", "KURU TİP HİLMİ.xlsx"),
-    "GT": os.path.join("templates", "TR BAKIM RAPORU GT HİLMİ.xlsx")
-}
-
-# Type-specific cell mappings per TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
+# Type-specific cell mappings per sheet matching docs/EXCEL_CELL_MAPPING.md and tools/generate_excel.py
+TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
     "HERMETIK": {
         "KAPAK SAYFASI": {
             "D9": "customer_name",
@@ -56,7 +55,6 @@ TEMPLATE_PATHS = {
             "O59": "ag_rca",
             "B73": "notes",
             "F81": "operator_title",
-            "F82": "operator_name",
         },
         "OG SARGI MEVCUT KADEME": {
             "D11": "operator_name",
@@ -204,7 +202,6 @@ TEMPLATE_PATHS = {
             "J57": "ground_r_fence",
             "B67": "notes",
             "F74": "operator_title",
-            "F75": "operator_name",
         },
         "OG SARGI MEVCUT KADEME": {
             "D11": "operator_name",
@@ -348,7 +345,6 @@ TEMPLATE_PATHS = {
             "J63": "ground_r_fence",
             "B73": "notes",
             "F81": "operator_title",
-            "F82": "operator_name",
         },
         "OG SARGI MEVCUT KADEME": {
             "D11": "operator_name",
@@ -448,6 +444,55 @@ TEMPLATE_PATHS = {
     }
 }
 
+SAMPLE_CLEAR_RANGES = {
+    "ANA SAYFA KESİCİ": [
+        "G11", "O11", "G13", "O13", "G15", "O15", "G17", "O17",
+        "G24", "I24", "P24", "R24", "G26", "H26", "I26", "P26", "R26",
+        "G28", "I28", "P28", "R28", "G30", "I30", "P30", "R30",
+        "G32", "I32", "P32", "R32",
+        "C39", "F39", "I39", "L39", "O39",
+        "C41", "F41", "I41", "L41", "O41",
+        "C43", "F43", "I43", "L43", "O43",
+        "C50", "G50", "K50", "O50",
+        "C52", "G52", "K52", "O52",
+        "C54", "G54", "K54", "O54",
+        "C61", "J61", "Q61", "C63", "J63", "Q63",
+        "C65", "F65", "J65", "M65", "Q65",
+        "F77", "F78",
+    ],
+    "OG SARGI MEVCUT KADEME": [
+        "D11", "J11", "O11",
+        "C24", "E24", "G24", "I24", "K24", "M24", "O24", "Q24",
+        "C25", "E25", "G25", "I25", "K25", "M25", "O25", "Q25",
+        "C26", "E26", "G26", "I26", "K26", "M26", "O26", "Q26",
+    ],
+    "AG SARGI": [
+        "D11", "J11", "O11",
+        "C24", "E24", "G24", "I24", "K24", "M24", "O24", "Q24",
+        "C25", "E25", "G25", "I25", "K25", "M25", "O25", "Q25",
+        "C26", "E26", "G26", "I26", "K26", "M26", "O26", "Q26",
+    ],
+    "İZOLASYON ": [
+        "D11", "J11", "O11", "D16", "D17", "D30", "D31",
+    ],
+    "Ç.O 34500": [
+        "D11", "J11", "O11",
+        "B16", "C16", "D16", "B17", "C17", "D17",
+        "B18", "C18", "D18", "B19", "C19", "D19", "B20", "C20", "D20",
+    ],
+    "TOPRAKLAMALAR": [
+        "D9", "J9", "O9", "D17", "D18", "D19", "D32", "D33", "D34",
+    ],
+    "HV PF": ["D11", "J11", "O11", "P17"],
+    "LV PF": ["D11", "J11", "O11", "P17"],
+    "KESİCİ İZOLASYON": ["D10", "J10", "O10"],
+    "KESİCİ KONTAK": ["D10", "J10", "O10"],
+    "AÇMA-KAPAMA": ["D9", "J9", "O9", "D10"],
+    "DİĞER": ["D9", "J9", "O9", "D16", "H16", "D17", "H17", "D18", "H18", "D23", "H23", "D24", "H24", "D25", "H25", "D30", "H30", "D31", "H31", "D32", "H32"],
+    "AKIM TRAFOLARI": ["D9", "J9", "O9", "D16", "H16", "D17", "H17", "D18", "H18"],
+}
+
+# Sheet signature anchors disabled across all sheets (Rule C)
 SHEET_SIGNATURE_ANCHORS = {
     "HERMETIK": {},
     "KURU_TIP": {},
@@ -528,7 +573,31 @@ CHECKLIST_PAIRS = {
 }
 
 
-def date_to_excel_serial(date_input) -> Optional[float]:
+def pre_clear_sample_cells(wb):
+    """
+    Pre-clears hardcoded sample data cells across all sheets in wb.
+    Preserves all formulas, titles, labels, logos, formatting, and row heights.
+    """
+    for sname, cell_list in SAMPLE_CLEAR_RANGES.items():
+        matched_sheet = None
+        for name in wb.sheetnames:
+            if name.strip() == sname.strip():
+                matched_sheet = name
+                break
+        if matched_sheet:
+            ws = wb[matched_sheet]
+            for cref in cell_list:
+                try:
+                    cell = ws[cref]
+                    if type(cell).__name__ != 'MergedCell' and cell.value is not None:
+                        if not str(cell.value).strip().startswith('='):
+                            cell.value = None
+                except Exception:
+                    pass
+
+
+def date_to_excel_serial(date_input: Any) -> Optional[float]:
+    """Converts DateTime or string (DD.MM.YYYY or YYYY-MM-DD) into Excel serial date number."""
     if date_input is None:
         return None
     try:
@@ -562,6 +631,7 @@ def date_to_excel_serial(date_input) -> Optional[float]:
 
 
 def get_writable_cell(ws, cell_ref: str):
+    """Returns the top-left cell if cell_ref belongs to a merged range."""
     cell = ws[cell_ref]
     if type(cell).__name__ == 'MergedCell':
         for rng in ws.merged_cells.ranges:
@@ -571,6 +641,10 @@ def get_writable_cell(ws, cell_ref: str):
 
 
 def process_checklist_pairs(ws, report_type, data_dict):
+    """
+    Sets Evet/Hayır checkmarks for checklist items and clears residual template sample checkmarks.
+    Also clears 3.0 pt divider row cells C61, F61, J61, C63, F63, J63 on ANA SAYFA to prevent ghost text.
+    """
     for cref in ["C61", "F61", "J61", "C63", "F63", "J63"]:
         try:
             cell = get_writable_cell(ws, cref)
@@ -602,6 +676,11 @@ def process_checklist_pairs(ws, report_type, data_dict):
 
 
 def process_sheet_signature(ws, target_anchor: Optional[str], sig_path: Optional[str]):
+    """
+    Cleans sample text artifacts from the worksheet.
+    DOES NOT insert any user signature image (signature placement is disabled across all sheets).
+    Clears all right block cells below 'ONAYLAYAN' header.
+    """
     for r in range(40, min(86, ws.max_row + 1)):
         for c in range(5, 15):
             cell = ws.cell(row=r, column=c)
@@ -617,7 +696,10 @@ def process_sheet_signature(ws, target_anchor: Optional[str], sig_path: Optional
 
 
 def process_kapak_photos(ws_kapak, data_dict, photos: Optional[List[Photo]] = None):
-
+    """
+    Inserts loaded photos (photo_before, photo_after, photo_label, photo_extra)
+    into KAPAK SAYFASI and writes bold Turkish captions beneath each photo slot.
+    """
     p_before = data_dict.get("photo_before")
     p_after = data_dict.get("photo_after")
     p_label = data_dict.get("photo_label")
@@ -653,9 +735,9 @@ def process_kapak_photos(ws_kapak, data_dict, photos: Optional[List[Photo]] = No
         ("G40", "G47", 200, 115),
     ]
 
-    for _, caption_ref, _, _ in slots:
+    for cref in ["A38", "G38", "A41", "G41", "A47", "G47", "A50", "G50"]:
         try:
-            cell = get_writable_cell(ws_kapak, caption_ref)
+            cell = get_writable_cell(ws_kapak, cref)
             cell.value = None
         except Exception:
             pass
@@ -688,6 +770,9 @@ def process_kapak_photos(ws_kapak, data_dict, photos: Optional[List[Photo]] = No
 
 
 def clean_5070_text(wb):
+    """
+    Clears any cell value containing '5070' or 'elektronik imza kanunu' across all sheets.
+    """
     for sname in wb.sheetnames:
         ws = wb[sname]
         for row in ws.iter_rows():
@@ -704,12 +789,11 @@ def clean_left_personnel_block(wb, op_name: str, op_title: str, test_date: Optio
       - Test Tarihi : {test_date}
       - Rapor Tarihi : {report_date}
       - Unvan : {operator_title}
-    (İsim Soyad row at A52 is removed/cleared as requested by user).
 
     Cleans and standardizes personnel blocks and footers across ALL sub-pages:
       - UNVAN: written verbatim from operator_title
       - TEST TARİHİ: test_date
-      - ODA SİCİL NO / EKİPNET NO: written ONLY if valid sicil_no / ekipnet_no exists in data_dict, otherwise CLEARED to prevent showing operator_name/title.
+      - ODA SİCİL NO / EKİPNET NO: written ONLY if valid sicil_no / ekipnet_no exists in data_dict, otherwise CLEARED.
     """
     if data_dict is None:
         data_dict = {}
@@ -725,7 +809,6 @@ def clean_left_personnel_block(wb, op_name: str, op_title: str, test_date: Optio
     for sname in wb.sheetnames:
         ws = wb[sname]
         if sname == "KAPAK SAYFASI":
-            # Clear A52:F52 (Remove operator_name / İsim Soyad from KAPAK left box)
             for c_let in ["A", "B", "C", "D", "E", "F"]:
                 try:
                     get_writable_cell(ws, f"{c_let}52").value = None
@@ -752,7 +835,6 @@ def clean_left_personnel_block(wb, op_name: str, op_title: str, test_date: Optio
             get_writable_cell(ws, "C55").value = ":"
             get_writable_cell(ws, "D55").value = op_title
 
-            # Clear A56:F57 residuals
             for r in [56, 57]:
                 for c_let in ["A", "B", "C", "D", "E", "F"]:
                     try:
@@ -809,7 +891,6 @@ def clean_left_personnel_block(wb, op_name: str, op_title: str, test_date: Optio
             get_writable_cell(ws, "E81").value = ":"
             get_writable_cell(ws, "F81").value = op_title
 
-            # Clear rows 82, 83, 84 (A82:F84) - remove operator_name / İsim
             for r in [82, 83, 84]:
                 for c_let in ["A", "B", "C", "D", "E", "F"]:
                     try:
@@ -817,7 +898,6 @@ def clean_left_personnel_block(wb, op_name: str, op_title: str, test_date: Optio
                     except Exception:
                         pass
 
-        # Sweep and clean sub-page personnel footers
         if sname != "KAPAK SAYFASI":
             for r in range(1, ws.max_row + 1):
                 col_b_val = str(ws.cell(row=r, column=2).value or "").strip().upper()
@@ -834,13 +914,11 @@ def clean_left_personnel_block(wb, op_name: str, op_title: str, test_date: Optio
                     target_cell.value = "='KAPAK SAYFASI'!D53"
                     target_cell.number_format = "dd.mm.yyyy"
                 elif any(kw in label_val for kw in ["ODA SİCİL NO", "ODA SICIL NO", "SICIL NO", "SİCİL NO", "EKİPNET NO", "EKIPNET NO"]):
-                    # Clear entire row label & value cells for sicil_no / ekipnet_no
                     for c_let in ["A", "B", "C", "D", "E", "F"]:
                         try:
                             get_writable_cell(ws, f"{c_let}{r}").value = None
                         except Exception:
                             pass
-
 
 
 def fix_subpage_dates(wb, test_date: Optional[str] = None, report_date: Optional[str] = None):
@@ -895,14 +973,12 @@ def process_oil_petition(wb, data_dict):
         if "YAĞ DİLEKÇESİ" in sname.upper() or "YAG DILEKCESI" in sname.upper():
             ws = wb[sname]
 
-            # Clear D16 and D18 to eliminate '30,0' artifact
             for cref in ["D16", "D18"]:
                 try:
                     get_writable_cell(ws, cref).value = None
                 except Exception:
                     pass
 
-            # Update customer/location headers
             try:
                 c_name = data_dict.get("customer_name")
                 if c_name:
@@ -918,7 +994,6 @@ def process_oil_petition(wb, data_dict):
             except Exception:
                 pass
 
-            # Extract date
             raw_date = data_dict.get("test_date") or data_dict.get("report_date")
             formatted_date = None
             if raw_date:
@@ -980,7 +1055,12 @@ def process_oil_petition(wb, data_dict):
                 )
                 cell_b10.value = text
 
+
 def apply_format_and_column_width_fixes(wb):
+    """
+    Ensures date cells, GΩ 20°C calculated cells, and V DC [V] cells have explicit number_format
+    and sufficient column width to eliminate '#####' display issues.
+    """
     for sname in ["KAPAK SAYFASI", "ANA SAYFA"]:
         if sname in wb.sheetnames:
             ws = wb[sname]
@@ -989,7 +1069,6 @@ def apply_format_and_column_width_fixes(wb):
                 if cref in ws:
                     ws[cref].number_format = "dd.mm.yyyy"
 
-    # 2. İZOLASYON sheet (Strict match: only 'İZOLASYON', NOT 'KESİCİ İZOLASYON')
     for sname in wb.sheetnames:
         norm_sname = sname.strip().upper()
         if norm_sname == "İZOLASYON":
@@ -1013,8 +1092,34 @@ def apply_format_and_column_width_fixes(wb):
                     cell.number_format = "0.00"
 
 
-def generate_excel_report(report: Report, photos: List[Photo], output_path: str) -> str:
-    mapped_type = (report.transformer_type or "HERMETIK").upper()
+def resolve_default_template(mapped_type: str, backend_dir: str) -> str:
+    """
+    Resolves template file path in priority order for backend:
+    1. backend/templates/hybrid/{hermetik_hybrid|gt_hybrid|kuru_tip_hybrid}.xlsx
+    2. backend/templates/{HERMETİK TRAFO BAKIM RAPORU HİLMİ|KURU TİP HİLMİ|TR BAKIM RAPORU GT HİLMİ}.xlsx (legacy fallback)
+    """
+    type_filename_map = {
+        "HERMETIK": ("hermetik_hybrid.xlsx", "HERMETİK TRAFO BAKIM RAPORU HİLMİ.xlsx"),
+        "GT": ("gt_hybrid.xlsx", "TR BAKIM RAPORU GT HİLMİ.xlsx"),
+        "KURU_TIP": ("kuru_tip_hybrid.xlsx", "KURU TİP HİLMİ.xlsx"),
+    }
+
+    hybrid_fname, old_fname = type_filename_map.get(mapped_type, type_filename_map["HERMETIK"])
+
+    candidates = [
+        os.path.abspath(os.path.join(backend_dir, "templates", "hybrid", hybrid_fname)),
+        os.path.abspath(os.path.join(backend_dir, "templates", old_fname)),
+    ]
+
+    for cand in candidates:
+        if os.path.exists(cand):
+            return cand
+
+    raise FileNotFoundError(f"No candidate template found for '{mapped_type}' in backend/templates! Checked paths: {candidates}")
+
+
+def generate_excel_report(report: Report, photos: Optional[List[Photo]] = None, output_path: Optional[str] = None) -> str:
+    mapped_type = (getattr(report, 'transformer_type', None) or getattr(report, 'report_type', None) or "HERMETIK").upper()
     if "KURU" in mapped_type:
         mapped_type = "KURU_TIP"
     elif "GT" in mapped_type or "TANK" in mapped_type:
@@ -1022,20 +1127,51 @@ def generate_excel_report(report: Report, photos: List[Photo], output_path: str)
     else:
         mapped_type = "HERMETIK"
 
-    template_rel_path = TEMPLATE_PATHS.get(mapped_type, TEMPLATE_PATHS["HERMETIK"])
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    template_abs_path = os.path.join(base_dir, template_rel_path)
+    # __file__ is backend/app/services/excel_engine.py -> backend_dir is backend/
+    backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    template_path = resolve_default_template(mapped_type, backend_dir)
 
-    if not os.path.exists(template_abs_path):
-        raise FileNotFoundError(f"Template file not found at: {template_abs_path}")
-
-    wb = openpyxl.load_workbook(template_abs_path, data_only=False)
+    wb = openpyxl.load_workbook(template_path, data_only=False)
 
     data_dict = report.data_json or {}
-    op_name = str(data_dict.get("operator_name") or "").strip() or "Operatör"
-    op_title = str(data_dict.get("operator_title") or "").strip() or "Elektrik Mühendisi"
+
+    if mapped_type == "HERMETIK":
+        data_dict["tank_mark_hermetik"] = "ü"
+    elif mapped_type == "GT":
+        data_dict["tank_mark_gt"] = "ü"
+    elif mapped_type == "KURU_TIP":
+        data_dict["tank_mark_kuru"] = "ü"
+
+    if "address" not in data_dict or not data_dict["address"]:
+        data_dict["address"] = data_dict.get("location", "")
+
+    op_name = str(data_dict.get("operator_name") or data_dict.get("creator_display_name") or "").strip() or "Operatör"
+    op_title = str(data_dict.get("operator_title") or data_dict.get("title") or "").strip() or "Elektrik Mühendisi"
+    data_dict["operator_name"] = op_name
+    data_dict["operator_title"] = op_title
+
+    notes_text = data_dict.get("notes") or data_dict.get("notes_text") or ""
+    if notes_text:
+        notes_str = str(notes_text).strip()
+        if not notes_str.upper().startswith("NOTLAR"):
+            data_dict["notes"] = f"NOTLAR : {notes_str}"
+        else:
+            data_dict["notes"] = notes_str
+
+    wr = data_dict.get("winding_resistance") if isinstance(data_dict.get("winding_resistance"), dict) else {}
+    data_dict.setdefault("og_rab", wr.get("r_phase"))
+    data_dict.setdefault("og_rbc", wr.get("s_phase"))
+    data_dict.setdefault("og_rca", wr.get("t_phase"))
+
+    gr = data_dict.get("grounding") if isinstance(data_dict.get("grounding"), dict) else {}
+    data_dict.setdefault("ground_r_trafo_body", data_dict.get("ground_trafo_body") or gr.get("value"))
 
     cell_map_sheets = TYPE_CELL_MAPPINGS.get(mapped_type, TYPE_CELL_MAPPINGS["HERMETIK"])
+
+    # 1. Pre-clear hardcoded sample data cells across all sheets
+    pre_clear_sample_cells(wb)
+
+    # 2. Main cell writing loop
     force_overwrite_keys = {
         "operator_name", "operator_title", "creator_display_name", "notes", "device_model", "device_serial"
     }
@@ -1056,37 +1192,42 @@ def generate_excel_report(report: Report, photos: List[Photo], output_path: str)
                 if field_key.startswith("TODO_VERIFY"):
                     continue
 
-                if field_key in data_dict:
-                    val = data_dict[field_key]
-                    if val is None:
+                cell_obj = get_writable_cell(ws, cell_ref)
+
+                if cell_obj.value is not None and str(cell_obj.value).strip().startswith("="):
+                    if field_key not in force_overwrite_keys:
                         continue
 
-                    cell_obj = get_writable_cell(ws, cell_ref)
+                val = data_dict.get(field_key)
+                if val is None or val == "" or (isinstance(val, list) and len(val) == 0):
+                    cell_obj.value = None
+                    continue
 
-                    if cell_obj.value is not None and str(cell_obj.value).strip().startswith("="):
-                        if field_key not in force_overwrite_keys:
-                            continue
-
-                    if field_key.startswith("checklist_") or field_key.startswith("tank_mark_"):
-                        if val is True or str(val).strip() in ["true", "ü", "1"]:
-                            cell_obj.value = "ü"
-                        continue
-
-                    if field_key in ["report_date", "test_date"]:
-                        serial_val = date_to_excel_serial(val)
-                        if serial_val is not None:
-                            cell_obj.value = serial_val
-                        else:
-                            cell_obj.value = str(val)
-                        cell_obj.number_format = "dd.mm.yyyy"
-                        continue
-
-                    if isinstance(val, bool):
-                        cell_obj.value = "ü" if val else ""
-                    elif isinstance(val, (int, float)):
-                        cell_obj.value = val
+                if field_key.startswith("checklist_") or field_key.startswith("tank_mark_"):
+                    if val is True or str(val).strip().lower() in ["true", "ü", "1", "evet"]:
+                        cell_obj.value = "ü"
                     else:
-                        str_val = str(val).strip()
+                        cell_obj.value = None
+                    continue
+
+                if field_key in ["report_date", "test_date"]:
+                    serial_val = date_to_excel_serial(val)
+                    if serial_val is not None:
+                        cell_obj.value = serial_val
+                        cell_obj.number_format = "dd.mm.yyyy"
+                    else:
+                        cell_obj.value = None
+                    continue
+
+                if isinstance(val, bool):
+                    cell_obj.value = "ü" if val else None
+                elif isinstance(val, (int, float)):
+                    cell_obj.value = val
+                else:
+                    str_val = str(val).strip()
+                    if not str_val:
+                        cell_obj.value = None
+                    else:
                         clean_num = str_val.replace(',', '.')
                         try:
                             if '.' in clean_num:
@@ -1096,6 +1237,7 @@ def generate_excel_report(report: Report, photos: List[Photo], output_path: str)
                         except Exception:
                             cell_obj.value = str_val
 
+    # 3. Process signatures
     sig_path = data_dict.get("signature_path") or data_dict.get("signature")
     sheet_signature_map = SHEET_SIGNATURE_ANCHORS.get(mapped_type, SHEET_SIGNATURE_ANCHORS["HERMETIK"])
 
@@ -1108,17 +1250,19 @@ def generate_excel_report(report: Report, photos: List[Photo], output_path: str)
                 break
         process_sheet_signature(ws, target_anchor, sig_path)
 
+    # 4. Process Kapak Photos
     if "KAPAK SAYFASI" in wb.sheetnames:
         process_kapak_photos(wb["KAPAK SAYFASI"], data_dict, photos)
 
+    # 5. Clean legal text, personnel blocks, dates, oil petition
     clean_5070_text(wb)
     test_date_val = data_dict.get("test_date")
     report_date_val = data_dict.get("report_date")
     clean_left_personnel_block(wb, op_name, op_title, test_date=test_date_val, report_date=report_date_val, data_dict=data_dict)
     fix_subpage_dates(wb, test_date=test_date_val, report_date=report_date_val)
     process_oil_petition(wb, data_dict)
-    # Note: customize_charts_marker_only is permanently disabled at runtime to prevent drawing5 corruption
 
+    # 6. Breaker pruning
     BREAKER_SHEETS = ["ANA SAYFA KESİCİ", "KESİCİ İZOLASYON", "KESİCİ KONTAK", "AÇMA-KAPAMA"]
     has_breaker = data_dict.get("has_breaker")
     if has_breaker is None:
@@ -1132,6 +1276,7 @@ def generate_excel_report(report: Report, photos: List[Photo], output_path: str)
             if b_sheet in wb.sheetnames:
                 del wb[b_sheet]
 
+    # 7. Replace old sample names
     b_brand = str(data_dict.get("breaker_brand") or "").strip()
     for sname in wb.sheetnames:
         ws = wb[sname]
@@ -1149,9 +1294,71 @@ def generate_excel_report(report: Report, photos: List[Photo], output_path: str)
                             cval = cval.replace("ULusoy", b_brand)
                     cell.value = cval
 
+    # 8. Format & column width fixes
     apply_format_and_column_width_fixes(wb)
+
+    # 9. Save & fix rels
+    if not output_path:
+        os.makedirs(settings.EXPORT_DIR, exist_ok=True)
+        report_id = getattr(report, "id", "temp")
+        output_path = os.path.join(settings.EXPORT_DIR, f"report_{report_id}.xlsx")
 
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     wb.save(output_path)
     fix_xlsx_rels(output_path)
     return output_path
+
+
+def generate_report_excel(report: Report, photos: Optional[List[Photo]] = None, signature_path: Optional[str] = None, output_path: Optional[str] = None) -> str:
+    """
+    Compatibility wrapper matching backend API expected signature.
+    """
+    if photos is None:
+        photos = []
+
+    if signature_path and isinstance(report.data_json, dict) and "signature_path" not in report.data_json:
+        report.data_json["signature_path"] = signature_path
+
+    return generate_excel_report(report, photos, output_path)
+
+
+def fix_xlsx_rels(xlsx_path: str):
+    """
+    Fixes relationship target paths in .xlsx zip archive by converting
+    absolute targets starting with '/xl/' (e.g. '/xl/drawings/drawing1.xml', '/xl/media/image1.png')
+    to standard relative targets without leading '/xl/'.
+    """
+    try:
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(xlsx_path, 'r') as zin:
+            with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zout:
+                for item in zin.infolist():
+                    content = zin.read(item.filename)
+                    if item.filename.endswith('.rels'):
+                        try:
+                            root = ET.fromstring(content)
+                            modified = False
+                            parts = item.filename.split('/')
+                            if len(parts) >= 2 and parts[-2] == '_rels':
+                                base_dir = '/'.join(parts[:-2])
+                            else:
+                                base_dir = '/'.join(parts[:-1])
+
+                            for child in root:
+                                tgt = child.get('Target')
+                                if tgt and tgt.startswith('/xl/'):
+                                    full_target = tgt[1:]
+                                    rel_target = os.path.relpath(full_target, base_dir).replace('\\', '/')
+                                    child.set('Target', rel_target)
+                                    modified = True
+
+                            if modified:
+                                content = ET.tostring(root, encoding='utf-8', xml_declaration=True)
+                        except Exception:
+                            pass
+                    zout.writestr(item, content)
+
+        with open(xlsx_path, 'wb') as f:
+            f.write(buffer.getvalue())
+    except Exception as e:
+        sys.stderr.write(f"Warning: Failed to fix rels targets in '{xlsx_path}': {e}\n")
