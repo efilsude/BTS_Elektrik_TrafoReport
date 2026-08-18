@@ -290,6 +290,14 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
     );
   }
 
+  void _editReport(Report report) {
+    final ReportService service = Provider.of<ReportService>(context, listen: false);
+    service.resumeReport(report);
+    Navigator.of(context).push(
+      MaterialPageRoute<dynamic>(builder: (BuildContext context) => const ReportFormScreen()),
+    );
+  }
+
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6.0),
@@ -531,6 +539,11 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
                           tooltip: 'Görüntüle',
                         ),
                         IconButton(
+                          icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryColor),
+                          onPressed: () => _editReport(report),
+                          tooltip: 'Düzenle',
+                        ),
+                        IconButton(
                           icon: const Icon(Icons.file_download_outlined, color: AppTheme.primaryColor),
                           onPressed: () => _downloadExcel(report),
                           tooltip: 'Excel İndir',
@@ -589,11 +602,7 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
                 } else if (value == 'view') {
                   _viewReportDetail(report);
                 } else if (value == 'edit') {
-                  final ReportService service = Provider.of<ReportService>(context, listen: false);
-                  service.resumeReport(report);
-                  Navigator.of(context).push(
-                    MaterialPageRoute<dynamic>(builder: (BuildContext context) => const ReportFormScreen()),
-                  );
+                  _editReport(report);
                 } else if (value == 'delete') {
                   _deleteReport(report);
                 }
