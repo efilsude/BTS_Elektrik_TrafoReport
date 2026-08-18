@@ -626,26 +626,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
     if (report == null) return;
 
-    final bool isTestOnly = report.reportType == 'test';
-    final dynamic hasLabelPhoto = report.dataJson['photo_label'] ??
-        (report.dataJson['photos'] is Map ? report.dataJson['photos']['photo_label'] : null);
-    final dynamic hasBeforePhoto = report.dataJson['photo_before'] ??
-        (report.dataJson['photos'] is Map ? report.dataJson['photos']['photo_before'] : null);
-    final dynamic hasAfterPhoto = report.dataJson['photo_after'] ??
-        (report.dataJson['photos'] is Map ? report.dataJson['photos']['photo_after'] : null);
-
-    if (isTestOnly) {
-      if (hasLabelPhoto == null) {
-        _showPhotoWarningDialog('Etiket Fotoğrafı zorunludur.');
-        return;
-      }
-    } else {
-      if (hasLabelPhoto == null || hasBeforePhoto == null || hasAfterPhoto == null) {
-        _showPhotoWarningDialog('Bakım raporu için Öncesi, Sonrası ve Etiket fotoğraflarının hepsi zorunludur.');
-        return;
-      }
-    }
-
     final AuthService authService = Provider.of<AuthService>(context, listen: false);
     final User? currentUser = authService.currentUser;
 
@@ -809,28 +789,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               'Kapat',
               style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppTheme.textLight),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showPhotoWarningDialog(String message) {
-    showDialog<dynamic>(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: Row(
-          children: <Widget>[
-            const Icon(Icons.warning_amber_rounded, color: AppTheme.errorColor),
-            const SizedBox(width: 10),
-            Text('Eksik Fotoğraflar', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: Text(message),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Kapat'),
           ),
         ],
       ),
