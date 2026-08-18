@@ -109,12 +109,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   final TextEditingController _breakerIsoGndController = TextEditingController();
   final TextEditingController _breakerNotesController = TextEditingController();
 
-  // Step 8: İsteğe Bağlı Modüller Controllers (PF, Akım Trafosu)
-  final TextEditingController _pfHvTempController = TextEditingController();
-  final TextEditingController _pfHvHumidityController = TextEditingController();
-  final TextEditingController _pfLvTempController = TextEditingController();
-  final TextEditingController _pfLvHumidityController = TextEditingController();
-  final TextEditingController _ctRatioController = TextEditingController();
 
   // Step 9: Yağ Testi Controllers
   final TextEditingController _oilBreakdownVoltageController = TextEditingController();
@@ -212,11 +206,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     _breakerIsoGndController.dispose();
     _breakerNotesController.dispose();
 
-    _pfHvTempController.dispose();
-    _pfHvHumidityController.dispose();
-    _pfLvTempController.dispose();
-    _pfLvHumidityController.dispose();
-    _ctRatioController.dispose();
 
     _oilBreakdownVoltageController.dispose();
     _oilWaterContentController.dispose();
@@ -321,12 +310,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _breakerIsoGndController.text = data['breaker_iso_r_gnd']?.toString() ?? '';
       _breakerNotesController.text = data['breaker_notes']?.toString() ?? '';
 
-      // Modules (PF / CT)
-      _pfHvTempController.text = data['pf_hv_temp']?.toString() ?? '';
-      _pfHvHumidityController.text = data['pf_hv_humidity']?.toString() ?? '';
-      _pfLvTempController.text = data['pf_lv_temp']?.toString() ?? '';
-      _pfLvHumidityController.text = data['pf_lv_humidity']?.toString() ?? '';
-      _ctRatioController.text = data['ct_ratio']?.toString() ?? '';
 
       // Oil Test
       _oilBreakdownVoltageController.text = data['oil_test_breakdown_voltage']?.toString() ?? '';
@@ -871,7 +854,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       'İzolasyon',
       'TTR & Toprak',
       if (isKesici) 'Kesici',
-      'Modüller',
       if (!isKuru) 'Yağ Raporu',
       'Fotoğraflar',
       'Özet & Bitir',
@@ -1051,8 +1033,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         return _buildTtrStep(report);
       case 'Kesici':
         return _buildBreakerStep(report);
-      case 'Modüller':
-        return _buildModulesStep(report);
       case 'Yağ Raporu':
         return _buildOilTestStep(report);
       case 'Fotoğraflar':
@@ -1967,45 +1947,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     );
   }
 
-  // Step 8: İsteğe Bağlı Modüller (Power Factor & Akım Trafoları)
-  Widget _buildModulesStep(Report report) {
-    final ReportService service = Provider.of<ReportService>(context, listen: false);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _buildSectionHeader('Güç Faktörü (PF) ve Akım Trafoları', 'HV PF, LV PF ve Akım Trafosu dönüştürme oranı.'),
-        const SizedBox(height: 24),
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: TextFormField(
-                controller: _pfHvHumidityController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'HV PF Nem (%)', suffixText: '%'),
-                onChanged: (String val) => service.updateField('pf_hv_humidity', val),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: _pfLvHumidityController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'LV PF Nem (%)', suffixText: '%'),
-                onChanged: (String val) => service.updateField('pf_lv_humidity', val),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        TextFormField(
-          controller: _ctRatioController,
-          decoration: const InputDecoration(labelText: 'Akım Trafosu Dönüştürme Oranı (CT Ratio)', hintText: 'Örn: 100/5 A'),
-          onChanged: (String val) => service.updateField('ct_ratio', val),
-        ),
-      ],
-    );
-  }
 
   // Step 9: Yağ Testi (GT / Hermetik)
   Widget _buildOilTestStep(Report report) {
