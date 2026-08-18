@@ -1393,6 +1393,22 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         _buildSwitchTile('O.G Conta Kontrolü', 'checklist_14', report.dataJson),
         _buildSwitchTile('Kapak Conta Kontrolü', 'checklist_15', report.dataJson),
         _buildSwitchTile('A.G Conta Kontrolü', 'checklist_16', report.dataJson),
+        const SizedBox(height: 20),
+        const Divider(),
+        const SizedBox(height: 12),
+        Text('Rapor Notları (ANA SAYFA)', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _notesController,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: 'Trafonun, trafo odasının, hücre odasının, trafo koruma hücresinin, kesicinin test, kontrol ve temizliği yapıldı...',
+          ),
+          onChanged: (String val) {
+            final ReportService service = Provider.of<ReportService>(context, listen: false);
+            service.updateField('notes', val);
+          },
+        ),
       ],
     );
   }
@@ -2071,20 +2087,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           onChanged: (String val) {
             final ReportService service = Provider.of<ReportService>(context, listen: false);
             service.updateField('summary_text', val);
-          },
-        ),
-        const SizedBox(height: 20),
-        Text('Notlar (ANA SAYFA)', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _notesController,
-          maxLines: 3,
-          decoration: const InputDecoration(
-            hintText: 'Trafonun, trafo odasının, hücre odasının, trafo koruma hücresinin, kesicinin test, kontrol ve temizliği yapıldı...',
-          ),
-          onChanged: (String val) {
-            final ReportService service = Provider.of<ReportService>(context, listen: false);
-            service.updateField('notes', val);
           },
         ),
         const SizedBox(height: 24),
