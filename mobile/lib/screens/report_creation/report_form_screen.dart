@@ -326,10 +326,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     });
 
     _autoSetTankMark(report.transformerType);
-    final ReportService service = Provider.of<ReportService>(context, listen: false);
-    if (data['dc_redresor_voltage'] == null) {
-      service.updateField('dc_redresor_voltage', '24 VDC');
-    }
   }
 
   void _autoSetTankMark(String type) {
@@ -1341,7 +1337,10 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   Widget _buildChecklistStep(Report report) {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
     final String type = report.transformerType.toLowerCase().trim();
-    final String dcVoltage = (report.dataJson['dc_redresor_voltage']?.toString() ?? '24 VDC').toUpperCase().contains('110') ? '110 VDC' : '24 VDC';
+    final dynamic rawDcVoltage = report.dataJson['dc_redresor_voltage'];
+    final String? currentDcVoltage = (rawDcVoltage != null && rawDcVoltage.toString().trim().isNotEmpty)
+        ? (rawDcVoltage.toString().toUpperCase().contains('110') ? '110 VDC' : '24 VDC')
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1362,17 +1361,17 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               const SizedBox(width: 12),
               ChoiceChip(
                 label: const Text('24 VDC'),
-                selected: dcVoltage == '24 VDC',
+                selected: currentDcVoltage == '24 VDC',
                 onSelected: (bool sel) {
-                  if (sel) service.updateField('dc_redresor_voltage', '24 VDC');
+                  service.updateField('dc_redresor_voltage', sel ? '24 VDC' : null);
                 },
               ),
               const SizedBox(width: 8),
               ChoiceChip(
                 label: const Text('110 VDC'),
-                selected: dcVoltage == '110 VDC',
+                selected: currentDcVoltage == '110 VDC',
                 onSelected: (bool sel) {
-                  if (sel) service.updateField('dc_redresor_voltage', '110 VDC');
+                  service.updateField('dc_redresor_voltage', sel ? '110 VDC' : null);
                 },
               ),
             ],

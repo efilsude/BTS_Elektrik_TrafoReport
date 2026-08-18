@@ -23,7 +23,7 @@ def test_checklist_system():
     # Test inputs with alternating Evet/Hayır combinations and DC voltage choices
     test_cases = {
         "HERMETIK": {
-            "dc_redresor_voltage": "110 VDC",
+            "dc_redresor_voltage": None, # Scenario 1: Unselected -> G31 MUST BE NONE
             "checklist_1": True,
             "checklist_2": False,
             "checklist_3": True,
@@ -42,7 +42,7 @@ def test_checklist_system():
             "checklist_16": False,
         },
         "KURU_TIP": {
-            "dc_redresor_voltage": "24 VDC",
+            "dc_redresor_voltage": "24 VDC", # Scenario 3: 24 VDC -> G31 MUST BE "24 VDC"
             "checklist_1": False,
             "checklist_2": True,
             "checklist_3": False,
@@ -61,7 +61,7 @@ def test_checklist_system():
             "checklist_16": True,
         },
         "GT": {
-            "dc_redresor_voltage": "110 VDC",
+            "dc_redresor_voltage": "110 VDC", # Scenario 2: 110 VDC -> G31 MUST BE "110 VDC"
             "checklist_1": True,
             "checklist_2": True,
             "checklist_3": True,
@@ -118,7 +118,7 @@ def test_checklist_system():
         expected_g31 = data['dc_redresor_voltage']
         print(f"[{rtype}] Cell G31 (DC Redresor Voltage): {g31_val!r} (Expected: {expected_g31!r})")
         if g31_val != expected_g31:
-            print(f"  FAIL: G31 mismatch in {rtype}!")
+            print(f"  FAIL: G31 mismatch in {rtype}! Got {g31_val!r}, expected {expected_g31!r}")
             all_passed = False
 
         # 2. Verify all 16 Checklist Pairs
