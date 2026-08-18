@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+import '../../utils/decimal_comma_input_formatter.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -520,9 +522,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   }
 
   Map<String, dynamic> _calculateWindingUnbalance() {
-    final double? r = double.tryParse(_ogRabController.text);
-    final double? s = double.tryParse(_ogRbcController.text);
-    final double? t = double.tryParse(_ogRcaController.text);
+    final double? r = double.tryParse(_ogRabController.text.replaceAll(',', '.'));
+    final double? s = double.tryParse(_ogRbcController.text.replaceAll(',', '.'));
+    final double? t = double.tryParse(_ogRcaController.text.replaceAll(',', '.'));
 
     if (r == null || s == null || t == null) {
       return <String, dynamic>{'unbalance': null, 'status': 'Eksik'};
@@ -545,10 +547,10 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   }
 
   Map<String, dynamic> _calculateTtrError() {
-    final double? nom = double.tryParse(_ttrNominalController.text);
-    final double? r = double.tryParse(_ttrTap1AController.text);
-    final double? s = double.tryParse(_ttrTap1BController.text);
-    final double? t = double.tryParse(_ttrTap1CController.text);
+    final double? nom = double.tryParse(_ttrNominalController.text.replaceAll(',', '.'));
+    final double? r = double.tryParse(_ttrTap1AController.text.replaceAll(',', '.'));
+    final double? s = double.tryParse(_ttrTap1BController.text.replaceAll(',', '.'));
+    final double? t = double.tryParse(_ttrTap1CController.text.replaceAll(',', '.'));
 
     if (nom == null || r == null || s == null || t == null || nom == 0) {
       return <String, dynamic>{'error': null, 'status': 'Eksik'};
@@ -1292,6 +1294,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _shortCircuitImpController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(
                   labelText: 'Kısa Devre Empedansı (%)',
                   suffixText: '%',
@@ -1448,6 +1451,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _ogRabController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'OG R-AB Direnci', suffixText: 'mΩ'),
                 onChanged: (String val) {
                   service.updateField('og_rab', val);
@@ -1460,6 +1464,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _ogRbcController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'OG R-BC Direnci', suffixText: 'mΩ'),
                 onChanged: (String val) {
                   service.updateField('og_rbc', val);
@@ -1472,6 +1477,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _ogRcaController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'OG R-CA Direnci', suffixText: 'mΩ'),
                 onChanged: (String val) {
                   service.updateField('og_rca', val);
@@ -1500,6 +1506,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _agRanController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'AG R-AN (mΩ)'),
                 onChanged: (String val) => service.updateField('ag_ran', val),
               ),
@@ -1509,6 +1516,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _agRbnController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'AG R-BN (mΩ)'),
                 onChanged: (String val) => service.updateField('ag_rbn', val),
               ),
@@ -1518,6 +1526,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _agRcnController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'AG R-CN (mΩ)'),
                 onChanged: (String val) => service.updateField('ag_rcn', val),
               ),
@@ -1531,6 +1540,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _agRabController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'AG R-AB (mΩ)'),
                 onChanged: (String val) => service.updateField('ag_rab', val),
               ),
@@ -1540,6 +1550,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _agRbcController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'AG R-BC (mΩ)'),
                 onChanged: (String val) => service.updateField('ag_rbc', val),
               ),
@@ -1549,6 +1560,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _agRcaController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'AG R-CA (mΩ)'),
                 onChanged: (String val) => service.updateField('ag_rca', val),
               ),
@@ -1574,6 +1586,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _isoTempController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'Ortam Sıcaklığı (°C)', suffixText: '°C'),
                 onChanged: (String val) {
                   service.updateField('iso_temp', val);
@@ -1586,6 +1599,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _isoHumidityController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'Nem Oranı (%)', suffixText: '%'),
                 onChanged: (String val) => service.updateField('iso_humidity', val),
               ),
@@ -1596,6 +1610,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         TextFormField(
           controller: _isoOgGndController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
           decoration: const InputDecoration(labelText: 'OG - GND İzolasyon Direnci (MΩ)', suffixText: 'MΩ'),
           onChanged: (String val) => service.updateField('iso_og_gnd', val),
         ),
@@ -1603,6 +1618,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         TextFormField(
           controller: _isoAgGndController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
           decoration: const InputDecoration(labelText: 'AG - GND İzolasyon Direnci (MΩ)', suffixText: 'MΩ'),
           onChanged: (String val) => service.updateField('iso_ag_gnd', val),
         ),
@@ -1610,6 +1626,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         TextFormField(
           controller: _isoOgAgController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
           decoration: const InputDecoration(labelText: 'OG - AG İzolasyon Direnci (MΩ)', suffixText: 'MΩ'),
           onChanged: (String val) => service.updateField('iso_og_ag', val),
         ),
@@ -1617,6 +1634,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         TextFormField(
           controller: _isoCoreGndController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
           decoration: const InputDecoration(labelText: 'Nüve - GND İzolasyon Direnci (MΩ)', suffixText: 'MΩ'),
           onChanged: (String val) => service.updateField('iso_core_gnd', val),
         ),
@@ -1629,7 +1647,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
     final Map<String, dynamic> evaluation = _calculateTtrError();
 
-    final double? groundVal = double.tryParse(_groundTrafoBodyController.text);
+    final double? groundVal = double.tryParse(_groundTrafoBodyController.text.replaceAll(',', '.'));
     final bool groundOk = groundVal != null && groundVal <= 2.0;
 
     return Column(
@@ -1640,6 +1658,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         TextFormField(
           controller: _ttrNominalController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
           decoration: const InputDecoration(labelText: 'Nominal Çevirme Oranı', hintText: 'Örn: 86.25'),
           onChanged: (String val) => service.updateField('ttr.nominal', val),
         ),
@@ -1651,6 +1670,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _ttrTap1AController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'Kademe 1 - A Fazı'),
                 onChanged: (String val) {
                   service.updateField('ttr_tap1_a', val);
@@ -1663,6 +1683,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _ttrTap1BController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'Kademe 1 - B Fazı'),
                 onChanged: (String val) {
                   service.updateField('ttr_tap1_b', val);
@@ -1675,6 +1696,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _ttrTap1CController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'Kademe 1 - C Fazı'),
                 onChanged: (String val) {
                   service.updateField('ttr_tap1_c', val);
@@ -1700,6 +1722,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         TextFormField(
           controller: _groundTrafoBodyController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
           decoration: const InputDecoration(labelText: 'Trafo Gövde Topraklaması (Ω)', suffixText: 'Ω'),
           onChanged: (String val) {
             service.updateField('ground_r_trafo_body', val);
@@ -1720,6 +1743,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _groundNeutralController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'Yıldız Noktası (Nötr) (Ω)'),
                 onChanged: (String val) {
                   service.updateField('ground_r_neutral', val);
@@ -1732,6 +1756,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _groundTankController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'Kazan / Tank Topraklaması (Ω)'),
                 onChanged: (String val) {
                   service.updateField('ground_r_tank', val);
@@ -1749,9 +1774,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   Widget _buildBreakerStep(Report report) {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
 
-    final double? contact = double.tryParse(_breakerContactController.text);
-    final double? open = double.tryParse(_breakerOpenController.text);
-    final double? close = double.tryParse(_breakerCloseController.text);
+    final double? contact = double.tryParse(_breakerContactController.text.replaceAll(',', '.'));
+    final double? open = double.tryParse(_breakerOpenController.text.replaceAll(',', '.'));
+    final double? close = double.tryParse(_breakerCloseController.text.replaceAll(',', '.'));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1814,6 +1839,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _breakerVoltageController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'Gerilim Seviyesi (V)', suffixText: 'V', hintText: 'Örn: 36000'),
                 onChanged: (String val) => service.updateField('breaker_voltage', val),
               ),
@@ -1862,6 +1888,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _breakerIsoGndController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'İzolasyon Direnci (GΩ)', suffixText: 'GΩ', hintText: 'Örn: 20000'),
                 onChanged: (String val) => service.updateField('breaker_iso_r_gnd', val),
               ),
@@ -1871,6 +1898,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _breakerContactController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'Kontak Direnci (µΩ)', suffixText: 'µΩ', hintText: 'Max 150 µΩ'),
                 onChanged: (String val) {
                   service.updateField('breaker_contact_r', val);
@@ -1893,6 +1921,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _breakerOpenController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'Açma Süresi (ms)', suffixText: 'ms', hintText: 'Max 80 ms'),
                 onChanged: (String val) {
                   service.updateField('breaker_timing_open', val);
@@ -1905,6 +1934,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               child: TextFormField(
                 controller: _breakerCloseController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'Kapama Süresi (ms)', suffixText: 'ms', hintText: 'Max 120 ms'),
                 onChanged: (String val) {
                   service.updateField('breaker_timing_close', val);
@@ -1962,6 +1992,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           TextFormField(
             controller: _oilBreakdownVoltageController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
             decoration: const InputDecoration(labelText: 'Yağ Delinme Gerilimi (kV)', suffixText: 'kV', hintText: 'Örn: 65'),
             onChanged: (String val) => service.updateField('oil_test_breakdown_voltage', val),
           ),
@@ -1969,6 +2000,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           TextFormField(
             controller: _oilWaterContentController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
             decoration: const InputDecoration(labelText: 'Yağ Su İhtivası (ppm)', suffixText: 'ppm', hintText: 'Örn: 15'),
             onChanged: (String val) => service.updateField('oil_test_water_content', val),
           ),
@@ -1978,6 +2010,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           TextFormField(
             controller: _oilBreakdownVoltageController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
             decoration: const InputDecoration(labelText: 'Yağ Delinme Gerilimi (kV)', suffixText: 'kV'),
             onChanged: (String val) => service.updateField('oil_test_breakdown_voltage', val),
           ),
