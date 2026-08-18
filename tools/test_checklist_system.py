@@ -20,10 +20,10 @@ def test_checklist_system():
     types_to_test = ["HERMETIK", "KURU_TIP", "GT"]
     all_passed = True
 
-    # Test inputs with alternating Evet/Hayır combinations and DC voltage choices
+    # Test inputs
     test_cases = {
         "HERMETIK": {
-            "dc_redresor_voltage": None, # Scenario 1: Unselected -> G31 MUST BE NONE
+            "dc_redresor_voltage": None,
             "checklist_1": True,
             "checklist_2": False,
             "checklist_3": True,
@@ -42,7 +42,7 @@ def test_checklist_system():
             "checklist_16": False,
         },
         "KURU_TIP": {
-            "dc_redresor_voltage": "24 VDC", # Scenario 3: 24 VDC -> G31 MUST BE "24 VDC"
+            "dc_redresor_voltage": "24 VDC",
             "checklist_1": False,
             "checklist_2": True,
             "checklist_3": False,
@@ -55,13 +55,9 @@ def test_checklist_system():
             "checklist_10": True,
             "checklist_11": False,
             "checklist_12": True,
-            "checklist_13": False,
-            "checklist_14": True,
-            "checklist_15": False,
-            "checklist_16": True,
         },
         "GT": {
-            "dc_redresor_voltage": "110 VDC", # Scenario 2: 110 VDC -> G31 MUST BE "110 VDC"
+            "dc_redresor_voltage": "110 VDC",
             "checklist_1": True,
             "checklist_2": True,
             "checklist_3": True,
@@ -81,8 +77,8 @@ def test_checklist_system():
         }
     }
 
-    # Standard checklist pairs coordinate map
-    expected_pairs = {
+    # Expected checklist pairs coordinate maps
+    hermetik_gt_pairs = {
         "checklist_1": ("I27", "J27"),
         "checklist_2": ("I29", "J29"),
         "checklist_3": ("I31", "J31"),
@@ -99,6 +95,21 @@ def test_checklist_system():
         "checklist_14": ("R37", "S37"),
         "checklist_15": ("R39", "S39"),
         "checklist_16": ("R41", "S41"),
+    }
+
+    kuru_pairs = {
+        "checklist_1": ("I27", "J27"),
+        "checklist_2": ("I29", "J29"),
+        "checklist_3": ("I31", "J31"),
+        "checklist_4": ("I33", "J33"),
+        "checklist_5": ("I35", "J35"),
+        "checklist_6": ("I37", "J37"),
+        "checklist_7": ("R27", "S27"),
+        "checklist_8": ("R29", "S29"),
+        "checklist_9": ("R31", "S31"),
+        "checklist_10": ("R33", "S33"),
+        "checklist_11": ("R35", "S35"),
+        "checklist_12": ("R37", "S37"),
     }
 
     for rtype in types_to_test:
@@ -121,8 +132,9 @@ def test_checklist_system():
             print(f"  FAIL: G31 mismatch in {rtype}! Got {g31_val!r}, expected {expected_g31!r}")
             all_passed = False
 
-        # 2. Verify all 16 Checklist Pairs
-        for item_key, (evet_ref, hayir_ref) in expected_pairs.items():
+        # 2. Verify Checklist Pairs
+        pairs = kuru_pairs if rtype == "KURU_TIP" else hermetik_gt_pairs
+        for item_key, (evet_ref, hayir_ref) in pairs.items():
             evet_val = ws[evet_ref].value
             hayir_val = ws[hayir_ref].value
             expected_choice = data[item_key]
@@ -135,6 +147,23 @@ def test_checklist_system():
             is_ok = (evet_val == expected_evet and hayir_val == expected_hayir)
             print(f"[{rtype}] {item_key} ({evet_ref}/{hayir_ref}): Evet={evet_val!r}, Hayir={hayir_val!r} -> {'OK' if is_ok else 'FAIL (Expected Evet=' + repr(expected_evet) + ', Hayir=' + repr(expected_hayir) + ')'}")
             if not is_ok:
+                all_passed = False
+
+        # 3. For Kuru Tip, verify rows 39 & 41 have NO checklist items or checkmarks
+        if rtype == "KURU_TIP":
+            b39, k39 = ws['B39'].value, ws['K39'].value
+            b41, k41 = ws['B41'].value, ws['K41'].value
+            i39, j39 = ws['I39'].value, ws['J39'].value
+            i41, j41 = ws['I41'].value, ws['J41'].value
+            r39, s39 = ws['R39'].value, ws['S39'].value
+            r41, s41 = ws['R41'].value, ws['S41'].value
+            no_oil_pressure_gaskets = (
+                b39 is None and k39 is None and b41 is None and k41 is None and
+                i39 is None and j39 is None and i41 is None and j41 is None and
+                r39 is None and s39 is None and r41 is None and s41 is None
+            )
+            print(f"[{rtype}] Rows 39 & 41 empty (no oil/pressure/gasket items): {'OK' if no_oil_pressure_gaskets else 'FAIL'}")
+            if not no_oil_pressure_gaskets:
                 all_passed = False
 
     print("\n==================================================")

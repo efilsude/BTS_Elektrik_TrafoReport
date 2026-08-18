@@ -1337,10 +1337,36 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   Widget _buildChecklistStep(Report report) {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
     final String type = report.transformerType.toLowerCase().trim();
+    final bool isKuru = type == 'kuru_tip';
     final dynamic rawDcVoltage = report.dataJson['dc_redresor_voltage'];
     final String? currentDcVoltage = (rawDcVoltage != null && rawDcVoltage.toString().trim().isNotEmpty)
         ? (rawDcVoltage.toString().toUpperCase().contains('110') ? '110 VDC' : '24 VDC')
         : null;
+
+    final Widget dcVoltageSelector = Padding(
+      padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 12.0),
+      child: Row(
+        children: <Widget>[
+          Text('DC Voltaj Seçimi: ', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
+          const SizedBox(width: 12),
+          ChoiceChip(
+            label: const Text('24 VDC'),
+            selected: currentDcVoltage == '24 VDC',
+            onSelected: (bool sel) {
+              service.updateField('dc_redresor_voltage', sel ? '24 VDC' : null);
+            },
+          ),
+          const SizedBox(width: 8),
+          ChoiceChip(
+            label: const Text('110 VDC'),
+            selected: currentDcVoltage == '110 VDC',
+            onSelected: (bool sel) {
+              service.updateField('dc_redresor_voltage', sel ? '110 VDC' : null);
+            },
+          ),
+        ],
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1350,49 +1376,45 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           'Seçtiğiniz Trafo Tipi (${type.toUpperCase()}) için tanımlı kontrol maddeleri aşağıda listelenmiştir.',
         ),
         const SizedBox(height: 20),
-        _buildSwitchTile('Trafo Sıcaklık Kontrolü', 'checklist_1', report.dataJson),
-        _buildSwitchTile('Yağ Seviyesi Kontrolü', 'checklist_2', report.dataJson),
-        _buildSwitchTile('DC Redresör Kontrolü', 'checklist_3', report.dataJson),
-        Padding(
-          padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 12.0),
-          child: Row(
-            children: <Widget>[
-              Text('DC Voltaj Seçimi: ', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
-              const SizedBox(width: 12),
-              ChoiceChip(
-                label: const Text('24 VDC'),
-                selected: currentDcVoltage == '24 VDC',
-                onSelected: (bool sel) {
-                  service.updateField('dc_redresor_voltage', sel ? '24 VDC' : null);
-                },
-              ),
-              const SizedBox(width: 8),
-              ChoiceChip(
-                label: const Text('110 VDC'),
-                selected: currentDcVoltage == '110 VDC',
-                onSelected: (bool sel) {
-                  service.updateField('dc_redresor_voltage', sel ? '110 VDC' : null);
-                },
-              ),
-            ],
-          ),
-        ),
-        _buildSwitchTile('Basınç Açma', 'checklist_4', report.dataJson),
-        _buildSwitchTile('Gaz Açma', 'checklist_5', report.dataJson),
-        _buildSwitchTile('Termik Alarm', 'checklist_6', report.dataJson),
-        _buildSwitchTile('Termik Açma', 'checklist_7', report.dataJson),
-        _buildSwitchTile('İzolatör Kontrolü', 'checklist_8', report.dataJson),
-        const SizedBox(height: 12),
-        const Divider(),
-        const SizedBox(height: 12),
-        _buildSwitchTile('Trafo Temizliği', 'checklist_9', report.dataJson),
-        _buildSwitchTile('Bina Temizliği', 'checklist_10', report.dataJson),
-        _buildSwitchTile('Kablo Sıkılık Kontrolü', 'checklist_11', report.dataJson),
-        _buildSwitchTile('Yağ Kaçağı Kontrolü', 'checklist_12', report.dataJson),
-        _buildSwitchTile('Kademe Conta Kontrolü', 'checklist_13', report.dataJson),
-        _buildSwitchTile('O.G Conta Kontrolü', 'checklist_14', report.dataJson),
-        _buildSwitchTile('Kapak Conta Kontrolü', 'checklist_15', report.dataJson),
-        _buildSwitchTile('A.G Conta Kontrolü', 'checklist_16', report.dataJson),
+        if (isKuru) ...<Widget>[
+          _buildSwitchTile('Trafo Sıcaklık Kontrolü', 'checklist_1', report.dataJson),
+          _buildSwitchTile('Fan ON', 'checklist_2', report.dataJson),
+          _buildSwitchTile('DC Redresör Kontrolü', 'checklist_3', report.dataJson),
+          dcVoltageSelector,
+          _buildSwitchTile('Termometre Alarm', 'checklist_4', report.dataJson),
+          _buildSwitchTile('Termometre Trip', 'checklist_5', report.dataJson),
+          _buildSwitchTile('Fan OFF', 'checklist_6', report.dataJson),
+          const SizedBox(height: 12),
+          const Divider(),
+          const SizedBox(height: 12),
+          _buildSwitchTile('Trafo Temizliği', 'checklist_7', report.dataJson),
+          _buildSwitchTile('Bina Temizliği', 'checklist_8', report.dataJson),
+          _buildSwitchTile('Kablo Sıkılık Kontrolü', 'checklist_9', report.dataJson),
+          _buildSwitchTile('Epoksi Kontrolü', 'checklist_10', report.dataJson),
+          _buildSwitchTile('Termistor Kontrolü', 'checklist_11', report.dataJson),
+          _buildSwitchTile('Topraklama Bağlantısı', 'checklist_12', report.dataJson),
+        ] else ...<Widget>[
+          _buildSwitchTile('Trafo Sıcaklık Kontrolü', 'checklist_1', report.dataJson),
+          _buildSwitchTile('Yağ Seviyesi Kontrolü', 'checklist_2', report.dataJson),
+          _buildSwitchTile('DC Redresör Kontrolü', 'checklist_3', report.dataJson),
+          dcVoltageSelector,
+          _buildSwitchTile('Basınç Açma', 'checklist_4', report.dataJson),
+          _buildSwitchTile('Gaz Açma', 'checklist_5', report.dataJson),
+          _buildSwitchTile('Termik Alarm', 'checklist_6', report.dataJson),
+          _buildSwitchTile('Termik Açma', 'checklist_7', report.dataJson),
+          _buildSwitchTile('İzolatör Kontrolü', 'checklist_8', report.dataJson),
+          const SizedBox(height: 12),
+          const Divider(),
+          const SizedBox(height: 12),
+          _buildSwitchTile('Trafo Temizliği', 'checklist_9', report.dataJson),
+          _buildSwitchTile('Bina Temizliği', 'checklist_10', report.dataJson),
+          _buildSwitchTile('Kablo Sıkılık Kontrolü', 'checklist_11', report.dataJson),
+          _buildSwitchTile('Yağ Kaçağı Kontrolü', 'checklist_12', report.dataJson),
+          _buildSwitchTile('Kademe Conta Kontrolü', 'checklist_13', report.dataJson),
+          _buildSwitchTile('O.G Conta Kontrolü', 'checklist_14', report.dataJson),
+          _buildSwitchTile('Kapak Conta Kontrolü', 'checklist_15', report.dataJson),
+          _buildSwitchTile('A.G Conta Kontrolü', 'checklist_16', report.dataJson),
+        ],
         const SizedBox(height: 20),
         const Divider(),
         const SizedBox(height: 12),

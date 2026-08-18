@@ -356,6 +356,29 @@ def build_kuru_tip_hybrid():
             target_ws = wb_ref.create_sheet(title=sname)
             copy_sheet_content(wb_kuru[sname], target_ws)
 
+    # Restore exact Kuru Tip ANA SAYFA checklist labels & clear oil/pressure/gasket rows
+    ws_ana = wb_ref["ANA SAYFA"]
+    kuru_labels = {
+        27: ("Trafo Sıcaklık Kontrolü ", "Trafo Temizliği"),
+        29: ("Fan ON", "Bina Temizliği"),
+        31: ("DC Redresör Kontrolü", "Kablo Sıkılık Kontrolü"),
+        33: ("Termometre Alarm", "Epoksi Kontrolü"),
+        35: ("Termometre Trip", "Termistor Kontrolü"),
+        37: ("Fan OFF", "Topraklama Bağlantısı"),
+        39: (None, None),
+        41: (None, None),
+    }
+
+    for r, (left_label, right_label) in kuru_labels.items():
+        cell_b = ws_ana[f"B{r}"]
+        cell_k = ws_ana[f"K{r}"]
+        cell_b.value = left_label
+        cell_k.value = right_label
+
+    for r in [39, 41]:
+        for col in ["I", "J", "R", "S"]:
+            ws_ana[f"{col}{r}"].value = None
+
     clean_master_images(wb_ref)
     clean_master_sample_data(wb_ref)
 
