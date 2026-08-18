@@ -13,6 +13,7 @@ import '../../services/report_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/photo_picker_widget.dart';
 import '../../widgets/qr_scanner_dialog.dart';
+import '../home_screen.dart';
 
 class ReportFormScreen extends StatefulWidget {
   const ReportFormScreen({super.key});
@@ -782,8 +783,11 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         actions: <Widget>[
           TextButton(
             onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.pop(context);
+              Navigator.of(ctx).pop();
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute<dynamic>(builder: (BuildContext context) => const HomeScreen()),
+                (Route<dynamic> route) => false,
+              );
             },
             child: Text(
               'Kapat',
