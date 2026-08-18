@@ -106,22 +106,59 @@ def copy_sheet_content(src_ws, target_ws):
         if cdim.outline_level:
             tcdim.outline_level = cdim.outline_level
 
-    # 4. Page Setup & Margins
-    if hasattr(src_ws, 'page_setup'):
+    # 4. Page Setup, Sheet View & Margins
+    # Copy existing sheet_view properties if present
+    if hasattr(src_ws, 'sheet_view') and src_ws.sheet_view is not None:
+        sv_src = src_ws.sheet_view
+        sv_tgt = target_ws.sheet_view
+        if getattr(sv_src, 'view', None) is not None:
+            sv_tgt.view = sv_src.view
+        if getattr(sv_src, 'zoomScale', None) is not None:
+            sv_tgt.zoomScale = sv_src.zoomScale
+        if getattr(sv_src, 'zoomScaleNormal', None) is not None:
+            sv_tgt.zoomScaleNormal = sv_src.zoomScaleNormal
+        if getattr(sv_src, 'showGridLines', None) is not None:
+            sv_tgt.showGridLines = sv_src.showGridLines
+
+    # Fallback for missing zoomScale / zoomScaleNormal (set to 82 to match reference)
+    if target_ws.sheet_view.zoomScale is None:
+        target_ws.sheet_view.zoomScale = 82
+    if target_ws.sheet_view.zoomScaleNormal is None:
+        target_ws.sheet_view.zoomScaleNormal = 82
+
+    # Page Setup
+    if hasattr(src_ws, 'page_setup') and src_ws.page_setup is not None:
         for attr in ['orientation', 'paperSize', 'scale', 'fitToWidth', 'fitToHeight', 'firstPageNumber', 'useFirstPageNumber', 'pageOrder']:
             val = getattr(src_ws.page_setup, attr, None)
             if val is not None:
                 setattr(target_ws.page_setup, attr, val)
 
+    # Fallback for missing orientation / paperSize
+    if target_ws.page_setup.orientation is None:
+        target_ws.page_setup.orientation = "portrait"
+    if target_ws.page_setup.paperSize is None:
+        target_ws.page_setup.paperSize = "9"  # A4
+
     if hasattr(src_ws, 'sheet_properties') and hasattr(src_ws.sheet_properties, 'pageSetUpPr'):
         if src_ws.sheet_properties.pageSetUpPr.fitToPage is not None:
             target_ws.sheet_properties.pageSetUpPr.fitToPage = src_ws.sheet_properties.pageSetUpPr.fitToPage
 
-    if hasattr(src_ws, 'page_margins'):
+    # Page Margins
+    if hasattr(src_ws, 'page_margins') and src_ws.page_margins is not None:
         for attr in ['top', 'bottom', 'left', 'right', 'header', 'footer']:
             val = getattr(src_ws.page_margins, attr, None)
             if val is not None:
                 setattr(target_ws.page_margins, attr, val)
+
+    # Fallback for default/missing margins (apply narrow margins matching reference)
+    if target_ws.page_margins.left is None or target_ws.page_margins.left >= 0.7:
+        target_ws.page_margins.left = 0.1968503937007874
+    if target_ws.page_margins.right is None or target_ws.page_margins.right >= 0.7:
+        target_ws.page_margins.right = 0.1968503937007874
+    if target_ws.page_margins.top is None or target_ws.page_margins.top >= 0.9:
+        target_ws.page_margins.top = 0.3543307086614173
+    if target_ws.page_margins.bottom is None or target_ws.page_margins.bottom >= 0.9:
+        target_ws.page_margins.bottom = 0.3543307086614173
 
     if hasattr(src_ws, 'print_title_rows') and src_ws.print_title_rows:
         target_ws.print_title_rows = src_ws.print_title_rows

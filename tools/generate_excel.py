@@ -1021,9 +1021,10 @@ def apply_format_and_column_width_fixes(wb):
                 if cref in ws:
                     ws[cref].number_format = "dd.mm.yyyy"
 
-    # 2. İZOLASYON sheet
+    # 2. İZOLASYON sheet (Strict match: only 'İZOLASYON', NOT 'KESİCİ İZOLASYON')
     for sname in wb.sheetnames:
-        if "İZOLASYON" in sname.upper():
+        norm_sname = sname.strip().upper()
+        if norm_sname == "İZOLASYON":
             ws = wb[sname]
             for col_let in ["B", "D", "F", "H", "J", "L"]:
                 ws.column_dimensions[col_let].width = max(ws.column_dimensions[col_let].width or 0, 13.0)
