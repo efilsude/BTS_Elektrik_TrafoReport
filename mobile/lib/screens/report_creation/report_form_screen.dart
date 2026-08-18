@@ -325,6 +325,10 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     });
 
     _autoSetTankMark(report.transformerType);
+    final ReportService service = Provider.of<ReportService>(context, listen: false);
+    if (data['dc_redresor_voltage'] == null) {
+      service.updateField('dc_redresor_voltage', '24 VDC');
+    }
   }
 
   void _autoSetTankMark(String type) {
@@ -1373,7 +1377,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
   // Step 3: Physical Checklist
   Widget _buildChecklistStep(Report report) {
+    final ReportService service = Provider.of<ReportService>(context, listen: false);
     final String type = report.transformerType.toLowerCase().trim();
+    final String dcVoltage = (report.dataJson['dc_redresor_voltage']?.toString() ?? '24 VDC').toUpperCase().contains('110') ? '110 VDC' : '24 VDC';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1383,54 +1389,49 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           'Seçtiğiniz Trafo Tipi (${type.toUpperCase()}) için tanımlı kontrol maddeleri aşağıda listelenmiştir.',
         ),
         const SizedBox(height: 20),
-
-        // Hermetik Checklist
-        if (type == 'hermetik') ...<Widget>[
-          _buildAlertText('Hermetik Sızdırmaz Trafo Modülü: Basınç ve gaz kontrolleri aktif.'),
-          const SizedBox(height: 12),
-          _buildSwitchTile('Genel Temizlik ve Gövde Korozyon Kontrolü', 'checklist_1', report.dataJson),
-          _buildSwitchTile('Terminaller ve Klemens Bağlantı Sıkılığı', 'checklist_2', report.dataJson),
-          _buildSwitchTile('Yağ Sızdırmazlık Contaları Kontrolü', 'checklist_3', report.dataJson),
-          _buildSwitchTile('Basınç Tahliye Valfi Testi', 'checklist_4', report.dataJson),
-          _buildSwitchTile('Hermetik Gaz Tahliye Ventili Sızdırmazlığı', 'checklist_5', report.dataJson),
-          _buildSwitchTile('Ark Boynuzları ve Bushing İzolatörler', 'checklist_6', report.dataJson),
-          _buildSwitchTile('Topraklama İletkeni Bağlantıları', 'checklist_7', report.dataJson),
-          _buildSwitchTile('Boya ve Pas Durumu Kontrolü', 'checklist_8', report.dataJson),
-          _buildSwitchTile('OG / AG Klemens Cıvata Sıkılığı', 'checklist_9', report.dataJson),
-          _buildSwitchTile('Havalandırma ve Ortam Sıcaklığı', 'checklist_10', report.dataJson),
-        ],
-
-        // GT Checklist
-        if (type == 'gt') ...<Widget>[
-          _buildAlertText('Genleşme Tanklı (GT) Trafo Modülü: Yağ seviyesi, Buchholz ve Silikajel kontrolleri aktif.'),
-          const SizedBox(height: 12),
-          _buildSwitchTile('Genel Temizlik ve Görünüm Kontrolü', 'checklist_1', report.dataJson),
-          _buildSwitchTile('Klemens ve İletken Bağlantı Kontrolleri', 'checklist_2', report.dataJson),
-          _buildSwitchTile('Gövde & Flanş Yağ Sızdırmazlık Contaları', 'checklist_3', report.dataJson),
-          _buildSwitchTile('Genleşme Deposu Yağ Seviye Göstergesi', 'checklist_4', report.dataJson),
-          _buildSwitchTile('Trafo Kazan ve Radyatör Yağ Sızıntısı', 'checklist_5', report.dataJson),
-          _buildSwitchTile('Buchholz Rölesi Kablo ve Gaz Kontrolü', 'checklist_6', report.dataJson),
-          _buildSwitchTile('Silikajel (Nem Alıcı) Renk ve Durum Kontrolü', 'checklist_7', report.dataJson),
-          _buildSwitchTile('İzolasyon Yağ Numunesi Alındı mı?', 'checklist_8', report.dataJson),
-          _buildSwitchTile('Termometre ve Yağ Sıcaklık Göstergeleri', 'checklist_9', report.dataJson),
-          _buildSwitchTile('Ark Boynuzları ve Bushing Temizliği', 'checklist_10', report.dataJson),
-          _buildSwitchTile('Topraklama İletkeni ve Klemensleri', 'checklist_11', report.dataJson),
-          _buildSwitchTile('Kazan Korozyon ve Boya Durumu', 'checklist_12', report.dataJson),
-        ],
-
-        // Kuru Tip Checklist
-        if (type == 'kuru_tip') ...<Widget>[
-          _buildAlertText('Kuru Tip Trafo Modülü: Fan, epoksi döküm ve termistör kontrolleri aktif (Yağ kontrolleri gizlendi).'),
-          const SizedBox(height: 12),
-          _buildSwitchTile('Epoksi Sargı Döküm Yüzey Temizliği ve Çatlak Kontrolü', 'checklist_1', report.dataJson),
-          _buildSwitchTile('Sargı Havalandırma Kanalları Toz Temizliği', 'checklist_2', report.dataJson),
-          _buildSwitchTile('Cebri Havalandırma (Fan) Otomatik ON/OFF Testi', 'checklist_3', report.dataJson),
-          _buildSwitchTile('Sıcaklık Koruma Ünitesi ve PT100 Termistörler', 'checklist_4', report.dataJson),
-          _buildSwitchTile('AG Bara ve OG Klemens Bağlantı Sıkılık Kontrolü', 'checklist_5', report.dataJson),
-          _buildSwitchTile('Sargı Destek Takozları ve Titreşim Sönümleyiciler', 'checklist_6', report.dataJson),
-          _buildSwitchTile('Gövde ve Kabin Topraklama İletkenleri', 'checklist_7', report.dataJson),
-          _buildSwitchTile('Koruma Kabini (IP Enclosure) İzolasyon ve Kilitler', 'checklist_8', report.dataJson),
-        ],
+        _buildSwitchTile('Trafo Sıcaklık Kontrolü', 'checklist_1', report.dataJson),
+        _buildSwitchTile('Yağ Seviyesi Kontrolü', 'checklist_2', report.dataJson),
+        _buildSwitchTile('DC Redresör Kontrolü', 'checklist_3', report.dataJson),
+        Padding(
+          padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 12.0),
+          child: Row(
+            children: <Widget>[
+              Text('DC Voltaj Seçimi: ', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
+              const SizedBox(width: 12),
+              ChoiceChip(
+                label: const Text('24 VDC'),
+                selected: dcVoltage == '24 VDC',
+                onSelected: (bool sel) {
+                  if (sel) service.updateField('dc_redresor_voltage', '24 VDC');
+                },
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: const Text('110 VDC'),
+                selected: dcVoltage == '110 VDC',
+                onSelected: (bool sel) {
+                  if (sel) service.updateField('dc_redresor_voltage', '110 VDC');
+                },
+              ),
+            ],
+          ),
+        ),
+        _buildSwitchTile('Basınç Açma', 'checklist_4', report.dataJson),
+        _buildSwitchTile('Gaz Açma', 'checklist_5', report.dataJson),
+        _buildSwitchTile('Termik Alarm', 'checklist_6', report.dataJson),
+        _buildSwitchTile('Termik Açma', 'checklist_7', report.dataJson),
+        _buildSwitchTile('İzolatör Kontrolü', 'checklist_8', report.dataJson),
+        const SizedBox(height: 12),
+        const Divider(),
+        const SizedBox(height: 12),
+        _buildSwitchTile('Trafo Temizliği', 'checklist_9', report.dataJson),
+        _buildSwitchTile('Bina Temizliği', 'checklist_10', report.dataJson),
+        _buildSwitchTile('Kablo Sıkılık Kontrolü', 'checklist_11', report.dataJson),
+        _buildSwitchTile('Yağ Kaçağı Kontrolü', 'checklist_12', report.dataJson),
+        _buildSwitchTile('Kademe Conta Kontrolü', 'checklist_13', report.dataJson),
+        _buildSwitchTile('O.G Conta Kontrolü', 'checklist_14', report.dataJson),
+        _buildSwitchTile('Kapak Conta Kontrolü', 'checklist_15', report.dataJson),
+        _buildSwitchTile('A.G Conta Kontrolü', 'checklist_16', report.dataJson),
       ],
     );
   }
