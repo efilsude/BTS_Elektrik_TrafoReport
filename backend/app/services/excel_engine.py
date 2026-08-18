@@ -125,11 +125,13 @@ TEMPLATE_PATHS = {
             "O11": "breaker_serial_no",
             "G13": "breaker_model",
             "O13": "breaker_year",
+            "G15": "breaker_voltage",
+            "G17": "breaker_motor_voltage",
+            "O17": "breaker_coil_voltage",
             "G50": "breaker_iso_r_gnd",
             "O50": "breaker_contact_r",
+            "D68": "breaker_notes",
             "F76": "operator_title",
-            "F77": "sicil_no",
-            "F78": "ekipnet_no",
         },
         "KESİCİ İZOLASYON": {
             "D10": "operator_name",
@@ -271,11 +273,13 @@ TEMPLATE_PATHS = {
             "O11": "breaker_serial_no",
             "G13": "breaker_model",
             "O13": "breaker_year",
+            "G15": "breaker_voltage",
+            "G17": "breaker_motor_voltage",
+            "O17": "breaker_coil_voltage",
             "G50": "breaker_iso_r_gnd",
             "O50": "breaker_contact_r",
+            "D68": "breaker_notes",
             "F76": "operator_title",
-            "F77": "sicil_no",
-            "F78": "ekipnet_no",
         },
         "KESİCİ İZOLASYON": {
             "D10": "operator_name",
@@ -401,11 +405,13 @@ TEMPLATE_PATHS = {
             "O11": "breaker_serial_no",
             "G13": "breaker_model",
             "O13": "breaker_year",
+            "G15": "breaker_voltage",
+            "G17": "breaker_motor_voltage",
+            "O17": "breaker_coil_voltage",
             "G50": "breaker_iso_r_gnd",
             "O50": "breaker_contact_r",
+            "D68": "breaker_notes",
             "F76": "operator_title",
-            "F77": "sicil_no",
-            "F78": "ekipnet_no",
         },
         "KESİCİ İZOLASYON": {
             "D10": "operator_name",
@@ -466,6 +472,16 @@ CHECKLIST_PAIRS = {
         "checklist_14": {"evet": "R37", "hayir": "S37"},
         "checklist_15": {"evet": "R39", "hayir": "S39"},
         "checklist_16": {"evet": "R41", "hayir": "S41"},
+        "breaker_control_visual": {"evet": "G24", "hayir": "I24"},
+        "breaker_control_cleanliness": {"evet": "P24", "hayir": "R24"},
+        "breaker_control_dc_redresor": {"evet": "G26", "hayir": "I26"},
+        "breaker_control_cell_cleanliness": {"evet": "P26", "hayir": "R26"},
+        "breaker_control_indicator": {"evet": "G28", "hayir": "I28"},
+        "breaker_control_busbar": {"evet": "P28", "hayir": "R28"},
+        "breaker_control_mechanical": {"evet": "G30", "hayir": "I30"},
+        "breaker_control_heater": {"evet": "P30", "hayir": "R30"},
+        "breaker_control_cable": {"evet": "G32", "hayir": "I32"},
+        "breaker_control_relay": {"evet": "P32", "hayir": "R32"},
     },
     "KURU_TIP": {
         "checklist_1": {"evet": "I26", "hayir": "J26"},
@@ -498,6 +514,16 @@ CHECKLIST_PAIRS = {
         "checklist_14": {"evet": "R37", "hayir": "S37"},
         "checklist_15": {"evet": "R39", "hayir": "S39"},
         "checklist_16": {"evet": "R41", "hayir": "S41"},
+        "breaker_control_visual": {"evet": "G24", "hayir": "I24"},
+        "breaker_control_cleanliness": {"evet": "P24", "hayir": "R24"},
+        "breaker_control_dc_redresor": {"evet": "G26", "hayir": "I26"},
+        "breaker_control_cell_cleanliness": {"evet": "P26", "hayir": "R26"},
+        "breaker_control_indicator": {"evet": "G28", "hayir": "I28"},
+        "breaker_control_busbar": {"evet": "P28", "hayir": "R28"},
+        "breaker_control_mechanical": {"evet": "G30", "hayir": "I30"},
+        "breaker_control_heater": {"evet": "P30", "hayir": "R30"},
+        "breaker_control_cable": {"evet": "G32", "hayir": "I32"},
+        "breaker_control_relay": {"evet": "P32", "hayir": "R32"},
     }
 }
 
@@ -728,6 +754,34 @@ def clean_left_personnel_block(wb, op_name: str, op_title: str, test_date: Optio
 
             # Clear A56:F57 residuals
             for r in [56, 57]:
+                for c_let in ["A", "B", "C", "D", "E", "F"]:
+                    try:
+                        get_writable_cell(ws, f"{c_let}{r}").value = None
+                    except Exception:
+                        pass
+
+        elif sname == "ANA SAYFA KESİCİ":
+            get_writable_cell(ws, "B74").value = "Test Tarihi"
+            get_writable_cell(ws, "E74").value = ":"
+            if test_date:
+                s_val = date_to_excel_serial(test_date)
+                cell_f74 = get_writable_cell(ws, "F74")
+                cell_f74.value = s_val if s_val is not None else str(test_date)
+                cell_f74.number_format = "dd.mm.yyyy"
+
+            get_writable_cell(ws, "B75").value = "Rapor Tarihi"
+            get_writable_cell(ws, "E75").value = ":"
+            if report_date:
+                s_val = date_to_excel_serial(report_date)
+                cell_f75 = get_writable_cell(ws, "F75")
+                cell_f75.value = s_val if s_val is not None else str(report_date)
+                cell_f75.number_format = "dd.mm.yyyy"
+
+            get_writable_cell(ws, "B76").value = "Unvan"
+            get_writable_cell(ws, "E76").value = ":"
+            get_writable_cell(ws, "F76").value = op_title
+
+            for r in [77, 78]:
                 for c_let in ["A", "B", "C", "D", "E", "F"]:
                     try:
                         get_writable_cell(ws, f"{c_let}{r}").value = None
@@ -995,7 +1049,7 @@ def generate_excel_report(report: Report, photos: List[Photo], output_path: str)
 
         if matched_sheet:
             ws = wb[matched_sheet]
-            if target_sheet_name.strip() == "ANA SAYFA":
+            if target_sheet_name.strip() in ["ANA SAYFA", "ANA SAYFA KESİCİ"]:
                 process_checklist_pairs(ws, mapped_type, data_dict)
 
             for cell_ref, field_key in cell_map.items():

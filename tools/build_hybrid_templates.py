@@ -120,24 +120,12 @@ def copy_sheet_content(src_ws, target_ws):
         if getattr(sv_src, 'showGridLines', None) is not None:
             sv_tgt.showGridLines = sv_src.showGridLines
 
-    # Fallback for missing zoomScale / zoomScaleNormal (set to 82 to match reference)
-    if target_ws.sheet_view.zoomScale is None:
-        target_ws.sheet_view.zoomScale = 82
-    if target_ws.sheet_view.zoomScaleNormal is None:
-        target_ws.sheet_view.zoomScaleNormal = 82
-
     # Page Setup
     if hasattr(src_ws, 'page_setup') and src_ws.page_setup is not None:
         for attr in ['orientation', 'paperSize', 'scale', 'fitToWidth', 'fitToHeight', 'firstPageNumber', 'useFirstPageNumber', 'pageOrder']:
             val = getattr(src_ws.page_setup, attr, None)
             if val is not None:
                 setattr(target_ws.page_setup, attr, val)
-
-    # Fallback for missing orientation / paperSize
-    if target_ws.page_setup.orientation is None:
-        target_ws.page_setup.orientation = "portrait"
-    if target_ws.page_setup.paperSize is None:
-        target_ws.page_setup.paperSize = "9"  # A4
 
     if hasattr(src_ws, 'sheet_properties') and hasattr(src_ws.sheet_properties, 'pageSetUpPr'):
         if src_ws.sheet_properties.pageSetUpPr.fitToPage is not None:
@@ -149,16 +137,6 @@ def copy_sheet_content(src_ws, target_ws):
             val = getattr(src_ws.page_margins, attr, None)
             if val is not None:
                 setattr(target_ws.page_margins, attr, val)
-
-    # Fallback for default/missing margins (apply narrow margins matching reference)
-    if target_ws.page_margins.left is None or target_ws.page_margins.left >= 0.7:
-        target_ws.page_margins.left = 0.1968503937007874
-    if target_ws.page_margins.right is None or target_ws.page_margins.right >= 0.7:
-        target_ws.page_margins.right = 0.1968503937007874
-    if target_ws.page_margins.top is None or target_ws.page_margins.top >= 0.9:
-        target_ws.page_margins.top = 0.3543307086614173
-    if target_ws.page_margins.bottom is None or target_ws.page_margins.bottom >= 0.9:
-        target_ws.page_margins.bottom = 0.3543307086614173
 
     if hasattr(src_ws, 'print_title_rows') and src_ws.print_title_rows:
         target_ws.print_title_rows = src_ws.print_title_rows

@@ -111,6 +111,13 @@ def run_t2():
         "breaker_model": "VD4",
         "breaker_serial_no": "ABB-98765",
         "breaker_year": "2023",
+        "breaker_rated_current": "630",
+        "breaker_voltage": "36000",
+        "breaker_motor_voltage": "220V DC",
+        "breaker_coil_voltage": "220V DC",
+        "breaker_control_visual": True,
+        "breaker_control_cleanliness": False,
+        "breaker_notes": "Kesici test ve kontrolu yapildi.",
         "breaker_iso_r_gnd": "15000",
         "breaker_contact_r": "25"
     }
@@ -137,16 +144,44 @@ def run_t2():
     g11_val = ws["G11"].value  # breaker_brand
     g13_val = ws["G13"].value  # breaker_model
     o11_val = ws["O11"].value  # breaker_serial_no
+    g15_val = ws["G15"].value  # breaker_voltage
+    g17_val = ws["G17"].value  # breaker_motor_voltage
+    o17_val = ws["O17"].value  # breaker_coil_voltage
+    g24_val = ws["G24"].value  # breaker_control_visual Evet ("ü")
+    i24_val = ws["I24"].value  # breaker_control_visual Hayır (None)
+    p24_val = ws["P24"].value  # breaker_control_cleanliness Evet (None)
+    r24_val = ws["R24"].value  # breaker_control_cleanliness Hayır ("ü")
     g50_val = ws["G50"].value  # breaker_iso_r_gnd
     c39_val = ws["C39"].value  # unprovided step voltage (should be None)
+    d68_val = ws["D68"].value  # breaker_notes
+    f74_val = ws["F74"].value  # Test Tarihi (serial date)
+    f75_val = ws["F75"].value  # Rapor Tarihi (serial date)
     
     print(f"[T2] G11 (Brand): {g11_val!r} (expected 'ABB')")
     print(f"[T2] G13 (Model): {g13_val!r} (expected 'VD4')")
     print(f"[T2] O11 (Serial): {o11_val!r} (expected 'ABB-98765')")
+    print(f"[T2] G15 (Volt): {g15_val!r} (expected 36000)")
+    print(f"[T2] G17 (Motor V): {g17_val!r} (expected '220V DC')")
+    print(f"[T2] O17 (Coil V): {o17_val!r} (expected '220V DC')")
+    print(f"[T2] G24/I24 (Visual Ctrl): Evet={g24_val!r}/Hayir={i24_val!r} (expected 'ü'/None)")
+    print(f"[T2] P24/R24 (Clean Ctrl): Evet={p24_val!r}/Hayir={r24_val!r} (expected None/'ü')")
     print(f"[T2] G50 (Iso R): {g50_val!r} (expected 15000)")
+    print(f"[T2] D68 (Notes): {d68_val!r} (expected 'Kesici test ve kontrolu yapildi.')")
+    print(f"[T2] F74/F75 (Dates): Test={f74_val!r}, Rapor={f75_val!r}")
     print(f"[T2] C39 (Unprovided Step Volt): {c39_val!r} (expected None)")
     
-    t2_success = (g11_val == "ABB") and (g13_val == "VD4") and (c39_val is None)
+    t2_success = (
+        (g11_val == "ABB") and 
+        (g13_val == "VD4") and 
+        (g15_val == 36000) and
+        (g17_val == "220V DC") and
+        (g24_val == "ü") and
+        (i24_val is None) and
+        (r24_val == "ü") and
+        (p24_val is None) and
+        (c39_val is None) and
+        (f74_val is not None)
+    )
     print(f"[T2] PASS: {t2_success}")
     return t2_success
 

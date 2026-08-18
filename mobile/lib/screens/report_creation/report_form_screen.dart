@@ -98,11 +98,16 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   final TextEditingController _breakerModelController = TextEditingController();
   final TextEditingController _breakerSerialController = TextEditingController();
   final TextEditingController _breakerYearController = TextEditingController();
+  final TextEditingController _breakerRatedCurrentController = TextEditingController();
+  final TextEditingController _breakerVoltageController = TextEditingController();
+  final TextEditingController _breakerMotorVoltageController = TextEditingController();
+  final TextEditingController _breakerCoilVoltageController = TextEditingController();
   final TextEditingController _breakerContactController = TextEditingController();
   final TextEditingController _breakerOpenController = TextEditingController();
   final TextEditingController _breakerCloseController = TextEditingController();
   final TextEditingController _breakerDiffController = TextEditingController();
   final TextEditingController _breakerIsoGndController = TextEditingController();
+  final TextEditingController _breakerNotesController = TextEditingController();
 
   // Step 8: İsteğe Bağlı Modüller Controllers (PF, Akım Trafosu)
   final TextEditingController _pfHvTempController = TextEditingController();
@@ -192,16 +197,20 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     _groundOgLightningController.dispose();
     _groundPanelController.dispose();
     _groundFenceController.dispose();
-
     _breakerBrandController.dispose();
     _breakerModelController.dispose();
     _breakerSerialController.dispose();
     _breakerYearController.dispose();
+    _breakerRatedCurrentController.dispose();
+    _breakerVoltageController.dispose();
+    _breakerMotorVoltageController.dispose();
+    _breakerCoilVoltageController.dispose();
     _breakerContactController.dispose();
     _breakerOpenController.dispose();
     _breakerCloseController.dispose();
     _breakerDiffController.dispose();
     _breakerIsoGndController.dispose();
+    _breakerNotesController.dispose();
 
     _pfHvTempController.dispose();
     _pfHvHumidityController.dispose();
@@ -221,24 +230,19 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final ReportService reportService = Provider.of<ReportService>(context, listen: false);
     final Report? report = reportService.activeReport;
     if (report == null) return;
-
     final Map<String, dynamic> data = report.dataJson;
-
-    final AuthService authService = Provider.of<AuthService>(context, listen: false);
-    final User? curUser = authService.currentUser;
 
     setState(() {
       _customerController.text = report.customerName;
       _trafoLabelController.text = report.trafoLabel;
       _addressController.text = data['address']?.toString() ?? data['location']?.toString() ?? '';
+
       _reportDateController.text = data['report_date']?.toString() ?? '';
       _testDateController.text = data['test_date']?.toString() ?? '';
-
-      _operatorNameController.text = curUser?.fullName ?? data['operator_name']?.toString() ?? '';
-      _operatorTitleController.text = curUser?.operatorTitle ?? data['operator_title']?.toString() ?? '';
-
+      _operatorNameController.text = data['operator_name']?.toString() ?? '';
       _deviceModelController.text = data['device_model']?.toString() ?? '';
       _deviceSerialController.text = data['device_serial']?.toString() ?? '';
+      _operatorTitleController.text = data['operator_title']?.toString() ?? '';
 
       _brandController.text = data['brand']?.toString() ?? '';
       _powerController.text = data['power_kva']?.toString() ?? '';
@@ -253,11 +257,12 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _oilBrandController.text = data['oil_brand']?.toString() ?? '';
       _oilWeightController.text = data['oil_weight']?.toString() ?? '';
 
-      // Winding Resistance
-      final Map<dynamic, dynamic> wr = data['winding_resistance'] as Map? ?? <dynamic, dynamic>{};
-      _ogRabController.text = data['og_rab']?.toString() ?? wr['r_phase']?.toString() ?? '';
-      _ogRbcController.text = data['og_rbc']?.toString() ?? wr['s_phase']?.toString() ?? '';
-      _ogRcaController.text = data['og_rca']?.toString() ?? wr['t_phase']?.toString() ?? '';
+      // Og Sargı
+      _ogRabController.text = data['og_rab']?.toString() ?? '';
+      _ogRbcController.text = data['og_rbc']?.toString() ?? '';
+      _ogRcaController.text = data['og_rca']?.toString() ?? '';
+
+      // Ag Sargı
       _agRanController.text = data['ag_ran']?.toString() ?? '';
       _agRbnController.text = data['ag_rbn']?.toString() ?? '';
       _agRcnController.text = data['ag_rcn']?.toString() ?? '';
@@ -265,8 +270,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _agRbcController.text = data['ag_rbc']?.toString() ?? '';
       _agRcaController.text = data['ag_rca']?.toString() ?? '';
 
-      // Insulation
-      _isoTempController.text = data['iso_temp']?.toString() ?? data['iso_temp_c']?.toString() ?? '';
+      // İzolasyon
+      _isoTempController.text = data['iso_temp']?.toString() ?? '';
       _isoHumidityController.text = data['iso_humidity']?.toString() ?? '';
       _isoOgGndController.text = data['iso_og_gnd']?.toString() ?? '';
       _isoAgGndController.text = data['iso_ag_gnd']?.toString() ?? '';
@@ -274,11 +279,10 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _isoCoreGndController.text = data['iso_core_gnd']?.toString() ?? '';
 
       // TTR
-      final Map<dynamic, dynamic> ttr = data['ttr'] as Map? ?? <dynamic, dynamic>{};
-      _ttrNominalController.text = ttr['nominal']?.toString() ?? '';
-      _ttrTap1AController.text = data['ttr_tap1_a']?.toString() ?? ttr['r_phase']?.toString() ?? '';
-      _ttrTap1BController.text = data['ttr_tap1_b']?.toString() ?? ttr['s_phase']?.toString() ?? '';
-      _ttrTap1CController.text = data['ttr_tap1_c']?.toString() ?? ttr['t_phase']?.toString() ?? '';
+      _ttrNominalController.text = data['ttr_nominal']?.toString() ?? '';
+      _ttrTap1AController.text = data['ttr_tap1_a']?.toString() ?? '';
+      _ttrTap1BController.text = data['ttr_tap1_b']?.toString() ?? '';
+      _ttrTap1CController.text = data['ttr_tap1_c']?.toString() ?? '';
       _ttrTap2AController.text = data['ttr_tap2_a']?.toString() ?? '';
       _ttrTap2BController.text = data['ttr_tap2_b']?.toString() ?? '';
       _ttrTap2CController.text = data['ttr_tap2_c']?.toString() ?? '';
@@ -293,8 +297,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _ttrTap5CController.text = data['ttr_tap5_c']?.toString() ?? '';
 
       // Grounding
-      final Map<dynamic, dynamic> gr = data['grounding'] as Map? ?? <dynamic, dynamic>{};
-      _groundTrafoBodyController.text = data['ground_r_trafo_body']?.toString() ?? data['ground_trafo_body']?.toString() ?? gr['value']?.toString() ?? '';
+      _groundTrafoBodyController.text = data['ground_r_trafo_body']?.toString() ?? data['ground_trafo_body']?.toString() ?? '';
       _groundNeutralController.text = data['ground_r_neutral']?.toString() ?? data['ground_neutral']?.toString() ?? '';
       _groundTankController.text = data['ground_r_tank']?.toString() ?? data['ground_tank']?.toString() ?? '';
       _groundOgLightningController.text = data['ground_r_og_lightning']?.toString() ?? data['ground_og_lightning']?.toString() ?? '';
@@ -307,11 +310,16 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _breakerModelController.text = data['breaker_model']?.toString() ?? '';
       _breakerSerialController.text = data['breaker_serial_no']?.toString() ?? '';
       _breakerYearController.text = data['breaker_year']?.toString() ?? '';
+      _breakerRatedCurrentController.text = data['breaker_rated_current']?.toString() ?? '';
+      _breakerVoltageController.text = data['breaker_voltage']?.toString() ?? '';
+      _breakerMotorVoltageController.text = data['breaker_motor_voltage']?.toString() ?? '';
+      _breakerCoilVoltageController.text = data['breaker_coil_voltage']?.toString() ?? '';
       _breakerContactController.text = data['breaker_contact_r']?.toString() ?? br['contact_resistance']?.toString() ?? '';
       _breakerOpenController.text = data['breaker_timing_open']?.toString() ?? br['open_time']?.toString() ?? '';
       _breakerCloseController.text = data['breaker_timing_close']?.toString() ?? br['close_time']?.toString() ?? '';
       _breakerDiffController.text = data['breaker_phase_diff']?.toString() ?? br['phase_diff']?.toString() ?? '';
       _breakerIsoGndController.text = data['breaker_iso_r_gnd']?.toString() ?? '';
+      _breakerNotesController.text = data['breaker_notes']?.toString() ?? '';
 
       // Modules (PF / CT)
       _pfHvTempController.text = data['pf_hv_temp']?.toString() ?? '';
@@ -1815,6 +1823,63 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           children: <Widget>[
             Expanded(
               child: TextFormField(
+                controller: _breakerRatedCurrentController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Anma Akımı (A)', suffixText: 'A', hintText: 'Örn: 630'),
+                onChanged: (String val) => service.updateField('breaker_rated_current', val),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _breakerVoltageController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'Gerilim Seviyesi (V)', suffixText: 'V', hintText: 'Örn: 36000'),
+                onChanged: (String val) => service.updateField('breaker_voltage', val),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _breakerMotorVoltageController,
+                decoration: const InputDecoration(labelText: 'Motor Gerilimi', hintText: 'Örn: 220V DC / 110V DC'),
+                onChanged: (String val) => service.updateField('breaker_motor_voltage', val),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _breakerCoilVoltageController,
+                decoration: const InputDecoration(labelText: 'Bobin Gerilimi', hintText: 'Örn: 220V DC'),
+                onChanged: (String val) => service.updateField('breaker_coil_voltage', val),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        _buildSectionHeader('Kesici Kontrolleri', '10 Adet Kesici Görsel, Temizlik ve Çalışma Kontrolü'),
+        const SizedBox(height: 12),
+        _buildSwitchTile('1. Kesici Görsel Kontrolü', 'breaker_control_visual', report.dataJson),
+        _buildSwitchTile('2. Kesici Temizliği Kontrolü', 'breaker_control_cleanliness', report.dataJson),
+        _buildSwitchTile('3. DC Redresör Kontrolü', 'breaker_control_dc_redresor', report.dataJson),
+        _buildSwitchTile('4. Hücre Temizliği Kontrolü', 'breaker_control_cell_cleanliness', report.dataJson),
+        _buildSwitchTile('5. İndikatör Kontrolü', 'breaker_control_indicator', report.dataJson),
+        _buildSwitchTile('6. Bara Kontrolü', 'breaker_control_busbar', report.dataJson),
+        _buildSwitchTile('7. Mekanik Kontrolü', 'breaker_control_mechanical', report.dataJson),
+        _buildSwitchTile('8. Isıtıcı Kontrolü', 'breaker_control_heater', report.dataJson),
+        _buildSwitchTile('9. Kablo Bağlantı Kontrolü', 'breaker_control_cable', report.dataJson),
+        _buildSwitchTile('10. A.A Röle Kontrolü', 'breaker_control_relay', report.dataJson),
+        const SizedBox(height: 24),
+        _buildSectionHeader('Kesici Ölçümleri', 'İzolasyon direnci, kontak direnci ve açma/kapama süreleri'),
+        const SizedBox(height: 16),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
                 controller: _breakerIsoGndController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(labelText: 'İzolasyon Direnci (GΩ)', suffixText: 'GΩ', hintText: 'Örn: 20000'),
@@ -1884,6 +1949,20 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
               valueText: '$close ms (Limit: < 120 ms)',
             ),
         ],
+        const SizedBox(height: 20),
+        Text('Kesici Sonuç Notu (ANA SAYFA KESİCİ)', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _breakerNotesController,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: 'Kesicinin test, kontrol ve temizliği yapıldı...',
+          ),
+          onChanged: (String val) {
+            final ReportService service = Provider.of<ReportService>(context, listen: false);
+            service.updateField('breaker_notes', val);
+          },
+        ),
       ],
     );
   }
