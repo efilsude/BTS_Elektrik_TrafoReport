@@ -332,8 +332,9 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
               prefixIcon: const Icon(Icons.lock_rounded),
               suffixIcon: IconButton(
                 icon: Icon(
-                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                 ),
+                tooltip: _obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle',
                 onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
               ),
             ),
@@ -354,8 +355,9 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
               prefixIcon: const Icon(Icons.lock_outline_rounded),
               suffixIcon: IconButton(
                 icon: Icon(
-                  _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                  _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                 ),
+                tooltip: _obscureConfirmPassword ? 'Şifreyi göster' : 'Şifreyi gizle',
                 onPressed: () =>
                     setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
               ),

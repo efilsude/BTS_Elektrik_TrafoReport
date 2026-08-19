@@ -275,6 +275,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                                     color: AppTheme.textLight,
                                   ),
+                                  tooltip: _obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle',
                                   onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                                 ),
                               ),

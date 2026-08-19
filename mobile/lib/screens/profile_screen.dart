@@ -518,7 +518,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           labelText: 'Mevcut Şifre',
                           prefixIcon: const Icon(Icons.lock_outline_rounded),
                           suffixIcon: IconButton(
-                            icon: Icon(_obscureOld ? Icons.visibility_off : Icons.visibility),
+                            icon: Icon(_obscureOld ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                            tooltip: _obscureOld ? 'Şifreyi göster' : 'Şifreyi gizle',
                             onPressed: () => setState(() => _obscureOld = !_obscureOld),
                           ),
                         ),
@@ -533,7 +534,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           labelText: 'Yeni Şifre',
                           prefixIcon: const Icon(Icons.lock_rounded),
                           suffixIcon: IconButton(
-                            icon: Icon(_obscureNew ? Icons.visibility_off : Icons.visibility),
+                            icon: Icon(_obscureNew ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                            tooltip: _obscureNew ? 'Şifreyi göster' : 'Şifreyi gizle',
                             onPressed: () => setState(() => _obscureNew = !_obscureNew),
                           ),
                         ),
@@ -551,7 +553,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           labelText: 'Yeni Şifre (Tekrar)',
                           prefixIcon: const Icon(Icons.lock_rounded),
                           suffixIcon: IconButton(
-                            icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
+                            icon: Icon(_obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                            tooltip: _obscureConfirm ? 'Şifreyi göster' : 'Şifreyi gizle',
                             onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
                           ),
                         ),

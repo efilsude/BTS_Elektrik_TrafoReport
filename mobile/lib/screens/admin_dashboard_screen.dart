@@ -43,6 +43,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final TextEditingController emailCtrl = TextEditingController();
     final TextEditingController passCtrl = TextEditingController();
     String selectedRole = 'employee';
+    bool obscurePassword = true;
 
     final bool? created = await showDialog<bool>(
       context: context,
@@ -88,8 +89,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: passCtrl,
-                          obscureText: true,
-                          decoration: const InputDecoration(labelText: 'Şifre *'),
+                          obscureText: obscurePassword,
+                          decoration: InputDecoration(
+                            labelText: 'Şifre *',
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                color: AppTheme.textLight,
+                              ),
+                              tooltip: obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle',
+                              onPressed: () => setDialogState(() => obscurePassword = !obscurePassword),
+                            ),
+                          ),
                           validator: (String? v) => v == null || v.length < 4 ? 'En az 4 karakter' : null,
                         ),
                         const SizedBox(height: 16),
@@ -173,6 +184,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final TextEditingController emailCtrl = TextEditingController(text: targetUser.email ?? '');
     final TextEditingController passCtrl = TextEditingController();
     String selectedRole = targetUser.role;
+    bool obscurePassword = true;
 
     final bool? updated = await showDialog<bool>(
       context: context,
@@ -218,10 +230,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: passCtrl,
-                          obscureText: true,
-                          decoration: const InputDecoration(
+                          obscureText: obscurePassword,
+                          decoration: InputDecoration(
                             labelText: 'Yeni Şifre (Opsiyonel)',
                             hintText: 'Değiştirmek istemiyorsanız boş bırakın',
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                color: AppTheme.textLight,
+                              ),
+                              tooltip: obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle',
+                              onPressed: () => setDialogState(() => obscurePassword = !obscurePassword),
+                            ),
                           ),
                           validator: (String? v) {
                             if (v != null && v.isNotEmpty && v.length < 4) {
