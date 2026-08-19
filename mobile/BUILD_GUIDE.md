@@ -153,12 +153,30 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 
 ## ❓ Troubleshooting & Common Errors
 
-1. **`Android SDK platform-tools not found`**:
-   - Install SDK tools via command line:
-     ```bash
-     sdkmanager "platform-tools" "platforms;android-35" "build-tools;36.1.0"
-     ```
-2. **`JAVA_HOME points to invalid location`**:
-   - Ensure `JAVA_HOME` points to JDK 17/21 root directory (without `/bin`).
-3. **`Gradle build daemon timeout`**:
-   - Run `flutter clean` and re-execute `./build_release.ps1`.
+---
+
+## 📁 Taşınabilir Excel Şablon ve Tools Yolu Yapılandırması (Windows Desktop / CLI)
+
+Uygulama ve `generate_excel.py` Excel şablonlarını ve bağımlılıkları dinamik olarak aşağıdaki sırayla arar (Sabit `C:\Users\...` veya `OneDrive` yolları kullanılmaz):
+
+### Şablon ve Tools Arama Sırası:
+1. `TRAFO_TOOLS_DIR` ortam değişkeni -> `generate_excel.py` ve şablon dizinleri
+2. `TRAFO_REPO_ROOT` ortam değişkeni -> `tools/` + `backend/templates/hybrid/`
+3. Çalıştırılabilir dosya (`.exe`) yanındaki veya üst klasöründeki dizinler:
+   - `tools/generate_excel.py`
+   - `backend/templates/hybrid/`
+   - `templates/hybrid/`
+4. Çalışma dizini (`Directory.current`) ve göreli repo kökü
+
+### Ortam Değişkeni Ayarlama (Farklı PC / Klasör için):
+- **Windows (PowerShell)**:
+  ```powershell
+  [System.Environment]::SetEnvironmentVariable('TRAFO_REPO_ROOT', 'C:\Projeler\BTS_Elektrik_TrafoReport', 'User')
+  ```
+- **Windows (CMD)**:
+  ```cmd
+  setx TRAFO_REPO_ROOT "C:\Projeler\BTS_Elektrik_TrafoReport"
+  ```
+
+Veya Release uygulamanızın (`.exe`) yanına `tools/` ve `backend/templates/hybrid/` klasörlerini kopyalamanız yeterlidir.
+

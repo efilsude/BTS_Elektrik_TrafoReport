@@ -1126,9 +1126,10 @@ def apply_format_and_column_width_fixes(wb):
 def resolve_default_template(mapped_type: str, repo_root: str) -> str:
     """
     Resolves template file path in priority order:
-    1. backend/templates/hybrid/{hermetik_hybrid|gt_hybrid|kuru_tip_hybrid}.xlsx
-    2. backend/templates/{HERMETİK...|TR BAKIM...|KURU TİP...}.xlsx
-    3. mobile/assets/templates/{hermetik|gt|kuru_tip}.xlsx
+    1. TRAFO_TOOLS_DIR env -> ../backend/templates/hybrid/ or ../templates/hybrid/
+    2. TRAFO_REPO_ROOT env -> backend/templates/hybrid/ or templates/hybrid/
+    3. Relative repo_root (script parent) -> backend/templates/hybrid/
+    4. CWD / Exe relative paths -> templates/hybrid/
     """
     type_filename_map = {
         "HERMETIK": ("hermetik_hybrid.xlsx", "HERMETİK TRAFO BAKIM RAPORU HİLMİ.xlsx", "hermetik.xlsx"),
@@ -1138,15 +1139,28 @@ def resolve_default_template(mapped_type: str, repo_root: str) -> str:
     
     hybrid_fname, old_fname, mobile_fname = type_filename_map.get(mapped_type, type_filename_map["HERMETIK"])
     
-    candidates = [
-        # Priority 1: Hybrid templates in backend/templates/hybrid
+    candidates = []
+
+    env_tools_dir = os.environ.get("TRAFO_TOOLS_DIR")
+    if env_tools_dir and os.path.isdir(env_tools_dir):
+        candidates.append(os.path.abspath(os.path.join(env_tools_dir, "..", "backend", "templates", "hybrid", hybrid_fname)))
+        candidates.append(os.path.abspath(os.path.join(env_tools_dir, "..", "templates", "hybrid", hybrid_fname)))
+        candidates.append(os.path.abspath(os.path.join(env_tools_dir, "templates", "hybrid", hybrid_fname)))
+
+    env_repo_root = os.environ.get("TRAFO_REPO_ROOT")
+    if env_repo_root and os.path.isdir(env_repo_root):
+        candidates.append(os.path.abspath(os.path.join(env_repo_root, "backend", "templates", "hybrid", hybrid_fname)))
+        candidates.append(os.path.abspath(os.path.join(env_repo_root, "templates", "hybrid", hybrid_fname)))
+        candidates.append(os.path.abspath(os.path.join(env_repo_root, "backend", "templates", old_fname)))
+
+    candidates.extend([
         os.path.abspath(os.path.join(repo_root, "backend", "templates", "hybrid", hybrid_fname)),
-        # Priority 2: Old templates in backend/templates
+        os.path.abspath(os.path.join(repo_root, "templates", "hybrid", hybrid_fname)),
         os.path.abspath(os.path.join(repo_root, "backend", "templates", old_fname)),
-        # Priority 3: Mobile assets templates
         os.path.abspath(os.path.join(repo_root, "mobile", "assets", "templates", mobile_fname)),
-        os.path.abspath(os.path.join(repo_root, "mobile", "assets", "templates", old_fname)),
-    ]
+        os.path.abspath(os.path.join(os.getcwd(), "backend", "templates", "hybrid", hybrid_fname)),
+        os.path.abspath(os.path.join(os.getcwd(), "templates", "hybrid", hybrid_fname)),
+    ])
 
     for cand in candidates:
         if os.path.exists(cand):

@@ -111,8 +111,7 @@ class ExcelGenerator {
         await tempJsonFile.delete();
       }
       throw Exception(
-        'Excel şablon üretim aracı bulunamadı (generate_excel.py).\n'
-        'Lütfen TRAFO_TOOLS_DIR ortam değişkenini ayarlayın veya uygulamanın yanındaki "tools" klasörünü kontrol edin.',
+        'Şablon/tools bulunamadı. TRAFO_REPO_ROOT veya exe yanına tools + templates koyun.',
       );
     }
 
@@ -247,18 +246,21 @@ class ExcelGenerator {
   }
 
   static String? _findPythonScriptPath() {
+    // 1) TRAFO_TOOLS_DIR -> generate_excel.py
     final String? envToolsDir = Platform.environment['TRAFO_TOOLS_DIR'];
     if (envToolsDir != null && envToolsDir.isNotEmpty) {
       final File envScript = File(p.join(envToolsDir, 'generate_excel.py'));
       if (envScript.existsSync()) return envScript.absolute.path;
     }
 
+    // 2) TRAFO_REPO_ROOT -> tools/generate_excel.py
     final String? envRepoRoot = Platform.environment['TRAFO_REPO_ROOT'];
     if (envRepoRoot != null && envRepoRoot.isNotEmpty) {
       final File envRepoScript = File(p.join(envRepoRoot, 'tools', 'generate_excel.py'));
       if (envRepoScript.existsSync()) return envRepoScript.absolute.path;
     }
 
+    // 3) Platform.resolvedExecutable (exe yanındaki veya üst klasöründeki tools)
     try {
       final Directory exeDir = File(Platform.resolvedExecutable).parent;
       final List<String> exeCandidates = <String>[
@@ -274,12 +276,14 @@ class ExcelGenerator {
       }
     } catch (_) {}
 
+    // 4) Directory.current ve göreli repo kökü
     try {
       final String cwd = Directory.current.path;
       final List<String> cwdCandidates = <String>[
         p.join(cwd, 'tools', 'generate_excel.py'),
         p.join(cwd, '..', 'tools', 'generate_excel.py'),
         p.join(cwd, '..', '..', 'tools', 'generate_excel.py'),
+        p.join(cwd, 'generate_excel.py'),
         'tools/generate_excel.py',
       ];
       for (final String path in cwdCandidates) {
@@ -287,11 +291,6 @@ class ExcelGenerator {
         if (f.existsSync()) return f.absolute.path;
       }
     } catch (_) {}
-
-    const String defaultFallback = 'C:/Users/User/OneDrive/Desktop/BTS_Elektrik/tools/generate_excel.py';
-    if (File(defaultFallback).existsSync()) {
-      return File(defaultFallback).absolute.path;
-    }
 
     return null;
   }
@@ -313,39 +312,50 @@ class ExcelGenerator {
 
     final List<String> candidatePaths = <String>[];
 
-    final String? envRepoRoot = Platform.environment['TRAFO_REPO_ROOT'];
-    if (envRepoRoot != null && envRepoRoot.isNotEmpty) {
-      candidatePaths.add(p.join(envRepoRoot, 'backend', 'templates', 'hybrid', hybridFilename));
-      candidatePaths.add(p.join(envRepoRoot, 'backend', 'templates', oldFilename));
-    }
-
+    // 1) TRAFO_TOOLS_DIR -> templates
     final String? envToolsDir = Platform.environment['TRAFO_TOOLS_DIR'];
     if (envToolsDir != null && envToolsDir.isNotEmpty) {
       candidatePaths.add(p.join(envToolsDir, '..', 'backend', 'templates', 'hybrid', hybridFilename));
+      candidatePaths.add(p.join(envToolsDir, '..', 'templates', 'hybrid', hybridFilename));
+      candidatePaths.add(p.join(envToolsDir, 'templates', 'hybrid', hybridFilename));
       candidatePaths.add(p.join(envToolsDir, '..', 'backend', 'templates', oldFilename));
     }
 
+    // 2) TRAFO_REPO_ROOT -> tools/ + backend/templates/hybrid/
+    final String? envRepoRoot = Platform.environment['TRAFO_REPO_ROOT'];
+    if (envRepoRoot != null && envRepoRoot.isNotEmpty) {
+      candidatePaths.add(p.join(envRepoRoot, 'backend', 'templates', 'hybrid', hybridFilename));
+      candidatePaths.add(p.join(envRepoRoot, 'templates', 'hybrid', hybridFilename));
+      candidatePaths.add(p.join(envRepoRoot, 'backend', 'templates', oldFilename));
+    }
+
+    // 3) Platform.resolvedExecutable (exe yanı)
     try {
       final Directory exeDir = File(Platform.resolvedExecutable).parent;
       candidatePaths.addAll(<String>[
         p.join(exeDir.path, 'backend', 'templates', 'hybrid', hybridFilename),
         p.join(exeDir.path, 'templates', 'hybrid', hybridFilename),
+        p.join(exeDir.path, 'tools', '..', 'backend', 'templates', 'hybrid', hybridFilename),
         p.join(exeDir.path, '..', 'backend', 'templates', 'hybrid', hybridFilename),
+        p.join(exeDir.path, '..', 'templates', 'hybrid', hybridFilename),
         p.join(exeDir.path, '..', '..', 'backend', 'templates', 'hybrid', hybridFilename),
         p.join(exeDir.path, 'backend', 'templates', oldFilename),
         p.join(exeDir.path, '..', 'backend', 'templates', oldFilename),
       ]);
     } catch (_) {}
 
-    final String cwd = Directory.current.path;
-    candidatePaths.addAll(<String>[
-      p.join(cwd, 'backend', 'templates', 'hybrid', hybridFilename),
-      p.join(cwd, '..', 'backend', 'templates', 'hybrid', hybridFilename),
-      p.join(cwd, 'backend', 'templates', oldFilename),
-      p.join(cwd, '..', 'backend', 'templates', oldFilename),
-      'C:/Users/User/OneDrive/Desktop/BTS_Elektrik/backend/templates/hybrid/$hybridFilename',
-      'C:/Users/User/OneDrive/Desktop/BTS_Elektrik/backend/templates/$oldFilename',
-    ]);
+    // 4) Directory.current ve göreli repo kökü
+    try {
+      final String cwd = Directory.current.path;
+      candidatePaths.addAll(<String>[
+        p.join(cwd, 'backend', 'templates', 'hybrid', hybridFilename),
+        p.join(cwd, 'templates', 'hybrid', hybridFilename),
+        p.join(cwd, '..', 'backend', 'templates', 'hybrid', hybridFilename),
+        p.join(cwd, '..', 'templates', 'hybrid', hybridFilename),
+        p.join(cwd, 'backend', 'templates', oldFilename),
+        p.join(cwd, '..', 'backend', 'templates', oldFilename),
+      ]);
+    } catch (_) {}
 
     for (final String path in candidatePaths) {
       final File f = File(path);
