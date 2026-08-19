@@ -96,12 +96,11 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   final TextEditingController _ttrTap5BController = TextEditingController();
   final TextEditingController _ttrTap5CController = TextEditingController();
 
-  final TextEditingController _groundTrafoBodyController = TextEditingController();
-  final TextEditingController _groundNeutralController = TextEditingController();
-  final TextEditingController _groundTankController = TextEditingController();
-  final TextEditingController _groundOgLightningController = TextEditingController();
-  final TextEditingController _groundPanelController = TextEditingController();
-  final TextEditingController _groundFenceController = TextEditingController();
+  final TextEditingController _groundIsletmeNotrController = TextEditingController();
+  final TextEditingController _groundKorumaTrafoController = TextEditingController();
+  final TextEditingController _groundKorumaHucreController = TextEditingController();
+  final TextEditingController _groundKorumaKapilarController = TextEditingController();
+  final TextEditingController _groundKorumaAgPanoController = TextEditingController();
 
   // Step 7: Kesici Controllers
   final TextEditingController _breakerBrandController = TextEditingController();
@@ -202,12 +201,11 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     _ttrTap5BController.dispose();
     _ttrTap5CController.dispose();
 
-    _groundTrafoBodyController.dispose();
-    _groundNeutralController.dispose();
-    _groundTankController.dispose();
-    _groundOgLightningController.dispose();
-    _groundPanelController.dispose();
-    _groundFenceController.dispose();
+    _groundIsletmeNotrController.dispose();
+    _groundKorumaTrafoController.dispose();
+    _groundKorumaHucreController.dispose();
+    _groundKorumaKapilarController.dispose();
+    _groundKorumaAgPanoController.dispose();
     _breakerBrandController.dispose();
     _breakerModelController.dispose();
     _breakerSerialController.dispose();
@@ -312,12 +310,11 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _ttrTap5CController.text = data['ttr_tap5_c']?.toString() ?? '';
 
       // Grounding
-      _groundTrafoBodyController.text = data['ground_r_trafo_body']?.toString() ?? data['ground_trafo_body']?.toString() ?? '';
-      _groundNeutralController.text = data['ground_r_neutral']?.toString() ?? data['ground_neutral']?.toString() ?? '';
-      _groundTankController.text = data['ground_r_tank']?.toString() ?? data['ground_tank']?.toString() ?? '';
-      _groundOgLightningController.text = data['ground_r_og_lightning']?.toString() ?? data['ground_og_lightning']?.toString() ?? '';
-      _groundPanelController.text = data['ground_r_panel']?.toString() ?? data['ground_panel']?.toString() ?? '';
-      _groundFenceController.text = data['ground_r_fence']?.toString() ?? data['ground_fence']?.toString() ?? '';
+      _groundIsletmeNotrController.text = data['ground_isletme_notr']?.toString() ?? data['ground_r_neutral']?.toString() ?? data['ground_neutral']?.toString() ?? '';
+      _groundKorumaTrafoController.text = data['ground_koruma_trafo']?.toString() ?? data['ground_r_trafo_body']?.toString() ?? data['ground_trafo_body']?.toString() ?? data['ground_r_tank']?.toString() ?? '';
+      _groundKorumaHucreController.text = data['ground_koruma_hucre']?.toString() ?? data['ground_r_hucre']?.toString() ?? '';
+      _groundKorumaKapilarController.text = data['ground_koruma_kapilar']?.toString() ?? data['ground_r_kapilar']?.toString() ?? data['ground_r_og_lightning']?.toString() ?? '';
+      _groundKorumaAgPanoController.text = data['ground_koruma_ag_pano']?.toString() ?? data['ground_r_ag_pano']?.toString() ?? data['ground_r_panel']?.toString() ?? '';
 
       // Breaker
       final Map<dynamic, dynamic> br = data['breaker'] as Map? ?? <dynamic, dynamic>{};
@@ -1804,9 +1801,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
     final Map<String, dynamic> evaluation = _calculateTtrError();
 
-    final double? groundVal = double.tryParse(_groundTrafoBodyController.text.replaceAll(',', '.'));
-    final bool groundOk = groundVal != null && groundVal <= 2.0;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -1874,56 +1868,131 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         ),
         const SizedBox(height: 32),
 
-        _buildSectionHeader('Topraklama Direnci Ölçümleri (Ohm)', 'Gövde, nötr ve şalt sahası topraklama dirençleri.'),
+        const SizedBox(height: 32),
+
+        _buildSectionHeader('Topraklama Direnci Ölçümleri (Ohm)', 'TOPRAKLAMALAR sayfasında yer alan 5 ölçüm kalemi.'),
         const SizedBox(height: 16),
         TextFormField(
-          controller: _groundTrafoBodyController,
+          controller: _groundIsletmeNotrController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
-          decoration: const InputDecoration(labelText: 'Trafo Gövde Topraklaması (Ω)', suffixText: 'Ω'),
+          inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
+          decoration: const InputDecoration(labelText: 'İşletme (Nötr) Topraklama Direnci (Ω)', suffixText: 'Ω'),
           onChanged: (String val) {
-            service.updateField('ground_r_trafo_body', val);
-            service.updateField('ground_trafo_body', val);
-            service.updateField('grounding.value', val);
+            service.updateField('ground_isletme_notr', val);
+            service.updateField('ground_r_neutral', val);
+            service.updateField('ground_neutral', val);
+            setState(() {});
           },
         ),
-        if (groundVal != null)
-          _buildInstantFeedbackRow(
-            isOk: groundOk,
-            label: 'Toprak Direnci Karşılaştırması',
-            valueText: '$groundVal Ω (Limit: ≤ 2.0 Ω)',
-          ),
         const SizedBox(height: 16),
         Row(
           children: <Widget>[
             Expanded(
               child: TextFormField(
-                controller: _groundNeutralController,
+                controller: _groundKorumaTrafoController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
-                decoration: const InputDecoration(labelText: 'Yıldız Noktası (Nötr) (Ω)'),
+                decoration: const InputDecoration(labelText: 'Koruma – Trafo (Ω)', suffixText: 'Ω'),
                 onChanged: (String val) {
-                  service.updateField('ground_r_neutral', val);
-                  service.updateField('ground_neutral', val);
+                  service.updateField('ground_koruma_trafo', val);
+                  service.updateField('ground_r_trafo_body', val);
+                  service.updateField('ground_trafo_body', val);
+                  service.updateField('grounding.value', val);
+                  setState(() {});
                 },
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: TextFormField(
-                controller: _groundTankController,
+                controller: _groundKorumaHucreController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
-                decoration: const InputDecoration(labelText: 'Kazan / Tank Topraklaması (Ω)'),
+                decoration: const InputDecoration(labelText: 'Koruma – Hücre (Ω)', suffixText: 'Ω'),
                 onChanged: (String val) {
-                  service.updateField('ground_r_tank', val);
-                  service.updateField('ground_tank', val);
+                  service.updateField('ground_koruma_hucre', val);
+                  service.updateField('ground_r_hucre', val);
+                  setState(() {});
                 },
               ),
             ),
           ],
         ),
+        const SizedBox(height: 16),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _groundKorumaKapilarController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
+                decoration: const InputDecoration(labelText: 'Koruma – Kapılar (Ω)', suffixText: 'Ω'),
+                onChanged: (String val) {
+                  service.updateField('ground_koruma_kapilar', val);
+                  service.updateField('ground_r_kapilar', val);
+                  setState(() {});
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _groundKorumaAgPanoController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
+                decoration: const InputDecoration(labelText: 'Koruma – AG. Pano (Ω)', suffixText: 'Ω'),
+                onChanged: (String val) {
+                  service.updateField('ground_koruma_ag_pano', val);
+                  service.updateField('ground_r_ag_pano', val);
+                  service.updateField('ground_r_panel', val);
+                  setState(() {});
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        _buildGroundingEvaluationCard(),
       ],
+    );
+  }
+
+  Widget _buildGroundingEvaluationCard() {
+    final List<double> vals = <double>[];
+    for (final String raw in <String>[
+      _groundIsletmeNotrController.text,
+      _groundKorumaTrafoController.text,
+      _groundKorumaHucreController.text,
+      _groundKorumaKapilarController.text,
+      _groundKorumaAgPanoController.text,
+    ]) {
+      final double? d = double.tryParse(raw.replaceAll(',', '.'));
+      if (d != null) {
+        vals.add(d);
+      }
+    }
+
+    if (vals.isEmpty) {
+      return _buildEvaluationCard(
+        title: 'Topraklama Direnci Değerlendirmesi',
+        feedback: <String, dynamic>{'status': 'Eksik'},
+        limitText: 'Maksimum İzin Verilen Topraklama Direnci: Max. 4.0 Ω',
+        valueText: 'Gözlemlenen: Değer Bekleniyor...',
+      );
+    }
+
+    final double maxVal = vals.reduce((double a, double b) => a > b ? a : b);
+    final bool isOk = maxVal <= 4.0;
+    final Map<String, dynamic> feedback = <String, dynamic>{
+      'status': isOk ? 'UYGUN' : 'UYGUN DEĞİL',
+      'max': maxVal,
+    };
+
+    return _buildEvaluationCard(
+      title: 'Topraklama Direnci Değerlendirmesi',
+      feedback: feedback,
+      limitText: 'Maksimum İzin Verilen Topraklama Direnci: Max. 4.0 Ω',
+      valueText: 'Maksimum Ölçülen Direnç: ${maxVal.toStringAsFixed(2)} Ω',
     );
   }
 

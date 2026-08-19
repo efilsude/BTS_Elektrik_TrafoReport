@@ -69,6 +69,11 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "F70": "iso_yg_ag_30s",
             "I70": "iso_yg_ag_45s",
             "L70": "iso_yg_ag_60s",
+            "H46": "ground_koruma_trafo",
+            "H48": "ground_isletme_notr",
+            "H50": "ground_koruma_hucre",
+            "Q46": "ground_koruma_ag_pano",
+            "Q48": "ground_koruma_kapilar",
             "B73": "notes",
             "F81": "operator_title",
         },
@@ -115,12 +120,11 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D9": "operator_name",
             "J9": "device_model",
             "O9": "device_serial",
-            "D17": "ground_r_trafo_body",
-            "D18": "ground_r_neutral",
-            "D19": "ground_r_tank",
-            "D32": "ground_r_og_lightning",
-            "D33": "ground_r_panel",
-            "D34": "ground_r_fence",
+            "K16": "ground_isletme_notr",
+            "K26": "ground_koruma_trafo",
+            "K27": "ground_koruma_hucre",
+            "K28": "ground_koruma_kapilar",
+            "K29": "ground_koruma_ag_pano",
         },
         "HV PF": {
             "D11": "operator_name",
@@ -212,12 +216,6 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O49": "ag_rab",
             "O51": "ag_rbc",
             "O53": "ag_rca",
-            "C55": "ground_r_trafo_body",
-            "F55": "ground_r_neutral",
-            "J55": "ground_r_tank",
-            "C57": "ground_r_og_lightning",
-            "F57": "ground_r_panel",
-            "J57": "ground_r_fence",
             "B67": "notes",
             "F74": "operator_title",
         },
@@ -264,12 +262,11 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D9": "operator_name",
             "J9": "device_model",
             "O9": "device_serial",
-            "D17": "ground_r_trafo_body",
-            "D18": "ground_r_neutral",
-            "D19": "ground_r_tank",
-            "D32": "ground_r_og_lightning",
-            "D33": "ground_r_panel",
-            "D34": "ground_r_fence",
+            "K16": "ground_isletme_notr",
+            "K26": "ground_koruma_trafo",
+            "K27": "ground_koruma_hucre",
+            "K28": "ground_koruma_kapilar",
+            "K29": "ground_koruma_ag_pano",
         },
         "HV PF": {
             "D11": "operator_name",
@@ -371,7 +368,11 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "F70": "iso_yg_ag_30s",
             "I70": "iso_yg_ag_45s",
             "L70": "iso_yg_ag_60s",
-            "J63": "ground_r_fence",
+            "H46": "ground_koruma_trafo",
+            "H48": "ground_isletme_notr",
+            "H50": "ground_koruma_hucre",
+            "Q46": "ground_koruma_ag_pano",
+            "Q48": "ground_koruma_kapilar",
             "B73": "notes",
             "F81": "operator_title",
         },
@@ -418,12 +419,11 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "D9": "operator_name",
             "J9": "device_model",
             "O9": "device_serial",
-            "D17": "ground_r_trafo_body",
-            "D18": "ground_r_neutral",
-            "D19": "ground_r_tank",
-            "D32": "ground_r_og_lightning",
-            "D33": "ground_r_panel",
-            "D34": "ground_r_fence",
+            "K16": "ground_isletme_notr",
+            "K26": "ground_koruma_trafo",
+            "K27": "ground_koruma_hucre",
+            "K28": "ground_koruma_kapilar",
+            "K29": "ground_koruma_ag_pano",
         },
         "ANA SAYFA KESİCİ": {
             "G11": "breaker_brand",
@@ -475,11 +475,14 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
 }
 
 SAMPLE_CLEAR_RANGES = {
+    "TOPRAKLAMALAR": ["K16", "K26", "K27", "K28", "K29"],
     "ANA SAYFA": [
         "G31", "O55", "O57", "O59",
         "F66", "I66", "L66",
         "F68", "I68", "L68",
-        "F70", "I70", "L70"
+        "F70", "I70", "L70",
+        "H46", "H48", "H50", "Q46", "Q48",
+        "H40", "H42", "H44", "Q40", "Q42"
     ],
     "ANA SAYFA KESİCİ": [
         "G11", "O11", "G13", "O13", "G15", "O15", "G17", "O17",
@@ -1288,6 +1291,13 @@ def main():
     data_dict.setdefault("iso_yg_ag_45s", data_dict.get("iso_og_ag_45s"))
     data_dict.setdefault("iso_yg_ag_60s", data_dict.get("iso_og_ag_60s"))
 
+    # Grounding 5-field fallback aliases
+    data_dict.setdefault("ground_isletme_notr", data_dict.get("ground_r_neutral") or data_dict.get("ground_neutral"))
+    data_dict.setdefault("ground_koruma_trafo", data_dict.get("ground_r_trafo_body") or data_dict.get("ground_trafo_body") or data_dict.get("ground_r_tank"))
+    data_dict.setdefault("ground_koruma_hucre", data_dict.get("ground_r_hucre"))
+    data_dict.setdefault("ground_koruma_kapilar", data_dict.get("ground_r_kapilar") or data_dict.get("ground_r_og_lightning"))
+    data_dict.setdefault("ground_koruma_ag_pano", data_dict.get("ground_r_ag_pano") or data_dict.get("ground_r_panel"))
+
     # 3. Resolve template path
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     if args.template and os.path.exists(args.template):
@@ -1313,7 +1323,8 @@ def main():
 
     # 5. Cell writing loop across sheets (Mapping-first clear-then-write)
     force_overwrite_keys = {
-        "operator_name", "operator_title", "creator_display_name", "notes", "device_model", "device_serial"
+        "operator_name", "operator_title", "creator_display_name", "notes", "device_model", "device_serial",
+        "ground_isletme_notr", "ground_koruma_trafo", "ground_koruma_hucre", "ground_koruma_kapilar", "ground_koruma_ag_pano"
     }
 
     for target_sheet_name, cell_map in cell_map_sheets.items():
