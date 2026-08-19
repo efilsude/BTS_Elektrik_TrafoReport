@@ -5,6 +5,7 @@ import '../database/database_helper.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/validators.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -65,26 +66,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         TextFormField(
                           controller: nameCtrl,
                           decoration: const InputDecoration(labelText: 'Ad Soyad (Operatör Adı) *'),
-                          validator: (String? v) => v == null || v.trim().isEmpty ? 'Zorunlu' : null,
+                          validator: Validators.validateFullName,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: titleCtrl,
                           decoration: const InputDecoration(labelText: 'Unvan (Elektrik Mühendisi vb.) *'),
-                          validator: (String? v) => v == null || v.trim().isEmpty ? 'Zorunlu' : null,
+                          validator: Validators.validateTitle,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: phoneCtrl,
                           keyboardType: TextInputType.phone,
                           decoration: const InputDecoration(labelText: 'Telefon Numarası *', hintText: '05XXXXXXXXX'),
-                          validator: (String? v) => v == null || v.trim().isEmpty ? 'Zorunlu' : null,
+                          validator: Validators.validatePhone,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: emailCtrl,
                           keyboardType: TextInputType.emailAddress,
                           decoration: const InputDecoration(labelText: 'E-posta (Opsiyonel)'),
+                          validator: Validators.validateEmailOptional,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
@@ -101,7 +103,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               onPressed: () => setDialogState(() => obscurePassword = !obscurePassword),
                             ),
                           ),
-                          validator: (String? v) => v == null || v.length < 4 ? 'En az 4 karakter' : null,
+                          validator: (String? v) => Validators.validatePassword(v, minLength: 4),
                         ),
                         const SizedBox(height: 16),
                         Text('Kullanıcı Rolü:', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13)),
@@ -206,26 +208,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         TextFormField(
                           controller: nameCtrl,
                           decoration: const InputDecoration(labelText: 'Ad Soyad (Operatör Adı) *'),
-                          validator: (String? v) => v == null || v.trim().isEmpty ? 'Zorunlu' : null,
+                          validator: Validators.validateFullName,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: titleCtrl,
                           decoration: const InputDecoration(labelText: 'Unvan (Elektrik Mühendisi vb.) *'),
-                          validator: (String? v) => v == null || v.trim().isEmpty ? 'Zorunlu' : null,
+                          validator: Validators.validateTitle,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: phoneCtrl,
                           keyboardType: TextInputType.phone,
                           decoration: const InputDecoration(labelText: 'Telefon Numarası *', hintText: '05XXXXXXXXX'),
-                          validator: (String? v) => v == null || v.trim().isEmpty ? 'Zorunlu' : null,
+                          validator: Validators.validatePhone,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: emailCtrl,
                           keyboardType: TextInputType.emailAddress,
                           decoration: const InputDecoration(labelText: 'E-posta (Opsiyonel)'),
+                          validator: Validators.validateEmailOptional,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
@@ -243,12 +246,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               onPressed: () => setDialogState(() => obscurePassword = !obscurePassword),
                             ),
                           ),
-                          validator: (String? v) {
-                            if (v != null && v.isNotEmpty && v.length < 4) {
-                              return 'Şifre en az 4 karakter olmalıdır';
-                            }
-                            return null;
-                          },
+                          validator: (String? v) => Validators.validatePasswordOptional(v, minLength: 4),
                         ),
                         const SizedBox(height: 16),
                         Text('Kullanıcı Rolü:', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13)),

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/validators.dart';
 import '../home_screen.dart';
 
 class FirstAdminBootstrapScreen extends StatefulWidget {
@@ -38,19 +39,6 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
 
   Future<void> _handleBootstrap() async {
     if (!_formKey.currentState!.validate()) return;
-
-    if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Şifreler eşleşmiyor.',
-            style: GoogleFonts.inter(fontWeight: FontWeight.w500),
-          ),
-          backgroundColor: AppTheme.errorColor,
-        ),
-      );
-      return;
-    }
 
     final AuthService authService = Provider.of<AuthService>(context, listen: false);
 
@@ -106,60 +94,58 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
   Widget _buildWideLayout(AuthService authService) {
     return Row(
       children: <Widget>[
-        // Sol Banner Paneli
+        // Sol Bilgi Paneli
         Expanded(
           flex: 5,
           child: Container(
             decoration: const BoxDecoration(
               gradient: AppTheme.primaryGradient,
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(40.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.admin_panel_settings_rounded,
-                      size: 56,
-                      color: AppTheme.accentColor,
-                    ),
+            padding: const EdgeInsets.all(48),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Sistem Kurulumu',
-                    style: GoogleFonts.outfit(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                  child: const Icon(
+                    Icons.admin_panel_settings_rounded,
+                    size: 48,
+                    color: AppTheme.accentColor,
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'İlk Yönetici Kaydı',
-                    style: GoogleFonts.inter(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.accentColor,
-                    ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Sistem Kurulumu',
+                  style: GoogleFonts.outfit(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Cihazınızda kayıtlı kullanıcı bulunmuyor. Sistem ana yöneticisini tanımlayarak cihazınızı kullanıma açın.',
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      color: Colors.white70,
-                      height: 1.5,
-                    ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'İlk Yönetici (Admin) Hesabı',
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.accentColor,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Cihazınızda kayıtlı kullanıcı bulunmuyor. Sistem ana yöneticisini tanımlayarak cihazınızı kullanıma açın.',
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    color: Colors.white70,
+                    height: 1.5,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -281,8 +267,7 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
               labelText: 'Ad Soyad *',
               prefixIcon: Icon(Icons.person_rounded),
             ),
-            validator: (String? val) =>
-                val == null || val.trim().isEmpty ? 'Ad Soyad zorunludur' : null,
+            validator: Validators.validateFullName,
           ),
           const SizedBox(height: 16),
 
@@ -293,8 +278,7 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
               labelText: 'Unvan (Elektrik Mühendisi vb.) *',
               prefixIcon: Icon(Icons.work_rounded),
             ),
-            validator: (String? val) =>
-                val == null || val.trim().isEmpty ? 'Unvan zorunludur' : null,
+            validator: Validators.validateTitle,
           ),
           const SizedBox(height: 16),
 
@@ -307,8 +291,7 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
               prefixIcon: Icon(Icons.phone_rounded),
               hintText: '05XXXXXXXXX',
             ),
-            validator: (String? val) =>
-                val == null || val.trim().isEmpty ? 'Telefon numarası zorunludur' : null,
+            validator: Validators.validatePhone,
           ),
           const SizedBox(height: 16),
 
@@ -320,6 +303,7 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
               labelText: 'E-posta Adresi (Opsiyonel)',
               prefixIcon: Icon(Icons.email_rounded),
             ),
+            validator: Validators.validateEmailOptional,
           ),
           const SizedBox(height: 16),
 
@@ -338,11 +322,7 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
                 onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
               ),
             ),
-            validator: (String? val) {
-              if (val == null || val.isEmpty) return 'Şifre zorunludur';
-              if (val.length < 6) return 'Şifre en az 6 karakter olmalıdır';
-              return null;
-            },
+            validator: (String? val) => Validators.validatePassword(val, minLength: 4),
           ),
           const SizedBox(height: 16),
 
@@ -362,10 +342,7 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
                     setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
               ),
             ),
-            validator: (String? val) {
-              if (val == null || val.isEmpty) return 'Şifre tekrarı zorunludur';
-              return null;
-            },
+            validator: (String? val) => Validators.validateConfirmPassword(val, _passwordController.text),
           ),
           const SizedBox(height: 24),
 
