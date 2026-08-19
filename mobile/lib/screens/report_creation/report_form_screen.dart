@@ -59,9 +59,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   final TextEditingController _agRanController = TextEditingController();
   final TextEditingController _agRbnController = TextEditingController();
   final TextEditingController _agRcnController = TextEditingController();
-  final TextEditingController _agRabController = TextEditingController();
-  final TextEditingController _agRbcController = TextEditingController();
-  final TextEditingController _agRcaController = TextEditingController();
 
   // Step 5: İzolasyon Controllers
   final TextEditingController _isoTempController = TextEditingController();
@@ -160,9 +157,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     _agRanController.dispose();
     _agRbnController.dispose();
     _agRcnController.dispose();
-    _agRabController.dispose();
-    _agRbcController.dispose();
-    _agRcaController.dispose();
 
     _isoTempController.dispose();
     _isoHumidityController.dispose();
@@ -258,9 +252,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _agRanController.text = data['ag_ran']?.toString() ?? '';
       _agRbnController.text = data['ag_rbn']?.toString() ?? '';
       _agRcnController.text = data['ag_rcn']?.toString() ?? '';
-      _agRabController.text = data['ag_rab']?.toString() ?? '';
-      _agRbcController.text = data['ag_rbc']?.toString() ?? '';
-      _agRcaController.text = data['ag_rca']?.toString() ?? '';
 
       // İzolasyon
       _isoTempController.text = data['iso_temp']?.toString() ?? '';
@@ -526,6 +517,31 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final double? r = double.tryParse(_ogRabController.text.replaceAll(',', '.'));
     final double? s = double.tryParse(_ogRbcController.text.replaceAll(',', '.'));
     final double? t = double.tryParse(_ogRcaController.text.replaceAll(',', '.'));
+
+    if (r == null || s == null || t == null) {
+      return <String, dynamic>{'unbalance': null, 'status': 'Eksik'};
+    }
+
+    final double max = <double>[r, s, t].reduce((double a, double b) => a > b ? a : b);
+    final double min = <double>[r, s, t].reduce((double a, double b) => a < b ? a : b);
+    final double avg = (r + s + t) / 3.0;
+
+    if (avg == 0) return <String, dynamic>{'unbalance': 0.0, 'status': 'UYGUN'};
+
+    final double unbalance = ((max - min) / avg) * 100.0;
+    final bool ok = unbalance <= 5.0;
+
+    return <String, dynamic>{
+      'unbalance': unbalance,
+      'status': ok ? 'UYGUN' : 'UYGUN DEĞİL',
+      'color': ok ? AppTheme.successColor : AppTheme.errorColor,
+    };
+  }
+
+  Map<String, dynamic> _calculateAgWindingUnbalance() {
+    final double? r = double.tryParse(_agRanController.text.replaceAll(',', '.'));
+    final double? s = double.tryParse(_agRbnController.text.replaceAll(',', '.'));
+    final double? t = double.tryParse(_agRcnController.text.replaceAll(',', '.'));
 
     if (r == null || s == null || t == null) {
       return <String, dynamic>{'unbalance': null, 'status': 'Eksik'};
@@ -1439,6 +1455,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   Widget _buildWindingStep(Report report) {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
     final Map<String, dynamic> evaluation = _calculateWindingUnbalance();
+    final Map<String, dynamic> agEvaluation = _calculateAgWindingUnbalance();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1456,6 +1473,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                 onChanged: (String val) {
                   service.updateField('og_rab', val);
                   service.updateField('winding_resistance.r_phase', val);
+                  setState(() {});
                 },
               ),
             ),
@@ -1469,6 +1487,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                 onChanged: (String val) {
                   service.updateField('og_rbc', val);
                   service.updateField('winding_resistance.s_phase', val);
+                  setState(() {});
                 },
               ),
             ),
@@ -1482,6 +1501,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                 onChanged: (String val) {
                   service.updateField('og_rca', val);
                   service.updateField('winding_resistance.t_phase', val);
+                  setState(() {});
                 },
               ),
             ),
@@ -1498,7 +1518,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         ),
         const SizedBox(height: 32),
 
-        _buildSectionHeader('AG Sargı Direnç Ölçümleri (Faz-Nötr ve Faz-Faz)', 'Sekonder AG sargılarının miliohm (mΩ) cinsinden dirençleri.'),
+        _buildSectionHeader('AG Sargı Direnç Ölçümleri (Faz-Nötr)', 'Sekonder AG sargılarının miliohm (mΩ) cinsinden dirençleri.'),
         const SizedBox(height: 16),
         Row(
           children: <Widget>[
@@ -1508,7 +1528,10 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'AG R-AN (mΩ)'),
-                onChanged: (String val) => service.updateField('ag_ran', val),
+                onChanged: (String val) {
+                  service.updateField('ag_ran', val);
+                  setState(() {});
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -1518,7 +1541,10 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'AG R-BN (mΩ)'),
-                onChanged: (String val) => service.updateField('ag_rbn', val),
+                onChanged: (String val) {
+                  service.updateField('ag_rbn', val);
+                  setState(() {});
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -1528,44 +1554,22 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
                 decoration: const InputDecoration(labelText: 'AG R-CN (mΩ)'),
-                onChanged: (String val) => service.updateField('ag_rcn', val),
+                onChanged: (String val) {
+                  service.updateField('ag_rcn', val);
+                  setState(() {});
+                },
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: TextFormField(
-                controller: _agRabController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
-                decoration: const InputDecoration(labelText: 'AG R-AB (mΩ)'),
-                onChanged: (String val) => service.updateField('ag_rab', val),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: TextFormField(
-                controller: _agRbcController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
-                decoration: const InputDecoration(labelText: 'AG R-BC (mΩ)'),
-                onChanged: (String val) => service.updateField('ag_rbc', val),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: TextFormField(
-                controller: _agRcaController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
-                decoration: const InputDecoration(labelText: 'AG R-CA (mΩ)'),
-                onChanged: (String val) => service.updateField('ag_rca', val),
-              ),
-            ),
-          ],
+        const SizedBox(height: 24),
+        _buildEvaluationCard(
+          title: 'AG Faz Dengesizliği Değerlendirmesi',
+          feedback: agEvaluation,
+          limitText: 'Maksimum İzin Verilen Dengesizlik Sınırı: %5 (0.05)',
+          valueText: agEvaluation['unbalance'] != null
+              ? 'Maksimum Faz Dengesizliği: %${(agEvaluation['unbalance'] as double).toStringAsFixed(2)}'
+              : 'Gözlemlenen: Değer Bekleniyor...',
         ),
       ],
     );

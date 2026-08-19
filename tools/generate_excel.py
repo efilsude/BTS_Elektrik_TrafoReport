@@ -457,7 +457,7 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
 }
 
 SAMPLE_CLEAR_RANGES = {
-    "ANA SAYFA": ["G31"],
+    "ANA SAYFA": ["G31", "O55", "O57", "O59"],
     "ANA SAYFA KESİCİ": [
         "G11", "O11", "G13", "O13", "G15", "O15", "G17", "O17",
         "G24", "I24", "P24", "R24", "G26", "H26", "I26", "P26", "R26",
