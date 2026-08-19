@@ -1778,6 +1778,11 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final double? open = double.tryParse(_breakerOpenController.text.replaceAll(',', '.'));
     final double? close = double.tryParse(_breakerCloseController.text.replaceAll(',', '.'));
 
+    final dynamic rawBreakerDcVoltage = report.dataJson['breaker_dc_redresor_voltage'];
+    final String? currentBreakerDcVoltage = (rawBreakerDcVoltage != null && rawBreakerDcVoltage.toString().trim().isNotEmpty)
+        ? (rawBreakerDcVoltage.toString().toUpperCase().contains('110') ? '110 VDC' : '24 VDC')
+        : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -1872,6 +1877,30 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         _buildSwitchTile('1. Kesici Görsel Kontrolü', 'breaker_control_visual', report.dataJson),
         _buildSwitchTile('2. Kesici Temizliği Kontrolü', 'breaker_control_cleanliness', report.dataJson),
         _buildSwitchTile('3. DC Redresör Kontrolü', 'breaker_control_dc_redresor', report.dataJson),
+        Padding(
+          padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 12.0),
+          child: Row(
+            children: <Widget>[
+              Text('Kesici DC Voltaj Seçimi: ', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
+              const SizedBox(width: 12),
+              ChoiceChip(
+                label: const Text('24 VDC'),
+                selected: currentBreakerDcVoltage == '24 VDC',
+                onSelected: (bool sel) {
+                  service.updateField('breaker_dc_redresor_voltage', sel ? '24 VDC' : null);
+                },
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: const Text('110 VDC'),
+                selected: currentBreakerDcVoltage == '110 VDC',
+                onSelected: (bool sel) {
+                  service.updateField('breaker_dc_redresor_voltage', sel ? '110 VDC' : null);
+                },
+              ),
+            ],
+          ),
+        ),
         _buildSwitchTile('4. Hücre Temizliği Kontrolü', 'breaker_control_cell_cleanliness', report.dataJson),
         _buildSwitchTile('5. İndikatör Kontrolü', 'breaker_control_indicator', report.dataJson),
         _buildSwitchTile('6. Bara Kontrolü', 'breaker_control_busbar', report.dataJson),
