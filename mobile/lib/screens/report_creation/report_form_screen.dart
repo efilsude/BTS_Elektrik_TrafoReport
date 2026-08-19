@@ -68,6 +68,16 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   final TextEditingController _isoOgAgController = TextEditingController();
   final TextEditingController _isoCoreGndController = TextEditingController();
 
+  final TextEditingController _isoYgTank30sController = TextEditingController();
+  final TextEditingController _isoYgTank45sController = TextEditingController();
+  final TextEditingController _isoYgTank60sController = TextEditingController();
+  final TextEditingController _isoAgTank30sController = TextEditingController();
+  final TextEditingController _isoAgTank45sController = TextEditingController();
+  final TextEditingController _isoAgTank60sController = TextEditingController();
+  final TextEditingController _isoYgAg30sController = TextEditingController();
+  final TextEditingController _isoYgAg45sController = TextEditingController();
+  final TextEditingController _isoYgAg60sController = TextEditingController();
+
   // Step 6: TTR & Toprak Controllers
   final TextEditingController _ttrNominalController = TextEditingController();
   final TextEditingController _ttrTap1AController = TextEditingController();
@@ -165,6 +175,16 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     _isoOgAgController.dispose();
     _isoCoreGndController.dispose();
 
+    _isoYgTank30sController.dispose();
+    _isoYgTank45sController.dispose();
+    _isoYgTank60sController.dispose();
+    _isoAgTank30sController.dispose();
+    _isoAgTank45sController.dispose();
+    _isoAgTank60sController.dispose();
+    _isoYgAg30sController.dispose();
+    _isoYgAg45sController.dispose();
+    _isoYgAg60sController.dispose();
+
     _ttrNominalController.dispose();
     _ttrTap1AController.dispose();
     _ttrTap1BController.dispose();
@@ -260,6 +280,18 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _isoAgGndController.text = data['iso_ag_gnd']?.toString() ?? '';
       _isoOgAgController.text = data['iso_og_ag']?.toString() ?? '';
       _isoCoreGndController.text = data['iso_core_gnd']?.toString() ?? '';
+
+      _isoYgTank30sController.text = data['iso_yg_tank_30s']?.toString() ?? data['iso_og_gnd_30s']?.toString() ?? data['iso_og_gnd']?.toString() ?? '';
+      _isoYgTank45sController.text = data['iso_yg_tank_45s']?.toString() ?? data['iso_og_gnd_45s']?.toString() ?? '';
+      _isoYgTank60sController.text = data['iso_yg_tank_60s']?.toString() ?? data['iso_og_gnd_60s']?.toString() ?? '';
+
+      _isoAgTank30sController.text = data['iso_ag_tank_30s']?.toString() ?? data['iso_ag_gnd_30s']?.toString() ?? data['iso_ag_gnd']?.toString() ?? '';
+      _isoAgTank45sController.text = data['iso_ag_tank_45s']?.toString() ?? data['iso_ag_gnd_45s']?.toString() ?? '';
+      _isoAgTank60sController.text = data['iso_ag_tank_60s']?.toString() ?? data['iso_ag_gnd_60s']?.toString() ?? '';
+
+      _isoYgAg30sController.text = data['iso_yg_ag_30s']?.toString() ?? data['iso_og_ag_30s']?.toString() ?? data['iso_og_ag']?.toString() ?? '';
+      _isoYgAg45sController.text = data['iso_yg_ag_45s']?.toString() ?? data['iso_og_ag_45s']?.toString() ?? '';
+      _isoYgAg60sController.text = data['iso_yg_ag_60s']?.toString() ?? data['iso_og_ag_60s']?.toString() ?? '';
 
       // TTR
       _ttrNominalController.text = data['ttr_nominal']?.toString() ?? '';
@@ -1582,7 +1614,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _buildSectionHeader('İzolasyon Direnci Ölçümleri (Megohm)', 'Ortam sıcaklığı ve nem koşullarında sargı izolasyon dirençleri.'),
+        _buildSectionHeader('İzolasyon Direnci Ölçümleri (30s / 45s / 60s)', 'Ortam sıcaklığı, nem ve sürelere göre sargı yalıtım dirençleri.'),
         const SizedBox(height: 24),
         Row(
           children: <Widget>[
@@ -1611,35 +1643,156 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           ],
         ),
         const SizedBox(height: 24),
-        TextFormField(
-          controller: _isoOgGndController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+
+        // Y.G - TANK (30s / 45s / 60s)
+        Text('Y.G - TANK İzolasyon Direnci', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
+        const SizedBox(height: 8),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _isoYgTank30sController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
-          decoration: const InputDecoration(labelText: 'OG - GND İzolasyon Direnci (MΩ)', suffixText: 'MΩ'),
-          onChanged: (String val) => service.updateField('iso_og_gnd', val),
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _isoAgGndController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: '30 sn', suffixText: 'GΩ'),
+                onChanged: (String val) {
+                  service.updateField('iso_yg_tank_30s', val);
+                  service.updateField('iso_og_gnd_30s', val);
+                  service.updateField('iso_og_gnd', val);
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _isoYgTank45sController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
-          decoration: const InputDecoration(labelText: 'AG - GND İzolasyon Direnci (MΩ)', suffixText: 'MΩ'),
-          onChanged: (String val) => service.updateField('iso_ag_gnd', val),
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _isoOgAgController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: '45 sn', suffixText: 'GΩ'),
+                onChanged: (String val) {
+                  service.updateField('iso_yg_tank_45s', val);
+                  service.updateField('iso_og_gnd_45s', val);
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _isoYgTank60sController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
-          decoration: const InputDecoration(labelText: 'OG - AG İzolasyon Direnci (MΩ)', suffixText: 'MΩ'),
-          onChanged: (String val) => service.updateField('iso_og_ag', val),
+                decoration: const InputDecoration(labelText: '60 sn', suffixText: 'GΩ'),
+                onChanged: (String val) {
+                  service.updateField('iso_yg_tank_60s', val);
+                  service.updateField('iso_og_gnd_60s', val);
+                },
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
+
+        // A.G - TANK (30s / 45s / 60s)
+        Text('A.G - TANK İzolasyon Direnci', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
+        const SizedBox(height: 8),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _isoAgTank30sController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
+                decoration: const InputDecoration(labelText: '30 sn', suffixText: 'GΩ'),
+                onChanged: (String val) {
+                  service.updateField('iso_ag_tank_30s', val);
+                  service.updateField('iso_ag_gnd_30s', val);
+                  service.updateField('iso_ag_gnd', val);
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _isoAgTank45sController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
+                decoration: const InputDecoration(labelText: '45 sn', suffixText: 'GΩ'),
+                onChanged: (String val) {
+                  service.updateField('iso_ag_tank_45s', val);
+                  service.updateField('iso_ag_gnd_45s', val);
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _isoAgTank60sController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
+                decoration: const InputDecoration(labelText: '60 sn', suffixText: 'GΩ'),
+                onChanged: (String val) {
+                  service.updateField('iso_ag_tank_60s', val);
+                  service.updateField('iso_ag_gnd_60s', val);
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+
+        // Y.G - A.G (30s / 45s / 60s)
+        Text('Y.G - A.G İzolasyon Direnci', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
+        const SizedBox(height: 8),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: TextFormField(
+                controller: _isoYgAg30sController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
+                decoration: const InputDecoration(labelText: '30 sn', suffixText: 'GΩ'),
+                onChanged: (String val) {
+                  service.updateField('iso_yg_ag_30s', val);
+                  service.updateField('iso_og_ag_30s', val);
+                  service.updateField('iso_og_ag', val);
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _isoYgAg45sController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
+                decoration: const InputDecoration(labelText: '45 sn', suffixText: 'GΩ'),
+                onChanged: (String val) {
+                  service.updateField('iso_yg_ag_45s', val);
+                  service.updateField('iso_og_ag_45s', val);
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _isoYgAg60sController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
+                decoration: const InputDecoration(labelText: '60 sn', suffixText: 'GΩ'),
+                onChanged: (String val) {
+                  service.updateField('iso_yg_ag_60s', val);
+                  service.updateField('iso_og_ag_60s', val);
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+
         TextFormField(
           controller: _isoCoreGndController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
-          decoration: const InputDecoration(labelText: 'Nüve - GND İzolasyon Direnci (MΩ)', suffixText: 'MΩ'),
+          inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
+          decoration: const InputDecoration(labelText: 'Nüve - GND İzolasyon Direnci (MΩ / Opsiyonel)', suffixText: 'MΩ'),
           onChanged: (String val) => service.updateField('iso_core_gnd', val),
         ),
       ],

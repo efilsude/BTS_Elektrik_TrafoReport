@@ -60,6 +60,15 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O55": "ag_rab",
             "O57": "ag_rbc",
             "O59": "ag_rca",
+            "F66": "iso_yg_tank_30s",
+            "I66": "iso_yg_tank_45s",
+            "L66": "iso_yg_tank_60s",
+            "F68": "iso_ag_tank_30s",
+            "I68": "iso_ag_tank_45s",
+            "L68": "iso_ag_tank_60s",
+            "F70": "iso_yg_ag_30s",
+            "I70": "iso_yg_ag_45s",
+            "L70": "iso_yg_ag_60s",
             "B73": "notes",
             "F81": "operator_title",
         },
@@ -353,6 +362,15 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O55": "ag_rab",
             "O57": "ag_rbc",
             "O59": "ag_rca",
+            "F66": "iso_yg_tank_30s",
+            "I66": "iso_yg_tank_45s",
+            "L66": "iso_yg_tank_60s",
+            "F68": "iso_ag_tank_30s",
+            "I68": "iso_ag_tank_45s",
+            "L68": "iso_ag_tank_60s",
+            "F70": "iso_yg_ag_30s",
+            "I70": "iso_yg_ag_45s",
+            "L70": "iso_yg_ag_60s",
             "J63": "ground_r_fence",
             "B73": "notes",
             "F81": "operator_title",
@@ -457,7 +475,12 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
 }
 
 SAMPLE_CLEAR_RANGES = {
-    "ANA SAYFA": ["G31", "O55", "O57", "O59"],
+    "ANA SAYFA": [
+        "G31", "O55", "O57", "O59",
+        "F66", "I66", "L66",
+        "F68", "I68", "L68",
+        "F70", "I70", "L70"
+    ],
     "ANA SAYFA KESİCİ": [
         "G11", "O11", "G13", "O13", "G15", "O15", "G17", "O17",
         "G24", "I24", "P24", "R24", "G26", "H26", "I26", "P26", "R26",
@@ -1251,6 +1274,19 @@ def main():
 
     gr = data_dict.get("grounding") if isinstance(data_dict.get("grounding"), dict) else {}
     data_dict.setdefault("ground_r_trafo_body", data_dict.get("ground_trafo_body") or gr.get("value"))
+
+    # Insulation 30s/45s/60s fallback aliases
+    data_dict.setdefault("iso_yg_tank_30s", data_dict.get("iso_og_gnd_30s") or data_dict.get("iso_og_gnd") or data_dict.get("iso_yg_tank"))
+    data_dict.setdefault("iso_yg_tank_45s", data_dict.get("iso_og_gnd_45s"))
+    data_dict.setdefault("iso_yg_tank_60s", data_dict.get("iso_og_gnd_60s"))
+
+    data_dict.setdefault("iso_ag_tank_30s", data_dict.get("iso_ag_gnd_30s") or data_dict.get("iso_ag_gnd") or data_dict.get("iso_ag_tank"))
+    data_dict.setdefault("iso_ag_tank_45s", data_dict.get("iso_ag_gnd_45s"))
+    data_dict.setdefault("iso_ag_tank_60s", data_dict.get("iso_ag_gnd_60s"))
+
+    data_dict.setdefault("iso_yg_ag_30s", data_dict.get("iso_og_ag_30s") or data_dict.get("iso_og_ag") or data_dict.get("iso_yg_ag"))
+    data_dict.setdefault("iso_yg_ag_45s", data_dict.get("iso_og_ag_45s"))
+    data_dict.setdefault("iso_yg_ag_60s", data_dict.get("iso_og_ag_60s"))
 
     # 3. Resolve template path
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
