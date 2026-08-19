@@ -1,15 +1,12 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/backup_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/signature_pad.dart';
 import 'auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -20,7 +17,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   final BackupService _backupService = BackupService();
   final GlobalKey<FormState> _passwordFormKey = GlobalKey<FormState>();
 
@@ -32,16 +28,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _obscureNew = true;
   bool _obscureConfirm = true;
 
-  String? _signatureBase64;
   bool _isSubmittingPassword = false;
   bool _isBackingUp = false;
   bool _isRestoring = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSignature();
-  }
 
   @override
   void dispose() {
@@ -49,15 +38,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadSignature() async {
-    final String? signature = await _secureStorage.read(key: 'user_signature_base64');
-    if (mounted) {
-      setState(() {
-        _signatureBase64 = signature;
-      });
-    }
   }
 
   Future<void> _handleCreateBackup() async {
@@ -223,43 +203,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _handleUpdateSignature() {
-    showDialog<dynamic>(
-      context: context,
-      builder: (BuildContext ctx) => AlertDialog(
-        title: Text(
-          'Dijital İmza Çizimi',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
-        ),
-        content: SizedBox(
-          width: 500,
-          height: 300,
-          child: SignaturePad(
-            onSave: (String base64Png) async {
-              Navigator.pop(ctx);
 
-              // 1. Cache base64 signature locally
-              await _secureStorage.write(key: 'user_signature_base64', value: base64Png);
-              await _loadSignature();
-
-              // 2. Save signature status in AuthService
-              final AuthService authService = Provider.of<AuthService>(context, listen: false);
-              await authService.saveUserSignatureLocally('base64_cached');
-
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('İmzanız yerel cihazınıza kaydedildi.', style: GoogleFonts.inter()),
-                    backgroundColor: AppTheme.successColor,
-                  ),
-                );
-              }
-            },
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -434,64 +378,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Digital Signature Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      'Dijital İmza',
-                      style: GoogleFonts.outfit(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Raporlarda yer alacak imzanız cihazınızda yerel olarak saklanır.',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: AppTheme.textLight,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      height: 140,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.borderLight),
-                      ),
-                      child: _signatureBase64 != null
-                          ? Image.memory(
-                              base64Decode(_signatureBase64!),
-                              fit: BoxFit.contain,
-                            )
-                          : Center(
-                              child: Text(
-                                'Henüz dijital imza eklenmemiş',
-                                style: GoogleFonts.inter(color: AppTheme.textLight),
-                              ),
-                            ),
-                    ),
-                    const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: ElevatedButton.icon(
-                        onPressed: _handleUpdateSignature,
-                        icon: const Icon(Icons.draw_rounded, size: 18),
-                        label: Text(_signatureBase64 == null ? 'İmza Ekle' : 'İmzayı Yenile'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
+
 
             // Password Change Card (bcrypt)
             Card(

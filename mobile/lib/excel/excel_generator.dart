@@ -170,14 +170,6 @@ class ExcelGenerator {
         cliArgs.addAll(<String>['--template', templatePath]);
       }
 
-      final String? effectiveSigPath = signaturePath ??
-          dataDict['signature_path']?.toString() ??
-          dataDict['signature']?.toString();
-
-      if (effectiveSigPath != null && effectiveSigPath.isNotEmpty && File(effectiveSigPath).existsSync()) {
-        cliArgs.addAll(<String>['--signature', effectiveSigPath]);
-      }
-
       dynamic photoBefore = dataDict['photo_before'];
       if (photoBefore == null && dataDict['photos'] is Map) {
         photoBefore = dataDict['photos']['photo_before'];
