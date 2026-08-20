@@ -158,7 +158,7 @@ class _DraftsScreenState extends State<DraftsScreen> {
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                           decoration: BoxDecoration(
-                                            color: AppTheme.primaryColor.withOpacity(0.08),
+                                            color: AppTheme.primaryColor.withValues(alpha: 0.2),
                                             borderRadius: BorderRadius.circular(6),
                                           ),
                                           child: Text(
@@ -166,7 +166,7 @@ class _DraftsScreenState extends State<DraftsScreen> {
                                             style: GoogleFonts.inter(
                                               fontSize: 11,
                                               fontWeight: FontWeight.bold,
-                                              color: AppTheme.primaryColor,
+                                              color: AppTheme.primaryDark,
                                             ),
                                           ),
                                         ),

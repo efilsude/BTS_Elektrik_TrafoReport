@@ -72,9 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Expanded(
                 flex: 5,
                 child: Container(
-                  decoration: const BoxDecoration(
-                    gradient: AppTheme.primaryGradient,
-                  ),
+                  color: AppTheme.primaryDark,
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.all(40.0),
@@ -83,22 +81,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.bolt_rounded,
-                              size: 60,
-                              color: AppTheme.accentColor,
+                            constraints: const BoxConstraints(maxWidth: 280, maxHeight: 140),
+                            child: Image.asset(
+                              'assets/images/btsLogo_1.png',
+                              fit: BoxFit.contain,
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 28),
                           Text(
                             'TrafoReport',
                             style: GoogleFonts.outfit(
-                              fontSize: 48,
+                              fontSize: 44,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                             ),
@@ -137,11 +130,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: <Widget>[
                             // Small Mobile Header
                             if (!isTablet) ...<Widget>[
-                              const Center(
-                                child: Icon(
-                                  Icons.bolt_rounded,
-                                  size: 50,
-                                  color: AppTheme.primaryColor,
+                              Center(
+                                child: Container(
+                                  constraints: const BoxConstraints(maxWidth: 220, maxHeight: 90),
+                                  child: Image.asset(
+                                    'assets/images/btsLogo_1.png',
+                                    fit: BoxFit.contain,
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 12),
@@ -149,13 +144,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: Text(
                                   'TrafoReport',
                                   style: GoogleFonts.outfit(
-                                    fontSize: 32,
+                                    fontSize: 30,
                                     fontWeight: FontWeight.w800,
-                                    color: AppTheme.primaryColor,
+                                    color: AppTheme.textDark,
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 6),
                               Center(
                                 child: Text(
                                   'B.T.S. Elektrik Raporlama Sistemi',
@@ -165,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 32),
+                              const SizedBox(height: 28),
                             ],
 
                             // Title and Subtitle
@@ -214,8 +209,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         child: Text(
                                           'Çalışan',
                                           style: GoogleFonts.inter(
-                                            fontWeight: FontWeight.w600,
-                                            color: !_isAdminMode ? Colors.white : AppTheme.textLight,
+                                            fontWeight: FontWeight.bold,
+                                            color: !_isAdminMode ? AppTheme.primaryDark : AppTheme.textLight,
                                           ),
                                         ),
                                       ),
@@ -233,8 +228,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         child: Text(
                                           'Yönetici',
                                           style: GoogleFonts.inter(
-                                            fontWeight: FontWeight.w600,
-                                            color: _isAdminMode ? Colors.white : AppTheme.textLight,
+                                            fontWeight: FontWeight.bold,
+                                            color: _isAdminMode ? AppTheme.primaryDark : AppTheme.textLight,
                                           ),
                                         ),
                                       ),

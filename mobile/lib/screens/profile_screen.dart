@@ -232,13 +232,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: <Widget>[
                     CircleAvatar(
                       radius: 36,
-                      backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.2),
                       child: Text(
                         user?.fullName.isNotEmpty == true ? user!.fullName[0].toUpperCase() : 'U',
                         style: GoogleFonts.outfit(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryColor,
+                          color: AppTheme.primaryDark,
                         ),
                       ),
                     ),
@@ -261,7 +261,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: user?.isAdmin == true ? Colors.orange.shade800 : AppTheme.primaryColor,
+                              color: user?.isAdmin == true ? Colors.orange.shade800 : AppTheme.primaryDark,
                             ),
                           ),
                           const SizedBox(height: 4),

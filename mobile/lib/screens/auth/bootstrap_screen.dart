@@ -98,24 +98,17 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
         Expanded(
           flex: 5,
           child: Container(
-            decoration: const BoxDecoration(
-              gradient: AppTheme.primaryGradient,
-            ),
+            color: AppTheme.primaryDark,
             padding: const EdgeInsets.all(48),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.admin_panel_settings_rounded,
-                    size: 48,
-                    color: AppTheme.accentColor,
+                  constraints: const BoxConstraints(maxWidth: 240, maxHeight: 100),
+                  child: Image.asset(
+                    'assets/images/btsLogo_1.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -133,7 +126,7 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.accentColor,
+                    color: AppTheme.primaryColor,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -174,22 +167,15 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
           // Üst Kompakt Banner
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-            decoration: const BoxDecoration(
-              gradient: AppTheme.primaryGradient,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            color: AppTheme.primaryDark,
             child: Row(
               children: <Widget>[
                 Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.admin_panel_settings_rounded,
-                    size: 32,
-                    color: AppTheme.accentColor,
+                  constraints: const BoxConstraints(maxWidth: 120, maxHeight: 50),
+                  child: Image.asset(
+                    'assets/images/btsLogo_1.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -200,7 +186,7 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
                       Text(
                         'Sistem Kurulumu',
                         style: GoogleFonts.outfit(
-                          fontSize: 22,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
@@ -211,7 +197,7 @@ class _FirstAdminBootstrapScreenState extends State<FirstAdminBootstrapScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.accentColor,
+                          color: AppTheme.primaryColor,
                         ),
                       ),
                     ],

@@ -57,7 +57,7 @@ class _ReportTypeScreenState extends State<ReportTypeScreen> {
               children: <Widget>[
                 Text(
                   'Rapor Yapılandırması',
-                  style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                  style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textDark),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
@@ -225,11 +225,11 @@ class _ReportTypeScreenState extends State<ReportTypeScreen> {
     required VoidCallback onTap,
   }) {
     return Card(
-      color: isSelected ? AppTheme.primaryColor.withOpacity(0.04) : Colors.white,
+      color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.15) : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: isSelected ? AppTheme.primaryColor : AppTheme.borderLight,
+          color: isSelected ? AppTheme.primaryDark : AppTheme.borderLight,
           width: isSelected ? 2 : 1,
         ),
       ),
@@ -243,7 +243,7 @@ class _ReportTypeScreenState extends State<ReportTypeScreen> {
             children: <Widget>[
               Icon(
                 icon,
-                color: isSelected ? AppTheme.primaryColor : AppTheme.textLight,
+                color: isSelected ? AppTheme.primaryDark : AppTheme.textLight,
                 size: 28,
               ),
               const SizedBox(height: 14),
@@ -252,7 +252,7 @@ class _ReportTypeScreenState extends State<ReportTypeScreen> {
                 style: GoogleFonts.outfit(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? AppTheme.primaryColor : AppTheme.textDark,
+                  color: isSelected ? AppTheme.primaryDark : AppTheme.textDark,
                 ),
               ),
               const SizedBox(height: 6),

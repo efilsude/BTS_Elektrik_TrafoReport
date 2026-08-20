@@ -98,9 +98,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-        ),
+        color: AppTheme.backgroundColor,
         child: AnimatedBuilder(
           animation: _animationController,
           builder: (BuildContext context, Widget? child) {
@@ -111,30 +109,22 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    // Logo Icon Container
+                    // Real BTS Logo Asset
                     Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.12),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.2),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.bolt_rounded,
-                        size: 80,
-                        color: AppTheme.accentColor,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                      constraints: const BoxConstraints(maxWidth: 320, maxHeight: 180),
+                      child: Image.asset(
+                        'assets/images/btsLogo_1.png',
+                        fit: BoxFit.contain,
                       ),
                     ),
                     const SizedBox(height: 24),
                     Text(
                       'TrafoReport',
                       style: GoogleFonts.outfit(
-                        fontSize: 42,
+                        fontSize: 38,
                         fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                        color: AppTheme.textDark,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -143,15 +133,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       'B.T.S. Elektrik Trafo Bakım & Test',
                       style: GoogleFonts.inter(
                         fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white70,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textLight,
                         letterSpacing: 0.5,
                       ),
                     ),
-                    const SizedBox(height: 80),
+                    const SizedBox(height: 60),
                     const SpinKitThreeBounce(
-                      color: Colors.white70,
-                      size: 25,
+                      color: AppTheme.primaryColor,
+                      size: 28,
                     ),
                   ],
                 ),

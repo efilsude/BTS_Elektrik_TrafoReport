@@ -934,24 +934,22 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                           backgroundColor: isCurrent
                               ? AppTheme.primaryColor
                               : isPassed
-                                  ? AppTheme.primaryColor.withOpacity(0.12)
+                                  ? AppTheme.primaryColor.withValues(alpha: 0.2)
                                   : Colors.white,
                           shape: const CircleBorder(),
                           side: BorderSide(
                             color: isCurrent
-                                ? AppTheme.primaryColor
+                                ? AppTheme.primaryDark
                                 : isPassed
-                                    ? AppTheme.primaryColor.withOpacity(0.2)
+                                    ? AppTheme.primaryDark.withValues(alpha: 0.4)
                                     : AppTheme.borderLight,
                           ),
                           label: Text(
                             '${index + 1}',
                             style: GoogleFonts.inter(
-                              color: isCurrent
-                                  ? Colors.white
-                                  : isPassed
-                                      ? AppTheme.primaryColor
-                                      : AppTheme.textLight,
+                              color: isCurrent || isPassed
+                                  ? AppTheme.primaryDark
+                                  : AppTheme.textLight,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -962,7 +960,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                         stepsList[index],
                         style: GoogleFonts.inter(
                           fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                          color: isCurrent ? AppTheme.primaryColor : AppTheme.textLight,
+                          color: isCurrent ? AppTheme.primaryDark : AppTheme.textLight,
                           fontSize: 13,
                         ),
                       ),
@@ -1130,15 +1128,15 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withOpacity(0.05),
+            color: AppTheme.primaryColor.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+            border: Border.all(color: AppTheme.primaryDark.withValues(alpha: 0.25)),
           ),
           child: Row(
             children: <Widget>[
               CircleAvatar(
-                backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-                child: const Icon(Icons.person_rounded, color: AppTheme.primaryColor),
+                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.25),
+                child: const Icon(Icons.person_rounded, color: AppTheme.primaryDark),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -2374,7 +2372,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text('Rapor Künyesi', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+                Text('Rapor Künyesi', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
                 const SizedBox(height: 16),
                 _buildSummaryRow('Müşteri:', report.customerName.isEmpty ? '(Belirtilmedi)' : report.customerName),
                 _buildSummaryRow('Trafo Tipi:', report.transformerType.toUpperCase()),
@@ -2400,7 +2398,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       title: Text(title, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500)),
       value: val,
       onChanged: (bool newVal) => service.updateField(key, newVal),
-      activeColor: AppTheme.secondaryColor,
+      activeColor: AppTheme.primaryColor,
       contentPadding: EdgeInsets.zero,
     );
   }
@@ -2409,18 +2407,18 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withOpacity(0.06),
+        color: AppTheme.primaryColor.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.15)),
+        border: Border.all(color: AppTheme.primaryDark.withValues(alpha: 0.25)),
       ),
       child: Row(
         children: <Widget>[
-          const Icon(Icons.info_outline_rounded, color: AppTheme.primaryColor, size: 20),
+          const Icon(Icons.info_outline_rounded, color: AppTheme.primaryDark, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
-              style: GoogleFonts.inter(fontSize: 12, color: AppTheme.primaryColor, height: 1.4),
+              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.primaryDark, height: 1.4),
             ),
           ),
         ],

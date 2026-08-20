@@ -87,7 +87,7 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('"${report.title}.xlsx" dosyası hazırlanıyor...'),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: AppTheme.primaryDark,
       ),
     );
 

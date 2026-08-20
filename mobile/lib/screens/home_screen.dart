@@ -124,20 +124,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   children: <Widget>[
                     Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: AppTheme.primaryColor,
-                        shape: BoxShape.circle,
+                      constraints: const BoxConstraints(maxWidth: 80, maxHeight: 50),
+                      child: Image.asset(
+                        'assets/images/btsLogo_1.png',
+                        fit: BoxFit.contain,
                       ),
-                      child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 28),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       'TrafoReport',
                       style: GoogleFonts.outfit(
                         fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: AppTheme.primaryColor,
+                        fontSize: 13,
+                        color: AppTheme.textDark,
                       ),
                     ),
                   ],
@@ -259,11 +258,11 @@ class _HomeScreenState extends State<HomeScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(28),
               decoration: BoxDecoration(
-                gradient: AppTheme.primaryGradient,
+                color: AppTheme.primaryColor,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: AppTheme.primaryColor.withOpacity(0.2),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
                     blurRadius: 15,
                     offset: const Offset(0, 8),
                   ),
@@ -274,13 +273,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
+                      color: AppTheme.primaryDark.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Icon(
                       Icons.note_add_rounded,
                       size: 40,
-                      color: Colors.white,
+                      color: AppTheme.primaryDark,
                     ),
                   ),
                   const SizedBox(width: 24),
@@ -293,7 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: GoogleFonts.outfit(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: AppTheme.primaryDark,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -301,7 +300,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           'Trafo bakım veya test verilerini girmek için tıklayın.',
                           style: GoogleFonts.inter(
                             fontSize: 14,
-                            color: Colors.white.withOpacity(0.85),
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primaryDark.withValues(alpha: 0.8),
                           ),
                         ),
                       ],
@@ -309,7 +309,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const Icon(
                     Icons.arrow_forward_ios_rounded,
-                    color: Colors.white,
+                    color: AppTheme.primaryDark,
                     size: 24,
                   ),
                 ],

@@ -394,11 +394,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
+                  color: AppTheme.primaryColor,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: <BoxShadow>[
                     BoxShadow(
-                      color: AppTheme.primaryColor.withOpacity(0.15),
+                      color: AppTheme.primaryColor.withValues(alpha: 0.25),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -409,10 +409,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: AppTheme.primaryDark.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.admin_panel_settings_rounded, size: 32, color: Colors.white),
+                      child: const Icon(Icons.admin_panel_settings_rounded, size: 32, color: AppTheme.primaryDark),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -424,7 +424,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             style: GoogleFonts.outfit(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: AppTheme.primaryDark,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -432,7 +432,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             'Yerel cihaz hesaplarını ekleyin veya düzenleyin.',
                             style: GoogleFonts.inter(
                               fontSize: 12,
-                              color: Colors.white70,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryDark.withValues(alpha: 0.8),
                             ),
                           ),
                         ],
