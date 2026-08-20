@@ -3,9 +3,7 @@ class User {
   final String fullName;
   final String? email;
   final String phone;
-  final String? sicilNo;
   final String? operatorTitle;
-  final String? ekipnetNo;
   final String? diplomaNo;
   final String? signaturePath;
   final String role; // 'admin' or 'employee'
@@ -17,9 +15,7 @@ class User {
     required this.fullName,
     this.email,
     required this.phone,
-    this.sicilNo,
     this.operatorTitle,
-    this.ekipnetNo,
     this.diplomaNo,
     this.signaturePath,
     required this.role,
@@ -53,9 +49,7 @@ class User {
       fullName: json['full_name'] ?? json['fullName'] ?? '',
       email: json['email']?.toString(),
       phone: json['phone']?.toString() ?? '',
-      sicilNo: json['sicil_no']?.toString() ?? json['sicilNo']?.toString(),
       operatorTitle: json['operator_title']?.toString() ?? json['operatorTitle']?.toString() ?? json['title']?.toString(),
-      ekipnetNo: json['ekipnet_no']?.toString() ?? json['ekipnetNo']?.toString(),
       diplomaNo: json['diploma_no']?.toString() ?? json['diplomaNo']?.toString(),
       signaturePath: sigPath,
       role: json['role']?.toString() ?? 'employee',
@@ -70,9 +64,7 @@ class User {
       'full_name': fullName,
       'email': email,
       'phone': phone,
-      'sicil_no': sicilNo,
       'operator_title': operatorTitle,
-      'ekipnet_no': ekipnetNo,
       'diploma_no': diplomaNo,
       'signature_path': signaturePath,
       'role': role,

@@ -9,6 +9,8 @@ import '../services/backup_service.dart';
 import '../theme/app_theme.dart';
 import 'auth/login_screen.dart';
 
+const bool kSignatureFeatureEnabled = false;
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -284,6 +286,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 24),
             ],
 
+            if (kSignatureFeatureEnabled) ...<Widget>[
+              _buildSignatureCard(),
+              const SizedBox(height: 24),
+            ],
+
             // Backup and Restore Card (Task B)
             Card(
               child: Padding(
@@ -498,6 +505,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+
+  Widget _buildSignatureCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Icon(Icons.draw_outlined, color: AppTheme.primaryColor),
+                const SizedBox(width: 10),
+                Text(
+                  'Dijital İmza',
+                  style: GoogleFonts.outfit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textDark,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Raporlarda yer alacak imzanız.',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: AppTheme.textLight,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _ProfileOperatorEditCard extends StatefulWidget {
@@ -582,7 +624,7 @@ class _ProfileOperatorEditCardState extends State<_ProfileOperatorEditCard> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Rapor kapak ve onay sayfalarında yer alan imza sahibi operatör bilgileri.',
+                'Rapor kapak ve onay sayfalarında yer alan operatör bilgileri.',
                 style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textLight),
               ),
               const SizedBox(height: 12),
