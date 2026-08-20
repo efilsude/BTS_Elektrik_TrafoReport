@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../excel/cell_mapping.dart';
 import '../models/report_model.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
@@ -22,8 +23,11 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedReportType = 'Hepsi';
   String _selectedTransformerType = 'Hepsi';
+  String _selectedYear = 'Tümü';
 
+  List<Report> _rawReportsList = <Report>[];
   List<Report> _reportsList = <Report>[];
+  List<String> _availableYears = <String>['Tümü'];
   bool _isLoading = true;
 
   @override
@@ -59,11 +63,68 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
     );
 
     if (mounted) {
-      setState(() {
-        _reportsList = reports;
-        _isLoading = false;
-      });
+      _rawReportsList = reports;
+      _updateYearsAndApplyFilter();
     }
+  }
+
+  void _updateYearsAndApplyFilter() {
+    final Set<int> yearsSet = <int>{};
+    for (final Report r in _rawReportsList) {
+      final DateTime? dt = ExcelCellMapping.tryParseDateTime(r.dataJson['test_date'] ?? r.dataJson['report_date']);
+      if (dt != null) {
+        yearsSet.add(dt.year);
+      }
+    }
+
+    final List<int> sortedYearsList = yearsSet.toList()..sort((int a, int b) => b.compareTo(a));
+    final List<String> newYears = <String>['Tümü', ...sortedYearsList.map((int y) => y.toString())];
+
+    if (!newYears.contains(_selectedYear)) {
+      _selectedYear = 'Tümü';
+    }
+
+    _availableYears = newYears;
+    _applyYearFilterAndSort();
+  }
+
+  void _applyYearFilterAndSort() {
+    List<Report> result = <Report>[];
+
+    if (_selectedYear == 'Tümü') {
+      result = List<Report>.from(_rawReportsList);
+    } else {
+      final int? targetYear = int.tryParse(_selectedYear);
+      if (targetYear != null) {
+        result = _rawReportsList.where((Report r) {
+          final DateTime? dt = ExcelCellMapping.tryParseDateTime(r.dataJson['test_date'] ?? r.dataJson['report_date']);
+          return dt != null && dt.year == targetYear;
+        }).toList();
+      } else {
+        result = List<Report>.from(_rawReportsList);
+      }
+    }
+
+    // Sort strictly by test date from NEWEST to OLDEST (EN YENİ → EN ESKİ)
+    result.sort((Report a, Report b) {
+      final DateTime? dtA = ExcelCellMapping.tryParseDateTime(a.dataJson['test_date'] ?? a.dataJson['report_date']);
+      final DateTime? dtB = ExcelCellMapping.tryParseDateTime(b.dataJson['test_date'] ?? b.dataJson['report_date']);
+
+      if (dtA != null && dtB != null) {
+        return dtB.compareTo(dtA);
+      } else if (dtA != null) {
+        return -1;
+      } else if (dtB != null) {
+        return 1;
+      } else {
+        return b.createdAt.compareTo(a.createdAt);
+      }
+    });
+
+    setState(() {
+      _reportsList = result;
+      _isLoading = false;
+    });
   }
 
   String _getTechnicianDisplayName(Report report) {
@@ -381,50 +442,135 @@ class _ReportsPoolScreenState extends State<ReportsPoolScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            value: _selectedReportType,
-                            decoration: const InputDecoration(labelText: 'Rapor Kapsamı'),
-                            items: <String>['Hepsi', 'Bakım', 'Yalnızca Test']
-                                .map((String type) => DropdownMenuItem<String>(
-                                      value: type,
-                                      child: Text(type),
-                                    ))
-                                .toList(),
-                            onChanged: (String? val) {
-                              if (val != null) {
-                                setState(() {
-                                  _selectedReportType = val;
-                                });
-                                _loadReports();
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            value: _selectedTransformerType,
-                            decoration: const InputDecoration(labelText: 'Trafo Tipi'),
-                            items: <String>['Hepsi', 'Hermetik', 'Kuru Tip', 'Genleşme Tanklı (GT)']
-                                .map((String type) => DropdownMenuItem<String>(
-                                      value: type,
-                                      child: Text(type),
-                                    ))
-                                .toList(),
-                            onChanged: (String? val) {
-                              if (val != null) {
-                                setState(() {
-                                  _selectedTransformerType = val;
-                                });
-                                _loadReports();
-                              }
-                            },
-                          ),
-                        ),
-                      ],
+                    LayoutBuilder(
+                      builder: (BuildContext ctx, BoxConstraints constraints) {
+                        final bool isWide = constraints.maxWidth > 650;
+                        if (isWide) {
+                          return Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: _selectedReportType,
+                                  decoration: const InputDecoration(labelText: 'Rapor Kapsamı'),
+                                  items: <String>['Hepsi', 'Bakım', 'Yalnızca Test']
+                                      .map((String type) => DropdownMenuItem<String>(
+                                            value: type,
+                                            child: Text(type),
+                                          ))
+                                      .toList(),
+                                  onChanged: (String? val) {
+                                    if (val != null) {
+                                      setState(() => _selectedReportType = val);
+                                      _loadReports();
+                                    }
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: _selectedTransformerType,
+                                  decoration: const InputDecoration(labelText: 'Trafo Tipi'),
+                                  items: <String>['Hepsi', 'Hermetik', 'Kuru Tip', 'Genleşme Tanklı (GT)']
+                                      .map((String type) => DropdownMenuItem<String>(
+                                            value: type,
+                                            child: Text(type),
+                                          ))
+                                      .toList(),
+                                  onChanged: (String? val) {
+                                    if (val != null) {
+                                      setState(() => _selectedTransformerType = val);
+                                      _loadReports();
+                                    }
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: _selectedYear,
+                                  decoration: const InputDecoration(labelText: 'Yıl'),
+                                  items: _availableYears
+                                      .map((String year) => DropdownMenuItem<String>(
+                                            value: year,
+                                            child: Text(year),
+                                          ))
+                                      .toList(),
+                                  onChanged: (String? val) {
+                                    if (val != null) {
+                                      setState(() => _selectedYear = val);
+                                      _applyYearFilterAndSort();
+                                    }
+                                  },
+                                ),
+                              ),
+                            ],
+                          );
+                        } else {
+                          return Column(
+                            children: <Widget>[
+                              Row(
+                                children: <Widget>[
+                                  Expanded(
+                                    child: DropdownButtonFormField<String>(
+                                      value: _selectedReportType,
+                                      decoration: const InputDecoration(labelText: 'Rapor Kapsamı'),
+                                      items: <String>['Hepsi', 'Bakım', 'Yalnızca Test']
+                                          .map((String type) => DropdownMenuItem<String>(
+                                                value: type,
+                                                child: Text(type),
+                                              ))
+                                          .toList(),
+                                      onChanged: (String? val) {
+                                        if (val != null) {
+                                          setState(() => _selectedReportType = val);
+                                          _loadReports();
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: DropdownButtonFormField<String>(
+                                      value: _selectedTransformerType,
+                                      decoration: const InputDecoration(labelText: 'Trafo Tipi'),
+                                      items: <String>['Hepsi', 'Hermetik', 'Kuru Tip', 'Genleşme Tanklı (GT)']
+                                          .map((String type) => DropdownMenuItem<String>(
+                                                value: type,
+                                                child: Text(type),
+                                              ))
+                                          .toList(),
+                                      onChanged: (String? val) {
+                                        if (val != null) {
+                                          setState(() => _selectedTransformerType = val);
+                                          _loadReports();
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              DropdownButtonFormField<String>(
+                                value: _selectedYear,
+                                decoration: const InputDecoration(labelText: 'Yıl'),
+                                items: _availableYears
+                                    .map((String year) => DropdownMenuItem<String>(
+                                          value: year,
+                                          child: Text(year),
+                                        ))
+                                    .toList(),
+                                onChanged: (String? val) {
+                                  if (val != null) {
+                                    setState(() => _selectedYear = val);
+                                    _applyYearFilterAndSort();
+                                  }
+                                },
+                              ),
+                            ],
+                          );
+                        }
+                      },
                     ),
                   ],
                 ),

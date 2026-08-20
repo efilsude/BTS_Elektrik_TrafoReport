@@ -555,37 +555,58 @@ class ExcelCellMapping {
     },
   };
 
-  /// Safely parses dynamic date input (DateTime, String, null) into a DateTime object
-  static DateTime parseDateTime(dynamic input, {DateTime? fallback}) {
-    if (input == null) return fallback ?? DateTime.now();
+  /// Safely attempts to parse dynamic date input (DateTime, String, null) into a DateTime object, returning null if invalid or empty
+  static DateTime? tryParseDateTime(dynamic input) {
+    if (input == null) return null;
     if (input is DateTime) return input;
 
     final String str = input.toString().trim();
-    if (str.isEmpty) return fallback ?? DateTime.now();
+    if (str.isEmpty || str == '-' || str.toLowerCase() == 'null') return null;
 
     try {
       if (str.contains('.')) {
         final List<String> parts = str.split('.');
         if (parts.length == 3) {
-          final int p1 = int.parse(parts[0]);
-          final int p2 = int.parse(parts[1]);
-          final int p3 = int.parse(parts[2]);
-          if (p3 > 1000) {
-            return DateTime(p3, p2, p1);
-          } else if (p1 > 1000) {
-            return DateTime(p1, p2, p3);
+          final int? p1 = int.tryParse(parts[0]);
+          final int? p2 = int.tryParse(parts[1]);
+          final int? p3 = int.tryParse(parts[2]);
+          if (p1 != null && p2 != null && p3 != null) {
+            if (p3 >= 1900 && p3 <= 2100 && p2 >= 1 && p2 <= 12 && p1 >= 1 && p1 <= 31) {
+              return DateTime(p3, p2, p1);
+            } else if (p1 >= 1900 && p1 <= 2100 && p2 >= 1 && p2 <= 12 && p3 >= 1 && p3 <= 31) {
+              return DateTime(p1, p2, p3);
+            }
+          }
+        }
+      } else if (str.contains('/')) {
+        final List<String> parts = str.split('/');
+        if (parts.length == 3) {
+          final int? p1 = int.tryParse(parts[0]);
+          final int? p2 = int.tryParse(parts[1]);
+          final int? p3 = int.tryParse(parts[2]);
+          if (p1 != null && p2 != null && p3 != null) {
+            if (p3 >= 1900 && p3 <= 2100 && p2 >= 1 && p2 <= 12 && p1 >= 1 && p1 <= 31) {
+              return DateTime(p3, p2, p1);
+            } else if (p1 >= 1900 && p1 <= 2100 && p2 >= 1 && p2 <= 12 && p3 >= 1 && p3 <= 31) {
+              return DateTime(p1, p2, p3);
+            }
           }
         }
       } else if (str.contains('-')) {
         final DateTime? parsed = DateTime.tryParse(str);
-        if (parsed != null) return parsed;
+        if (parsed != null && parsed.year >= 1900 && parsed.year <= 2100) return parsed;
       }
     } catch (_) {}
 
     final DateTime? parsedIso = DateTime.tryParse(str);
-    if (parsedIso != null) return parsedIso;
+    if (parsedIso != null && parsedIso.year >= 1900 && parsedIso.year <= 2100) return parsedIso;
 
-    return fallback ?? DateTime.now();
+    return null;
+  }
+
+  /// Safely parses dynamic date input (DateTime, String, null) into a DateTime object, returning fallback if invalid
+  static DateTime parseDateTime(dynamic input, {DateTime? fallback}) {
+    return tryParseDateTime(input) ?? fallback ?? DateTime.now();
   }
 
   /// Formats dynamic date input (DateTime, String, null) safely to DD.MM.YYYY string
