@@ -9,6 +9,8 @@ import '../services/backup_service.dart';
 import '../theme/app_theme.dart';
 import 'auth/login_screen.dart';
 
+import '../services/excel_import_service.dart';
+
 const bool kSignatureFeatureEnabled = false;
 
 class ProfileScreen extends StatefulWidget {
@@ -33,6 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isSubmittingPassword = false;
   bool _isBackingUp = false;
   bool _isRestoring = false;
+  bool _isImportingExcelZip = false;
 
   @override
   void dispose() {
@@ -147,6 +150,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } finally {
       if (mounted) setState(() => _isRestoring = false);
+    }
+  }
+
+  Future<void> _handleImportExcelZip() async {
+    setState(() => _isImportingExcelZip = true);
+    try {
+      final FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: <String>['zip'],
+      );
+
+      if (result == null || result.files.isEmpty) {
+        return;
+      }
+
+      final String? path = result.files.single.path;
+      if (path == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Seçilen dosya yolu alınamadı.'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+        return;
+      }
+
+      final File zipFile = File(path);
+      if (!await zipFile.exists()) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Seçilen ZIP dosyası bulunamadı.'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext dialogContext) {
+          return _ExcelImportProgressDialog(zipFile: zipFile);
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('İçe aktarma hatası: $e', style: GoogleFonts.inter()),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isImportingExcelZip = false);
     }
   }
 
@@ -378,6 +441,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           );
                         }
                       },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Eski Raporları İçeri Aktar Card
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        const Icon(Icons.folder_zip_outlined, color: AppTheme.primaryDark),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Eski Raporları İçeri Aktar',
+                          style: GoogleFonts.outfit(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Bilgisayarınızdaki mevcut Excel raporlarını ZIP dosyası olarak seçerek Rapor Havuzu\'na aktarabilirsiniz.',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: AppTheme.textLight,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _isImportingExcelZip ? null : _handleImportExcelZip,
+                        icon: _isImportingExcelZip
+                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: AppTheme.primaryDark, strokeWidth: 2))
+                            : const Icon(Icons.drive_folder_upload_outlined),
+                        label: const Text('Excel Raporlarını İçe Aktar (.zip)'),
+                      ),
                     ),
                   ],
                 ),
@@ -697,6 +806,270 @@ class _ProfileOperatorEditCardState extends State<_ProfileOperatorEditCard> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ExcelImportProgressDialog extends StatefulWidget {
+  final File zipFile;
+
+  const _ExcelImportProgressDialog({required this.zipFile});
+
+  @override
+  State<_ExcelImportProgressDialog> createState() => _ExcelImportProgressDialogState();
+}
+
+class _ExcelImportProgressDialogState extends State<_ExcelImportProgressDialog> {
+  bool _isProcessing = true;
+  int _current = 0;
+  int _total = 0;
+  String _currentFilename = '';
+  ExcelImportResult? _result;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _startImport();
+  }
+
+  Future<void> _startImport() async {
+    try {
+      final ExcelImportResult res = await ExcelImportService.importReportsFromZip(
+        widget.zipFile,
+        onProgress: (int current, int total, String currentFilename) {
+          if (mounted) {
+            setState(() {
+              _current = current;
+              _total = total;
+              _currentFilename = currentFilename;
+            });
+          }
+        },
+      );
+
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+          _result = res;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 540),
+        padding: const EdgeInsets.all(24),
+        child: _isProcessing ? _buildProcessingView() : _buildResultView(),
+      ),
+    );
+  }
+
+  Widget _buildProcessingView() {
+    final double progress = _total > 0 ? (_current / _total) : 0.0;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        const SizedBox(height: 12),
+        const CircularProgressIndicator(),
+        const SizedBox(height: 24),
+        Text(
+          'Raporlar içe aktarılıyor...',
+          style: GoogleFonts.outfit(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textDark,
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (_total > 0)
+          Text(
+            '$_current / $_total',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primaryDark,
+            ),
+          ),
+        const SizedBox(height: 16),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(
+            value: progress > 0 ? progress : null,
+            minHeight: 8,
+            backgroundColor: AppTheme.borderLight,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+        if (_currentFilename.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 16),
+          Text(
+            _currentFilename,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: AppTheme.textLight,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  Widget _buildResultView() {
+    if (_errorMessage != null) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          const Icon(Icons.error_outline_rounded, size: 56, color: AppTheme.errorColor),
+          const SizedBox(height: 16),
+          Text(
+            'İçe Aktarma Başarısız',
+            style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _errorMessage!,
+            style: GoogleFonts.inter(fontSize: 14, color: AppTheme.textLight),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Tamam'),
+          ),
+        ],
+      );
+    }
+
+    final ExcelImportResult res = _result!;
+    final bool hasFailures = res.failureDetails.isNotEmpty;
+    final bool hasDuplicates = res.duplicateDetails.isNotEmpty;
+
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(
+                res.successCount > 0 ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+                color: res.successCount > 0 ? AppTheme.successColor : AppTheme.warningColor,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'İçe Aktarma Tamamlandı',
+                style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Result Summary Cards
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.backgroundColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.borderLight),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: <Widget>[
+                _buildStatItem('Başarılı', '${res.successCount}', AppTheme.successColor),
+                _buildStatItem('Başarısız', '${res.failureCount}', res.failureCount > 0 ? AppTheme.errorColor : AppTheme.textLight),
+                _buildStatItem('Atlandı (Mevcut)', '${res.skippedCount}', res.skippedCount > 0 ? AppTheme.warningColor : AppTheme.textLight),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Details List
+          if (hasFailures || hasDuplicates) ...<Widget>[
+            Text(
+              'Ayrıntılı İşlem Detayları:',
+              style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppTheme.borderLight),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    if (hasFailures) ...<Widget>[
+                      Text('Başarısız Dosyalar:', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.errorColor)),
+                      const SizedBox(height: 4),
+                      for (final String fail in res.failureDetails)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4.0),
+                          child: Text('• $fail', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.errorColor)),
+                        ),
+                      const SizedBox(height: 8),
+                    ],
+                    if (hasDuplicates) ...<Widget>[
+                      Text('Atlanan (Mevcut) Dosyalar:', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.warningColor)),
+                      const SizedBox(height: 4),
+                      for (final String dup in res.duplicateDetails)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4.0),
+                          child: Text('• $dup', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textDark)),
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Tamam'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, Color color) {
+    return Column(
+      children: <Widget>[
+        Text(
+          value,
+          style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: color),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w500, color: AppTheme.textLight),
+        ),
+      ],
     );
   }
 }

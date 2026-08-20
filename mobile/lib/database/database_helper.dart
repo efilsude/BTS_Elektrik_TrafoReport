@@ -22,31 +22,32 @@ class DatabaseHelper {
     return _database!;
   }
 
+  static Future<String> getDbPath([String fileName = 'traforeport_local.db']) async {
+    String dbPath;
+    if (!kIsWeb && Platform.isWindows) {
+      try {
+        final Directory appSupportDir = await getApplicationSupportDirectory();
+        dbPath = appSupportDir.path;
+      } catch (_) {
+        dbPath = await getDatabasesPath();
+      }
+    } else {
+      dbPath = await getDatabasesPath();
+    }
+    return join(dbPath, fileName);
+  }
+
   Future<Database> _initDB(String filePath) async {
     if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
     }
 
-    String dbPath;
-    if (!kIsWeb && Platform.isWindows) {
-      try {
-        final Directory appSupportDir = await getApplicationSupportDirectory();
-        dbPath = appSupportDir.path;
-      } catch (e) {
-        dbPath = await getDatabasesPath();
-      }
-    } else {
-      dbPath = await getDatabasesPath();
-    }
-
-    // Ensure parent directory exists before SQLite tries to open the database file
-    final Directory dbDir = Directory(dbPath);
+    final String path = await getDbPath(filePath);
+    final Directory dbDir = Directory(dirname(path));
     if (!await dbDir.exists()) {
       await dbDir.create(recursive: true);
     }
-
-    final String path = join(dbPath, filePath);
 
     try {
       return await openDatabase(

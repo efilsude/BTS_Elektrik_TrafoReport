@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import 'storage_service.dart';
 
@@ -16,8 +15,7 @@ class BackupService {
       final Archive archive = Archive();
 
       // 1. Add SQLite Database file
-      final String dbDir = await getDatabasesPath();
-      final String dbPath = p.join(dbDir, 'traforeport_local.db');
+      final String dbPath = await DatabaseHelper.getDbPath();
       final File dbFile = File(dbPath);
 
       if (await dbFile.exists()) {
@@ -92,8 +90,7 @@ class BackupService {
       await DatabaseHelper.instance.closeDatabase();
 
       // 2. Restore SQLite database file
-      final String dbDir = await getDatabasesPath();
-      final String targetDbPath = p.join(dbDir, 'traforeport_local.db');
+      final String targetDbPath = await DatabaseHelper.getDbPath();
 
       for (final ArchiveFile file in archive) {
         if (file.name == 'traforeport_local.db') {
