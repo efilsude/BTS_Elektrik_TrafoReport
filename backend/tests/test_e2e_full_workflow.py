@@ -4,7 +4,8 @@ import pytest
 import openpyxl
 from fastapi.testclient import TestClient
 
-os.environ["DATABASE_URL"] = "sqlite:///./test_traforeport_e2e.db"
+# DATABASE_URL artık tests/conftest.py içinde tüm test oturumu için tek
+# seferde ayarlanıyor (bkz. conftest.py docstring'i).
 
 from app.main import app
 from app.db.session import engine, Base
@@ -14,16 +15,13 @@ client = TestClient(app)
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
+    # Bu dosyaya özel temiz sıfırlama. Dosyanın kendisi burada SİLİNMEZ —
+    # paylaşılan engine'e bağlı diğer modüllerin bağlantılarını bozar;
+    # fiziksel temizlik tek seferlik olarak conftest.py'de yapılır.
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     seed_data()
     yield
-    Base.metadata.drop_all(bind=engine)
-    if os.path.exists("./test_traforeport_e2e.db"):
-        try:
-            os.remove("./test_traforeport_e2e.db")
-        except PermissionError:
-            pass
 
 def test_full_end_to_end_workflow():
     # 1. Admin Login

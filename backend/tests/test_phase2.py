@@ -3,7 +3,8 @@ import io
 import pytest
 from fastapi.testclient import TestClient
 
-os.environ["DATABASE_URL"] = "sqlite:///./test_traforeport_phase2.db"
+# DATABASE_URL artık tests/conftest.py içinde tüm test oturumu için tek
+# seferde ayarlanıyor (bkz. conftest.py docstring'i).
 
 from app.main import app
 from app.db.session import engine, Base
@@ -13,16 +14,13 @@ client = TestClient(app)
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
+    # Dosyanın kendisi burada SİLİNMEZ — paylaşılan engine'e bağlı diğer
+    # modüllerin bağlantılarını bozar; fiziksel temizlik tek seferlik
+    # olarak conftest.py'de yapılır.
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     seed_data()
     yield
-    Base.metadata.drop_all(bind=engine)
-    if os.path.exists("./test_traforeport_phase2.db"):
-        try:
-            os.remove("./test_traforeport_phase2.db")
-        except PermissionError:
-            pass
 
 def get_auth_token(identifier, password):
     resp = client.post("/api/v1/auth/login", json={"identifier": identifier, "password": password})

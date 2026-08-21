@@ -46,3 +46,7 @@ class UserAlreadyExistsException(APIException):
 class InvalidCredentialsException(APIException):
     def __init__(self, message: str = "Giriş bilgileri veya şifre hatalı."):
         super().__init__(status_code=status.HTTP_400_BAD_REQUEST, code="INVALID_CREDENTIALS", message=message)
+
+class RateLimitedException(APIException):
+    def __init__(self, message: str = "Çok fazla başarısız deneme. Lütfen daha sonra tekrar deneyin."):
+        super().__init__(status_code=status.HTTP_429_TOO_MANY_REQUESTS, code="RATE_LIMIT_EXCEEDED", message=message)

@@ -4,7 +4,9 @@ from datetime import datetime, timezone, timedelta
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-settings.DATABASE_URL = "sqlite:///./test_traforeport_bootstrap.db"
+# DATABASE_URL artık tests/conftest.py içinde tüm test oturumu için tek
+# seferde ayarlanıyor (bkz. conftest.py docstring'i). Burada tekrar
+# ayarlamıyoruz çünkü app.db.session.engine zaten önbelleğe alınmış olur.
 settings.EMAIL_ENABLED = False
 
 from app.main import app
@@ -16,16 +18,14 @@ client = TestClient(app)
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_test_db():
+    # Her modül kendi tablolarını temiz sıfırlar (paylaşılan engine/db
+    # dosyası üzerinde). Dosyanın kendisi burada SİLİNMEZ — bu, aynı
+    # engine'e bağlı diğer test modüllerinin bağlantılarını bozar. Fiziksel
+    # dosya temizliği tek seferlik olarak conftest.py'de, oturum sonunda
+    # yapılır.
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     yield
-    Base.metadata.drop_all(bind=engine)
-
-    if os.path.exists("./test_traforeport_bootstrap.db"):
-        try:
-            os.remove("./test_traforeport_bootstrap.db")
-        except PermissionError:
-            pass
 
 
 def test_empty_db_bootstrap_flow():

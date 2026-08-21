@@ -1183,6 +1183,24 @@ def generate_excel_report(report: Report, photos: Optional[List[Photo]] = None, 
 
     data_dict = report.data_json or {}
 
+    # KRİTİK: customer_name, trafo_label, test_date, report_date ve
+    # creator_display_name, Report SQL modelinde AYRI kolonlar olarak
+    # tutulur — data_json içinde değildir (bkz. app/models/report.py).
+    # Ancak docs/EXCEL_CELL_MAPPING.md, KAPAK SAYFASI'ndaki D9/D10/D12 gibi
+    # hücreleri tam olarak bu alan adlarına eşliyor ve bu fonksiyon
+    # değerleri sadece data_dict'ten okuyor. Bu birleştirme yapılmadan
+    # önce, üretilen HER Excel'de müşteri adı, trafo etiketi, tarihler ve
+    # operatör adı boş/varsayılan kalıyordu (data_dict.get(...) hep None
+    # dönüyordu) — ürünün temel kabul kriterini ("şablonla birebir dolu
+    # rapor") ihlal eden sessiz bir bug'dı. setdefault kullanılır ki
+    # data_json içinde açıkça aynı anahtar varsa (örn. ileride formdan
+    # doğrudan gelirse) o değer önceliği korunsun.
+    data_dict.setdefault("customer_name", report.customer_name)
+    data_dict.setdefault("trafo_label", report.trafo_label)
+    data_dict.setdefault("test_date", report.test_date)
+    data_dict.setdefault("report_date", report.report_date)
+    data_dict.setdefault("creator_display_name", report.creator_display_name)
+
     if mapped_type == "HERMETIK":
         data_dict["tank_mark_hermetik"] = "ü"
     elif mapped_type == "GT":

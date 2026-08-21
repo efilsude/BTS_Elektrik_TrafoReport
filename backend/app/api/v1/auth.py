@@ -13,6 +13,7 @@ from app.core.security import (
     create_refresh_token,
     decode_token
 )
+from app.core import rate_limit
 from app.core.exceptions import (
     InviteCodeInvalidException,
     VerificationCodeInvalidException,
@@ -20,7 +21,8 @@ from app.core.exceptions import (
     UserAlreadyExistsException,
     InvalidCredentialsException,
     UnauthorizedException,
-    BadRequestException
+    BadRequestException,
+    RateLimitedException
 )
 from app.models.user import User
 from app.models.code import RegistrationCode
@@ -343,7 +345,16 @@ def login(
     db: Session = Depends(get_db)
 ):
     identifier = login_in.identifier.strip()
-    
+
+    # Brute-force koruması: aynı identifier için çok sayıda başarısız
+    # denemeden sonra geçici olarak kilitle.
+    locked, retry_after_seconds = rate_limit.is_locked_out(identifier)
+    if locked:
+        minutes = max(1, retry_after_seconds // 60)
+        raise RateLimitedException(
+            f"Çok fazla başarısız giriş denemesi. Lütfen yaklaşık {minutes} dakika sonra tekrar deneyin."
+        )
+
     # User can login with phone, email, or sicil_no
     user = db.query(User).filter(
         or_(
@@ -354,10 +365,13 @@ def login(
     ).first()
 
     if not user or not verify_password(login_in.password, user.password_hash):
+        rate_limit.record_failure(identifier)
         raise InvalidCredentialsException()
 
     if not user.is_active:
         raise UnauthorizedException("Kullanıcı hesabı devre dışı bırakılmış.")
+
+    rate_limit.record_success(identifier)
 
     access_token = create_access_token(subject=user.id)
     refresh_token = create_refresh_token(subject=user.id)
