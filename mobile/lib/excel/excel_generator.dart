@@ -42,6 +42,9 @@ class ExcelGenerator {
     dataDict['report_date'] = ExcelCellMapping.formatDateDisplay(dataDict['report_date'], fallback: report.createdAt);
     dataDict['test_date'] = ExcelCellMapping.formatDateDisplay(dataDict['test_date'], fallback: report.createdAt);
 
+    dataDict['device_model'] = (dataDict['device_model']?.toString().trim().isNotEmpty == true) ? dataDict['device_model'] : 'METREL-MI3210';
+    dataDict['device_serial'] = (dataDict['device_serial']?.toString().trim().isNotEmpty == true) ? dataDict['device_serial'] : 'METREL-MI3210';
+
     // Operator profile fields injection
     final String opName = dataDict['operator_name']?.toString().trim() ?? report.creatorDisplayName ?? '';
     final String opTitle = dataDict['operator_title']?.toString().trim() ?? '';

@@ -24,6 +24,7 @@ class ReportFormScreen extends StatefulWidget {
 
 class _ReportFormScreenState extends State<ReportFormScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final ScrollController _scrollController = ScrollController();
   int _currentStepIndex = 0;
   bool _isAutoSaving = false;
 
@@ -37,6 +38,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   final TextEditingController _deviceModelController = TextEditingController();
   final TextEditingController _deviceSerialController = TextEditingController();
   final TextEditingController _operatorTitleController = TextEditingController();
+  final TextEditingController _transformerTempController = TextEditingController();
 
   // Step 2: Etiket Bilgileri Controllers
   final TextEditingController _brandController = TextEditingController();
@@ -137,6 +139,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _customerController.dispose();
     _trafoLabelController.dispose();
     _addressController.dispose();
@@ -146,6 +149,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     _deviceModelController.dispose();
     _deviceSerialController.dispose();
     _operatorTitleController.dispose();
+    _transformerTempController.dispose();
 
     _brandController.dispose();
     _powerController.dispose();
@@ -244,9 +248,13 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _reportDateController.text = data['report_date']?.toString() ?? '';
       _testDateController.text = data['test_date']?.toString() ?? '';
       _operatorNameController.text = data['operator_name']?.toString() ?? '';
-      _deviceModelController.text = data['device_model']?.toString() ?? '';
-      _deviceSerialController.text = data['device_serial']?.toString() ?? '';
+      _deviceModelController.text = 'METREL-MI3210';
+      _deviceSerialController.text = 'METREL-MI3210';
       _operatorTitleController.text = data['operator_title']?.toString() ?? '';
+      _transformerTempController.text = data['transformer_temperature']?.toString() ?? '';
+
+      reportService.updateField('device_model', 'METREL-MI3210');
+      reportService.updateField('device_serial', 'METREL-MI3210');
 
       _brandController.text = data['brand']?.toString() ?? '';
       _powerController.text = data['power_kva']?.toString() ?? '';
@@ -540,6 +548,17 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _currentStepIndex = nextStep;
       _isAutoSaving = false;
     });
+
+    // Yeni sayfaya geçince her zaman en üstten başla
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0.0,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   Map<String, dynamic> _calculateWindingUnbalance() {
@@ -548,22 +567,38 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final double? t = double.tryParse(_ogRcaController.text.replaceAll(',', '.'));
 
     if (r == null || s == null || t == null) {
-      return <String, dynamic>{'unbalance': null, 'status': 'Eksik'};
+      return <String, dynamic>{'unbalance': null, 'status': 'Eksik', 'dominant_phase': null};
     }
 
     final double max = <double>[r, s, t].reduce((double a, double b) => a > b ? a : b);
     final double min = <double>[r, s, t].reduce((double a, double b) => a < b ? a : b);
-    final double avg = (r + s + t) / 3.0;
 
-    if (avg == 0) return <String, dynamic>{'unbalance': 0.0, 'status': 'UYGUN'};
+    if (min == 0) return <String, dynamic>{'unbalance': 0.0, 'status': 'UYGUN', 'dominant_phase': null};
 
-    final double unbalance = ((max - min) / avg) * 100.0;
+    final double unbalance = ((max - min) / min) * 100.0;
     final bool ok = unbalance <= 5.0;
+
+    final double avg = (r + s + t) / 3.0;
+    final double devR = (r - avg).abs();
+    final double devS = (s - avg).abs();
+    final double devT = (t - avg).abs();
+
+    String? dominantPhase;
+    if (devR > 1e-9 || devS > 1e-9 || devT > 1e-9) {
+      if (devR >= devS && devR >= devT) {
+        dominantPhase = 'RAB';
+      } else if (devS >= devR && devS >= devT) {
+        dominantPhase = 'RBC';
+      } else {
+        dominantPhase = 'RCA';
+      }
+    }
 
     return <String, dynamic>{
       'unbalance': unbalance,
       'status': ok ? 'UYGUN' : 'UYGUN DEĞİL',
       'color': ok ? AppTheme.successColor : AppTheme.errorColor,
+      'dominant_phase': dominantPhase,
     };
   }
 
@@ -573,22 +608,38 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final double? t = double.tryParse(_agRcnController.text.replaceAll(',', '.'));
 
     if (r == null || s == null || t == null) {
-      return <String, dynamic>{'unbalance': null, 'status': 'Eksik'};
+      return <String, dynamic>{'unbalance': null, 'status': 'Eksik', 'dominant_phase': null};
     }
 
     final double max = <double>[r, s, t].reduce((double a, double b) => a > b ? a : b);
     final double min = <double>[r, s, t].reduce((double a, double b) => a < b ? a : b);
-    final double avg = (r + s + t) / 3.0;
 
-    if (avg == 0) return <String, dynamic>{'unbalance': 0.0, 'status': 'UYGUN'};
+    if (min == 0) return <String, dynamic>{'unbalance': 0.0, 'status': 'UYGUN', 'dominant_phase': null};
 
-    final double unbalance = ((max - min) / avg) * 100.0;
+    final double unbalance = ((max - min) / min) * 100.0;
     final bool ok = unbalance <= 5.0;
+
+    final double avg = (r + s + t) / 3.0;
+    final double devR = (r - avg).abs();
+    final double devS = (s - avg).abs();
+    final double devT = (t - avg).abs();
+
+    String? dominantPhase;
+    if (devR > 1e-9 || devS > 1e-9 || devT > 1e-9) {
+      if (devR >= devS && devR >= devT) {
+        dominantPhase = 'RAN';
+      } else if (devS >= devR && devS >= devT) {
+        dominantPhase = 'RBN';
+      } else {
+        dominantPhase = 'RCN';
+      }
+    }
 
     return <String, dynamic>{
       'unbalance': unbalance,
       'status': ok ? 'UYGUN' : 'UYGUN DEĞİL',
       'color': ok ? AppTheme.successColor : AppTheme.errorColor,
+      'dominant_phase': dominantPhase,
     };
   }
 
@@ -978,6 +1029,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             // Form Content Step Switcher
             Expanded(
               child: SingleChildScrollView(
+                controller: _scrollController,
                 padding: const EdgeInsets.all(24.0),
                 child: Form(
                   key: _formKey,
@@ -1159,32 +1211,42 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           ),
         ),
         const SizedBox(height: 24),
-        _buildSectionHeader('Test Cihazı Bilgileri', 'Test sırasında kullanılan ikincil cihaz kayıtları.'),
-        const SizedBox(height: 16),
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: TextFormField(
-                controller: _deviceModelController,
-                decoration: const InputDecoration(
-                  labelText: 'Test Cihaz Modeli',
-                  hintText: 'Megger TTR300',
+        _buildSectionHeader('Test Cihazı Bilgileri', 'Tüm raporlar için otomatik kullanılan sabit test cihazı.'),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.backgroundColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.borderLight),
+          ),
+          child: Row(
+            children: <Widget>[
+              const Icon(Icons.precision_manufacturing_outlined, color: AppTheme.primaryDark),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Test Cihazı: METREL-MI3210',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textDark),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Cihaz Seri No: METREL-MI3210',
+                      style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textLight),
+                    ),
+                  ],
                 ),
-                onChanged: (String val) => service.updateField('device_model', val),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: _deviceSerialController,
-                decoration: const InputDecoration(
-                  labelText: 'Cihaz Seri No',
-                  hintText: 'SN-4021-X',
-                ),
-                onChanged: (String val) => service.updateField('device_serial', val),
+              Chip(
+                label: Text('Sabit Cihaz', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.primaryDark)),
+                backgroundColor: AppTheme.primaryColor.withOpacity(0.15),
+                side: BorderSide.none,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -1420,43 +1482,79 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         ),
         const SizedBox(height: 20),
         if (isKuru) ...<Widget>[
-          _buildSwitchTile('Trafo Sıcaklık Kontrolü', 'checklist_1', report.dataJson),
-          _buildSwitchTile('Fan ON', 'checklist_2', report.dataJson),
-          _buildSwitchTile('DC Redresör Kontrolü', 'checklist_3', report.dataJson),
+          _buildThreeStateControlTile('Trafo Sıcaklık Kontrolü', 'checklist_1', report.dataJson),
+          Padding(
+            padding: const EdgeInsets.only(left: 4.0, right: 4.0, bottom: 16.0),
+            child: TextFormField(
+              controller: _transformerTempController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
+              decoration: const InputDecoration(
+                labelText: 'Ölçülen Sıcaklık (°C)',
+                hintText: 'Örn: 65',
+                suffixText: '°C',
+                prefixIcon: Icon(Icons.thermostat_outlined),
+              ),
+              onChanged: (String val) {
+                final String clean = val.trim();
+                service.updateField('transformer_temperature', clean.isEmpty ? null : clean);
+              },
+            ),
+          ),
+          _buildThreeStateControlTile('Fan ON', 'checklist_2', report.dataJson),
+          _buildThreeStateControlTile('DC Redresör Kontrolü', 'checklist_3', report.dataJson),
           dcVoltageSelector,
-          _buildSwitchTile('Termometre Alarm', 'checklist_4', report.dataJson),
-          _buildSwitchTile('Termometre Trip', 'checklist_5', report.dataJson),
-          _buildSwitchTile('Fan OFF', 'checklist_6', report.dataJson),
+          _buildThreeStateControlTile('Termometre Alarm', 'checklist_4', report.dataJson),
+          _buildThreeStateControlTile('Termometre Trip', 'checklist_5', report.dataJson),
+          _buildThreeStateControlTile('Fan OFF', 'checklist_6', report.dataJson),
           const SizedBox(height: 12),
           const Divider(),
           const SizedBox(height: 12),
-          _buildSwitchTile('Trafo Temizliği', 'checklist_7', report.dataJson),
-          _buildSwitchTile('Bina Temizliği', 'checklist_8', report.dataJson),
-          _buildSwitchTile('Kablo Sıkılık Kontrolü', 'checklist_9', report.dataJson),
-          _buildSwitchTile('Epoksi Kontrolü', 'checklist_10', report.dataJson),
-          _buildSwitchTile('Termistor Kontrolü', 'checklist_11', report.dataJson),
-          _buildSwitchTile('Topraklama Bağlantısı', 'checklist_12', report.dataJson),
+          _buildThreeStateControlTile('Trafo Temizliği', 'checklist_7', report.dataJson),
+          _buildThreeStateControlTile('Bina Temizliği', 'checklist_8', report.dataJson),
+          _buildThreeStateControlTile('Kablo Sıkılık Kontrolü', 'checklist_9', report.dataJson),
+          _buildThreeStateControlTile('Epoksi Kontrolü', 'checklist_10', report.dataJson),
+          _buildThreeStateControlTile('Termistor Kontrolü', 'checklist_11', report.dataJson),
+          _buildThreeStateControlTile('Topraklama Bağlantısı', 'checklist_12', report.dataJson),
         ] else ...<Widget>[
-          _buildSwitchTile('Trafo Sıcaklık Kontrolü', 'checklist_1', report.dataJson),
-          _buildSwitchTile('Yağ Seviyesi Kontrolü', 'checklist_2', report.dataJson),
-          _buildSwitchTile('DC Redresör Kontrolü', 'checklist_3', report.dataJson),
+          _buildThreeStateControlTile('Trafo Sıcaklık Kontrolü', 'checklist_1', report.dataJson),
+          Padding(
+            padding: const EdgeInsets.only(left: 4.0, right: 4.0, bottom: 16.0),
+            child: TextFormField(
+              controller: _transformerTempController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: const <TextInputFormatter>[DecimalCommaInputFormatter()],
+              decoration: const InputDecoration(
+                labelText: 'Ölçülen Sıcaklık (°C)',
+                hintText: 'Örn: 65',
+                suffixText: '°C',
+                prefixIcon: Icon(Icons.thermostat_outlined),
+              ),
+              onChanged: (String val) {
+                final String clean = val.trim();
+                service.updateField('transformer_temperature', clean.isEmpty ? null : clean);
+              },
+            ),
+          ),
+          _buildThreeStateControlTile('Yağ Seviyesi Kontrolü', 'checklist_2', report.dataJson),
+          _buildThreeStateControlTile('DC Redresör Kontrolü', 'checklist_3', report.dataJson),
           dcVoltageSelector,
-          _buildSwitchTile('Basınç Açma', 'checklist_4', report.dataJson),
-          _buildSwitchTile('Gaz Açma', 'checklist_5', report.dataJson),
-          _buildSwitchTile('Termik Alarm', 'checklist_6', report.dataJson),
-          _buildSwitchTile('Termik Açma', 'checklist_7', report.dataJson),
-          _buildSwitchTile('İzolatör Kontrolü', 'checklist_8', report.dataJson),
+          _buildThreeStateControlTile('Basınç Açma', 'checklist_4', report.dataJson),
+          _buildThreeStateControlTile('Gaz Açma', 'checklist_5', report.dataJson),
+          _buildThreeStateControlTile('Termik Alarm', 'checklist_6', report.dataJson),
+          _buildThreeStateControlTile('Termik Açma', 'checklist_7', report.dataJson),
+          _buildThreeStateControlTile('İzolatör Kontrolü', 'checklist_8', report.dataJson),
           const SizedBox(height: 12),
           const Divider(),
           const SizedBox(height: 12),
-          _buildSwitchTile('Trafo Temizliği', 'checklist_9', report.dataJson),
-          _buildSwitchTile('Bina Temizliği', 'checklist_10', report.dataJson),
-          _buildSwitchTile('Kablo Sıkılık Kontrolü', 'checklist_11', report.dataJson),
-          _buildSwitchTile('Yağ Kaçağı Kontrolü', 'checklist_12', report.dataJson),
-          _buildSwitchTile('Kademe Conta Kontrolü', 'checklist_13', report.dataJson),
-          _buildSwitchTile('O.G Conta Kontrolü', 'checklist_14', report.dataJson),
-          _buildSwitchTile('Kapak Conta Kontrolü', 'checklist_15', report.dataJson),
-          _buildSwitchTile('A.G Conta Kontrolü', 'checklist_16', report.dataJson),
+          _buildThreeStateControlTile('Trafo Temizliği', 'checklist_9', report.dataJson),
+          _buildThreeStateControlTile('Bina Temizliği', 'checklist_10', report.dataJson),
+          _buildThreeStateControlTile('Kablo Sıkılık Kontrolü', 'checklist_11', report.dataJson),
+          _buildThreeStateControlTile('Yağ Kaçağı Kontrolü', 'checklist_12', report.dataJson),
+          _buildThreeStateControlTile('Kademe Conta Kontrolü', 'checklist_13', report.dataJson),
+          _buildThreeStateControlTile('O.G Conta Kontrolü', 'checklist_14', report.dataJson),
+          _buildThreeStateControlTile('Kapak Conta Kontrolü', 'checklist_15', report.dataJson),
+          _buildThreeStateControlTile('A.G Conta Kontrolü', 'checklist_16', report.dataJson),
         ],
         const SizedBox(height: 20),
         const Divider(),
@@ -1538,7 +1636,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         _buildEvaluationCard(
           title: 'OG Faz Dengesizliği Değerlendirmesi',
           feedback: evaluation,
-          limitText: 'Maksimum İzin Verilen Dengesizlik Sınırı: %5 (0.05)',
+          limitText: evaluation['dominant_phase'] != null
+              ? 'Dengesizliğe En Fazla Etki Eden Faz: ${evaluation['dominant_phase']} | Sınır: %5'
+              : 'Maksimum İzin Verilen Dengesizlik Sınırı: %5 (0.05)',
           valueText: evaluation['unbalance'] != null
               ? 'Maksimum Faz Dengesizliği: %${(evaluation['unbalance'] as double).toStringAsFixed(2)}'
               : 'Gözlemlenen: Değer Bekleniyor...',
@@ -1593,7 +1693,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         _buildEvaluationCard(
           title: 'AG Faz Dengesizliği Değerlendirmesi',
           feedback: agEvaluation,
-          limitText: 'Maksimum İzin Verilen Dengesizlik Sınırı: %5 (0.05)',
+          limitText: agEvaluation['dominant_phase'] != null
+              ? 'Dengesizliğe En Fazla Etki Eden Faz: ${agEvaluation['dominant_phase']} | Sınır: %5'
+              : 'Maksimum İzin Verilen Dengesizlik Sınırı: %5 (0.05)',
           valueText: agEvaluation['unbalance'] != null
               ? 'Maksimum Faz Dengesizliği: %${(agEvaluation['unbalance'] as double).toStringAsFixed(2)}'
               : 'Gözlemlenen: Değer Bekleniyor...',
@@ -2098,9 +2200,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         const SizedBox(height: 24),
         _buildSectionHeader('Kesici Kontrolleri', '10 Adet Kesici Görsel, Temizlik ve Çalışma Kontrolü'),
         const SizedBox(height: 12),
-        _buildSwitchTile('1. Kesici Görsel Kontrolü', 'breaker_control_visual', report.dataJson),
-        _buildSwitchTile('2. Kesici Temizliği Kontrolü', 'breaker_control_cleanliness', report.dataJson),
-        _buildSwitchTile('3. DC Redresör Kontrolü', 'breaker_control_dc_redresor', report.dataJson),
+        _buildThreeStateControlTile('1. Kesici Görsel Kontrolü', 'breaker_control_visual', report.dataJson),
+        _buildThreeStateControlTile('2. Kesici Temizliği Kontrolü', 'breaker_control_cleanliness', report.dataJson),
+        _buildThreeStateControlTile('3. DC Redresör Kontrolü', 'breaker_control_dc_redresor', report.dataJson),
         Padding(
           padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 12.0),
           child: Row(
@@ -2125,13 +2227,13 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             ],
           ),
         ),
-        _buildSwitchTile('4. Hücre Temizliği Kontrolü', 'breaker_control_cell_cleanliness', report.dataJson),
-        _buildSwitchTile('5. İndikatör Kontrolü', 'breaker_control_indicator', report.dataJson),
-        _buildSwitchTile('6. Bara Kontrolü', 'breaker_control_busbar', report.dataJson),
-        _buildSwitchTile('7. Mekanik Kontrolü', 'breaker_control_mechanical', report.dataJson),
-        _buildSwitchTile('8. Isıtıcı Kontrolü', 'breaker_control_heater', report.dataJson),
-        _buildSwitchTile('9. Kablo Bağlantı Kontrolü', 'breaker_control_cable', report.dataJson),
-        _buildSwitchTile('10. A.A Röle Kontrolü', 'breaker_control_relay', report.dataJson),
+        _buildThreeStateControlTile('4. Hücre Temizliği Kontrolü', 'breaker_control_cell_cleanliness', report.dataJson),
+        _buildThreeStateControlTile('5. İndikatör Kontrolü', 'breaker_control_indicator', report.dataJson),
+        _buildThreeStateControlTile('6. Bara Kontrolü', 'breaker_control_busbar', report.dataJson),
+        _buildThreeStateControlTile('7. Mekanik Kontrolü', 'breaker_control_mechanical', report.dataJson),
+        _buildThreeStateControlTile('8. Isıtıcı Kontrolü', 'breaker_control_heater', report.dataJson),
+        _buildThreeStateControlTile('9. Kablo Bağlantı Kontrolü', 'breaker_control_cable', report.dataJson),
+        _buildThreeStateControlTile('10. A.A Röle Kontrolü', 'breaker_control_relay', report.dataJson),
         const SizedBox(height: 24),
         _buildSectionHeader('Kesici Ölçümleri', 'İzolasyon direnci, kontak direnci ve açma/kapama süreleri'),
         const SizedBox(height: 16),
@@ -2390,18 +2492,169 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     );
   }
 
-  Widget _buildSwitchTile(String title, String key, Map<String, dynamic> data) {
+  Widget _buildThreeStateControlTile(String title, String key, Map<String, dynamic> data) {
     final ReportService service = Provider.of<ReportService>(context, listen: false);
-    final bool val = data[key] == true;
+    final dynamic rawVal = data[key];
 
-    return SwitchListTile(
-      title: Text(title, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500)),
-      value: val,
-      onChanged: (bool newVal) => service.updateField(key, newVal),
-      activeColor: AppTheme.primaryColor,
-      contentPadding: EdgeInsets.zero,
+    // --- Durum seçimi (YAPILDI / UYGUN / UYGUN DEĞİL) ---
+    String? currentVal;
+    if (rawVal == true || rawVal.toString().toUpperCase() == 'ON' || rawVal.toString() == '1' || rawVal.toString().toLowerCase() == 'evet') {
+      currentVal = 'UYGUN';
+    } else if (rawVal is String && <String>['YAPILDI', 'UYGUN', 'UYGUN DEĞİL'].contains(rawVal.trim())) {
+      currentVal = rawVal.trim();
+    } else {
+      currentVal = null;
+    }
+
+    // --- Evet / Hayır seçimi (bağımsız, ayrı key ile saklanır) ---
+    final String evetHayirKey = '${key}_evet_hayir';
+    final dynamic rawEvetHayir = data[evetHayirKey];
+    String? currentEvetHayir;
+    if (rawEvetHayir != null) {
+      final String s = rawEvetHayir.toString().trim().toUpperCase();
+      if (s == 'EVET') currentEvetHayir = 'EVET';
+      if (s == 'HAYIR') currentEvetHayir = 'HAYIR';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: currentVal != null ? AppTheme.primaryColor.withOpacity(0.5) : AppTheme.borderLight,
+          width: currentVal != null ? 1.5 : 1.0,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textDark,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // --- Durum seçimi satırı ---
+          Row(
+            children: <String>['YAPILDI', 'UYGUN', 'UYGUN DEĞİL'].map((String option) {
+              final bool isSelected = currentVal == option;
+              Color optionColor = AppTheme.primaryColor;
+              if (option == 'UYGUN') optionColor = AppTheme.successColor;
+              if (option == 'UYGUN DEĞİL') optionColor = AppTheme.errorColor;
+
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3.0),
+                  child: InkWell(
+                    onTap: () {
+                      if (isSelected) {
+                        service.updateField(key, null);
+                      } else {
+                        service.updateField(key, option);
+                      }
+                      setState(() {});
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? optionColor.withOpacity(0.12) : Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected ? optionColor : Colors.grey.shade300,
+                          width: isSelected ? 1.8 : 1.0,
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        option,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          color: isSelected ? optionColor : AppTheme.textLight,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          // --- Evet / Hayır satırı (bağımsız) ---
+          const SizedBox(height: 8),
+          Row(
+            children: <Widget>[
+              Text(
+                'Evet / Hayır:',
+                style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textLight, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(width: 10),
+              _buildEvetHayirChip(
+                label: 'EVET',
+                isSelected: currentEvetHayir == 'EVET',
+                color: AppTheme.successColor,
+                onTap: () {
+                  service.updateField(evetHayirKey, currentEvetHayir == 'EVET' ? null : 'EVET');
+                  setState(() {});
+                },
+              ),
+              const SizedBox(width: 8),
+              _buildEvetHayirChip(
+                label: 'HAYIR',
+                isSelected: currentEvetHayir == 'HAYIR',
+                color: AppTheme.errorColor,
+                onTap: () {
+                  service.updateField(evetHayirKey, currentEvetHayir == 'HAYIR' ? null : 'HAYIR');
+                  setState(() {});
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
+
+  Widget _buildEvetHayirChip({
+    required String label,
+    required bool isSelected,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.12) : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: isSelected ? color : Colors.grey.shade300,
+            width: isSelected ? 1.8 : 1.0,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: isSelected ? color : AppTheme.textLight,
+          ),
+        ),
+      ),
+    );
+  }
+
 
   Widget _buildAlertText(String text) {
     return Container(

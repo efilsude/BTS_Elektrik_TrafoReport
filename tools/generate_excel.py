@@ -35,6 +35,7 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "ANA SAYFA": {
             "G11": "brand",
+            "G27": "transformer_temperature",
             "O11": "tap_info_1",
             "Q11": "tap_info_2",
             "S11": "tap_info_3",
@@ -49,8 +50,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O19": "short_circuit_imp_pct",
             "G21": "tank_type",
             "I21": "tank_mark_hermetik",
-            "P21": "tank_mark_gt",
-            "U21": "tank_mark_kuru",
+            "N21": "tank_mark_gt",
+            "R21": "tank_mark_kuru",
             "C55": "og_rab",
             "C57": "og_rbc",
             "C59": "og_rca",
@@ -200,13 +201,16 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O13": "manufacture_year",
             "G15": "voltage",
             "O15": "serial_no",
-            "G17": "connection_group",
+            "G17": "oil_brand",
+            "O17": "oil_weight",
+            "G19": "connection_group",
+            "O19": "short_circuit_imp_pct",
+            "G21": "tank_type",
+            "G27": "transformer_temperature",
             "G31": "dc_redresor_voltage",
-            "O17": "short_circuit_imp_pct",
-            "G19": "tank_type",
-            "I19": "tank_mark_hermetik",
-            "P19": "tank_mark_gt",
-            "U19": "tank_mark_kuru",
+            "I21": "tank_mark_hermetik",
+            "N21": "tank_mark_gt",
+            "R21": "tank_mark_kuru",
             "C49": "og_rab",
             "C51": "og_rbc",
             "C53": "og_rca",
@@ -353,8 +357,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
             "O19": "short_circuit_imp_pct",
             "G21": "tank_type",
             "I21": "tank_mark_hermetik",
-            "P21": "tank_mark_gt",
-            "U21": "tank_mark_kuru",
+            "N21": "tank_mark_gt",
+            "R21": "tank_mark_kuru",
             "C55": "og_rab",
             "C57": "og_rbc",
             "C59": "og_rca",
@@ -482,7 +486,7 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
 SAMPLE_CLEAR_RANGES = {
     "TOPRAKLAMALAR": ["K16", "K26", "K27", "K28", "K29"],
     "ANA SAYFA": [
-        "G31", "O55", "O57", "O59",
+        "G27", "G31", "O55", "O57", "O59",
         "F66", "I66", "L66",
         "F68", "I68", "L68",
         "F70", "I70", "L70",
@@ -713,20 +717,32 @@ def process_checklist_pairs(ws, report_type, data_dict):
         hayir_cell = get_writable_cell(ws, pair["hayir"])
 
         val = data_dict.get(key)
-        if val is None:
+        evet_hayir_val = data_dict.get(f"{key}_evet_hayir")
+
+        if evet_hayir_val is not None and str(evet_hayir_val).strip().upper() in ["EVET", "HAYIR"]:
+            eh_str = str(evet_hayir_val).strip().upper()
+            if eh_str == "EVET":
+                evet_cell.value = "ü"
+                hayir_cell.value = None
+            else:
+                evet_cell.value = None
+                hayir_cell.value = "ü"
+        elif val is None or str(val).strip() == "" or str(val).strip().lower() in ["none", "null"]:
             evet_cell.value = None
             hayir_cell.value = None
         else:
-            is_true = (val is True or str(val).strip().lower() in ["true", "ü", "1", "evet"])
-            is_false = (val is False or str(val).strip().lower() in ["false", "0", "hayir", "hayır"])
-            if is_true:
+            val_str = str(val).strip()
+            val_upper = val_str.upper()
+
+            if val is True or val_upper in ["YAPILDI", "UYGUN", "EVET", "TRUE", "1", "Ü"]:
                 evet_cell.value = "ü"
                 hayir_cell.value = None
-            elif is_false:
+            elif val is False or val_upper in ["UYGUN DEĞİL", "HAYIR", "FALSE", "0"]:
                 evet_cell.value = None
                 hayir_cell.value = "ü"
             else:
-                evet_cell.value = None
+                evet_cell.value = "ü"
+                hayir_cell.value = None
                 hayir_cell.value = None
 
 
@@ -1264,6 +1280,9 @@ def main():
 
     if not data_dict.get("creator_display_name"):
         data_dict["creator_display_name"] = f"{op_name} ({op_title})"
+
+    data_dict["device_model"] = str(data_dict.get("device_model") or "").strip() or "STS 5000"
+    data_dict["device_serial"] = str(data_dict.get("device_serial") or "").strip() or "19B20"
 
     # Notes field normalization
     notes_text = data_dict.get("notes") or data_dict.get("notes_text") or ""
