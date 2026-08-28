@@ -44,7 +44,13 @@ async def upload_signature(
     filename = f"signature_user_{current_user.id}_{uuid.uuid4().hex[:8]}.png"
     filepath = os.path.join(settings.UPLOAD_DIR, "signatures", filename)
 
-    content = await file.read()
+    _MAX_SIGNATURE_BYTES = 10 * 1024 * 1024  # 10 MB
+    content = await file.read(_MAX_SIGNATURE_BYTES + 1)
+    if len(content) > _MAX_SIGNATURE_BYTES:
+        raise BadRequestException(
+            code="FILE_TOO_LARGE",
+            message="İmza dosyası 10 MB sınırını aşıyor."
+        )
     with open(filepath, "wb") as f:
         f.write(content)
 

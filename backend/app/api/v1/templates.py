@@ -51,7 +51,13 @@ async def upload_template(
     filename = f"template_{report_type.lower()}_{uuid.uuid4().hex[:8]}.xlsx"
     filepath = os.path.join(settings.UPLOAD_DIR, "templates", filename)
 
-    content = await file.read()
+    _MAX_TEMPLATE_BYTES = 20 * 1024 * 1024  # 20 MB
+    content = await file.read(_MAX_TEMPLATE_BYTES + 1)
+    if len(content) > _MAX_TEMPLATE_BYTES:
+        raise BadRequestException(
+            code="FILE_TOO_LARGE",
+            message="Şablon dosyası 20 MB sınırını aşıyor."
+        )
     with open(filepath, "wb") as f:
         f.write(content)
 

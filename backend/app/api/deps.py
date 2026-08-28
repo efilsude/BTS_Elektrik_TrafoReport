@@ -20,7 +20,10 @@ def get_current_user(
     if not authorization or not authorization.startswith("Bearer "):
         raise UnauthorizedException("Giriş başlığı geçersiz (Bearer token gerekli).")
     
-    token = authorization.split(" ")[1]
+    parts = authorization.split(" ", 1)
+    if len(parts) != 2 or not parts[1]:
+        raise UnauthorizedException("Giriş başlığı geçersiz (Bearer token eksik).")
+    token = parts[1]
     payload = decode_token(token)
     
     if not payload or payload.get("type") != "access":
@@ -30,7 +33,10 @@ def get_current_user(
     if not user_id:
         raise UnauthorizedException("Geçersiz token içeriği.")
     
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    try:
+        user = db.query(User).filter(User.id == int(user_id)).first()
+    except (ValueError, TypeError):
+        raise UnauthorizedException("Geçersiz token içeriği (sub).")
     if not user:
         raise UnauthorizedException("Kullanıcı bulunamadı.")
     

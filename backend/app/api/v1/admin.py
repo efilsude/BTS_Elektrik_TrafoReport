@@ -1,4 +1,4 @@
-import random
+import secrets
 import string
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
@@ -18,7 +18,7 @@ router = APIRouter()
 
 def generate_random_code(length: int = 8) -> str:
     chars = string.ascii_uppercase + string.digits
-    return ''.join(random.choice(chars) for _ in range(length))
+    return ''.join(secrets.choice(chars) for _ in range(length))
 
 @router.post("/codes", response_model=CodeResponse, status_code=status.HTTP_201_CREATED)
 def create_registration_code(

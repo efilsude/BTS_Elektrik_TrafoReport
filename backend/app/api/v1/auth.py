@@ -1,4 +1,4 @@
-import random
+import secrets
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, status, BackgroundTasks
 from sqlalchemy.orm import Session
@@ -77,7 +77,7 @@ def request_verification_bootstrap(
                 message="Lütfen yeni doğrulama kodu istemeden önce 60 saniye bekleyin."
             )
 
-    generated_code = f"{random.randint(100000, 999999)}"
+    generated_code = f"{secrets.randbelow(900000) + 100000}"
     ttl_minutes = settings.VERIFICATION_CODE_TTL_MINUTES
     expires_at = now + timedelta(minutes=ttl_minutes)
 
@@ -220,7 +220,7 @@ def request_verification_code(
             )
 
     # 4. Generate 6-digit verification code
-    generated_code = f"{random.randint(100000, 999999)}"
+    generated_code = f"{secrets.randbelow(900000) + 100000}"
     ttl_minutes = settings.VERIFICATION_CODE_TTL_MINUTES
     expires_at = now + timedelta(minutes=ttl_minutes)
 
@@ -397,7 +397,10 @@ def refresh_token(
         raise UnauthorizedException("Geçersiz veya süresi dolmuş refresh token.")
 
     user_id = payload.get("sub")
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    try:
+        user = db.query(User).filter(User.id == int(user_id)).first()
+    except (ValueError, TypeError):
+        raise UnauthorizedException("Geçersiz refresh token içeriği (sub).")
     if not user or not user.is_active:
         raise UnauthorizedException("Kullanıcı aktif değil veya bulunamadı.")
 

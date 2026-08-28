@@ -19,6 +19,8 @@ from app.schemas.photo import PhotoResponse
 logger = logging.getLogger(__name__)
 
 _ALLOWED_PHOTO_TYPES = {"before", "after", "label", "signature"}
+MAX_PHOTO_BYTES = 10 * 1024 * 1024   # 10 MB — fotoğraf / imza yüklemeleri
+MAX_TEMPLATE_BYTES = 20 * 1024 * 1024  # 20 MB — Excel şablonları
 
 router = APIRouter()
 
@@ -198,11 +200,17 @@ async def upload_report_photo(
     if not file.content_type.startswith("image/"):
         raise BadRequestException(code="INVALID_FILE_TYPE", message="Yalnızca görsel dosyaları yüklenebilir.")
 
+    safe_photo_type = photo_type.strip().lower()
     os.makedirs(os.path.join(settings.UPLOAD_DIR, "photos"), exist_ok=True)
-    filename = f"report_{report_id}_{photo_type}_{uuid.uuid4().hex[:8]}.jpg"
+    filename = f"report_{report_id}_{safe_photo_type}_{uuid.uuid4().hex[:8]}.jpg"
     filepath = os.path.join(settings.UPLOAD_DIR, "photos", filename)
 
-    content = await file.read()
+    content = await file.read(MAX_PHOTO_BYTES + 1)
+    if len(content) > MAX_PHOTO_BYTES:
+        raise BadRequestException(
+            code="FILE_TOO_LARGE",
+            message=f"Fotoğraf dosyası 10 MB sınırını aşıyor."
+        )
     with open(filepath, "wb") as f:
         f.write(content)
 
