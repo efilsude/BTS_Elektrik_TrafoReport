@@ -1,3 +1,4 @@
+import logging
 import os
 import uuid
 from typing import Optional, List
@@ -14,6 +15,10 @@ from app.models.report import Report
 from app.models.photo import Photo
 from app.schemas.report import ReportCreate, ReportUpdate, ReportResponse, ReportListResponse
 from app.schemas.photo import PhotoResponse
+
+logger = logging.getLogger(__name__)
+
+_ALLOWED_PHOTO_TYPES = {"before", "after", "label", "signature"}
 
 router = APIRouter()
 
@@ -109,6 +114,10 @@ def get_report(
     if not report:
         raise NotFoundException("Rapor bulunamadı.")
 
+    # Çalışanlar yalnızca kendi raporlarını okuyabilir; adminler hepsini görebilir.
+    if current_user.role != "admin" and report.created_by != current_user.id:
+        raise ForbiddenException("Bu rapora erişim yetkiniz bulunmamaktadır.")
+
     return ReportResponse.model_validate(report)
 
 @router.put("/{report_id}", response_model=ReportResponse)
@@ -173,6 +182,12 @@ async def upload_report_photo(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # photo_type whitelist — dosya adında kullanıldığı için kontrol şart
+    if photo_type.strip().lower() not in _ALLOWED_PHOTO_TYPES:
+        raise BadRequestException(
+            code="INVALID_PHOTO_TYPE",
+            message=f"Geçersiz fotoğraf türü. İzin verilenler: {', '.join(sorted(_ALLOWED_PHOTO_TYPES))}"
+        )
     report = db.query(Report).filter(Report.id == report_id).first()
     if not report:
         raise NotFoundException("Rapor bulunamadı.")
@@ -235,7 +250,12 @@ def finalize_report(
         db.refresh(report)
     except Exception as e:
         db.rollback()
-        raise BadRequestException(code="EXCEL_GENERATION_FAILED", message=f"Excel raporu üretilirken hata oluştu: {str(e)}")
+        # Hata detayını loga yaz ama client'a sızdırma (bilgi sızıntısı önlemi)
+        logger.error("Excel üretimi başarısız (report_id=%s): %s", report_id, e, exc_info=True)
+        raise BadRequestException(
+            code="EXCEL_GENERATION_FAILED",
+            message="Excel raporu üretilirken bir hata oluştu. Lütfen tekrar deneyin veya yöneticiyle iletişime geçin."
+        )
 
     # Notify admins in background
     background_tasks.add_task(notify_admins_for_finalize, report.id)
@@ -253,11 +273,22 @@ def download_report_excel(
     if not report:
         raise NotFoundException("Rapor bulunamadı.")
 
+    # Sahiplik kontrolü: çalışanlar yalnızca kendi raporlarını indirebilir (IDOR önlemi)
+    if current_user.role != "admin" and report.created_by != current_user.id:
+        raise ForbiddenException("Bu raporu indirme yetkiniz bulunmamaktadır.")
+
     # Generate if not already generated
     if not report.excel_path or not os.path.exists(report.excel_path):
         photos = db.query(Photo).filter(Photo.report_id == report_id).all()
         signature_path = current_user.signature_path
-        excel_file_path = generate_report_excel(report, photos, signature_path)
+        try:
+            excel_file_path = generate_report_excel(report, photos, signature_path)
+        except Exception as e:
+            logger.error("Download sırasında Excel üretimi başarısız (report_id=%s): %s", report_id, e, exc_info=True)
+            raise BadRequestException(
+                code="EXCEL_GENERATION_FAILED",
+                message="Excel raporu üretilirken bir hata oluştu. Lütfen tekrar deneyin."
+            )
         report.excel_path = excel_file_path
         db.commit()
 
