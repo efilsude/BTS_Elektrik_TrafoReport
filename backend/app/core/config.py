@@ -29,13 +29,16 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+    ENABLE_DOCS: bool = os.getenv("ENABLE_DOCS", "true").lower() in ("true", "1", "yes")
+
     SECRET_KEY: str = _SECRET_KEY_ENV
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day access token
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # 7 days refresh token
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))  # Default 60 minutes
+    REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))  # Default 7 days
     
-    INVITE_CODE_TTL_MINUTES: int = 15
-    VERIFICATION_CODE_TTL_MINUTES: int = 10
+    INVITE_CODE_TTL_MINUTES: int = int(os.getenv("INVITE_CODE_TTL_MINUTES", "15"))
+    VERIFICATION_CODE_TTL_MINUTES: int = int(os.getenv("VERIFICATION_CODE_TTL_MINUTES", "10"))
     
     # SMTP & Email settings
     SMTP_HOST: str = os.getenv("SMTP_HOST", "localhost")

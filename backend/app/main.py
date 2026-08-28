@@ -12,7 +12,9 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    openapi_url=f"{settings.API_V1_STR}/openapi.json" if settings.ENABLE_DOCS else None,
+    docs_url=f"{settings.API_V1_STR}/docs" if settings.ENABLE_DOCS else None,
+    redoc_url=f"{settings.API_V1_STR}/redoc" if settings.ENABLE_DOCS else None,
 )
 
 # CORS Middleware
