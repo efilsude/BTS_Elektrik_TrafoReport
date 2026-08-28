@@ -1197,7 +1197,7 @@ def generate_excel_report(report: Report, photos: Optional[List[Photo]] = None, 
 
     wb = openpyxl.load_workbook(template_path, data_only=False)
 
-    data_dict = report.data_json or {}
+    data_dict = dict(report.data_json or {})
 
     # KRİTİK: customer_name, trafo_label, test_date, report_date ve
     # creator_display_name, Report SQL modelinde AYRI kolonlar olarak
