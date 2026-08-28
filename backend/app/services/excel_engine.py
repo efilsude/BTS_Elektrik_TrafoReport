@@ -1295,9 +1295,6 @@ def generate_excel_report(report: Report, photos: Optional[List[Photo]] = None, 
                 process_checklist_pairs(ws, mapped_type, data_dict)
 
             for cell_ref, field_key in cell_map.items():
-                if field_key.startswith("TODO_VERIFY"):
-                    continue
-
                 cell_obj = get_writable_cell(ws, cell_ref)
 
                 if cell_obj.value is not None and str(cell_obj.value).strip().startswith("="):

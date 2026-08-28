@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:io' show Platform, Directory;
 import 'package:bcrypt/bcrypt.dart';
 import 'package:crypto/crypto.dart';
@@ -494,7 +495,7 @@ class DatabaseHelper {
 
   Future<void> addReportPhoto(String reportId, String kind, String filePath) async {
     final Database db = await instance.database;
-    final String id = 'pho_${DateTime.now().millisecondsSinceEpoch}_${kind}';
+    final String id = 'pho_${DateTime.now().millisecondsSinceEpoch}_${kind}_${Random().nextInt(9999)}';
 
     await db.insert(
       'report_photos',
