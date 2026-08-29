@@ -432,8 +432,14 @@ class ExcelGenerator {
 
       if (sheet == null) continue;
 
-      if (normTarget == 'ANA SAYFA') {
-        _processChecklistPairs(sheet, transformerType, dataDict);
+      if (targetSheetName == 'ANA SAYFA') {
+        // Şablonda kalan örnek işaret/ayraç hücrelerini temizle.
+        for (final String cref in <String>['C61', 'F61', 'J61', 'C63', 'F63', 'J63']) {
+          sheet.updateCell(CellIndex.indexByString(cref), TextCellValue(''));
+        }
+        _writeControlMarks(sheet, transformerType, dataDict, isBreakerSheet: false);
+      } else if (targetSheetName == 'ANA SAYFA KESİCİ') {
+        _writeControlMarks(sheet, transformerType, dataDict, isBreakerSheet: true);
       }
 
       final Map<String, String> cellMap = typeMapping[targetSheetName]!;
@@ -709,38 +715,81 @@ class ExcelGenerator {
     }
   }
 
-  /// Sets Evet/Hayır checkmarks for ANA SAYFA checklist items and clears residual sample checkmarks and divider cells
-  static void _processChecklistPairs(Sheet sheet, String transformerType, Map<String, dynamic> dataDict) {
-    for (final String cref in <String>['C61', 'F61', 'J61', 'C63', 'F63', 'J63']) {
-      sheet.updateCell(CellIndex.indexByString(cref), TextCellValue(''));
-    }
-
+  /// ANA SAYFA ve ANA SAYFA KESİCİ sayfalarındaki kontrol maddesi işaretlerini yazar.
+  /// Kullanıcının seçtiği 'YAPILDI' / 'UYGUN' / 'UYGUN DEĞİL' ifadesi:
+  ///  - Evet/Hayır işaret hücrelerine (I/J, R/S, veya kesicide G/I, P/R) 'ü' olarak,
+  ///  - Ayrıca (mevcutsa) ayrı bir metin hücresine (G/P sütunları) yazı olarak yazılır.
+  /// Hiçbir seçenek seçilmemişse (null) ilgili tüm hücreler boş bırakılır — bu, şablonda
+  /// kalan "UYGUN" / "-" / "30" gibi örnek verileri de temizler.
+  static void _writeControlMarks(
+    Sheet sheet,
+    String transformerType,
+    Map<String, dynamic> dataDict, {
+    required bool isBreakerSheet,
+  }) {
     final Map<String, Map<String, String>> pairs =
         ExcelCellMapping.checklistPairs[transformerType] ??
             ExcelCellMapping.checklistPairs['hermetik']!;
+    final Map<String, String> labelCells =
+        ExcelCellMapping.checklistLabelCells[transformerType] ?? const <String, String>{};
 
     pairs.forEach((String key, Map<String, String> pair) {
+      final bool belongsToThisSheet =
+          isBreakerSheet ? key.startsWith('breaker_control_') : key.startsWith('checklist_');
+      if (!belongsToThisSheet) return;
+
       final CellIndex evetIdx = CellIndex.indexByString(pair['evet']!);
       final CellIndex hayirIdx = CellIndex.indexByString(pair['hayir']!);
+      final String? labelCellRef = labelCells[key];
 
       final dynamic val = dataDict[key];
-      if (val == null) {
+      String? selectedLabel;
+      bool? isPositive;
+
+      if (val is String && <String>['YAPILDI', 'UYGUN', 'UYGUN DEĞİL'].contains(val)) {
+        selectedLabel = val;
+        isPositive = val != 'UYGUN DEĞİL';
+      } else if (val == true) {
+        // Geriye dönük uyumluluk: eski raporlarda bool olarak kaydedilmiş olabilir.
+        selectedLabel = 'YAPILDI';
+        isPositive = true;
+      } else if (val == false) {
+        selectedLabel = 'UYGUN DEĞİL';
+        isPositive = false;
+      }
+
+      if (isPositive == null) {
+        // Hiçbir şey seçilmemiş: tüm ilgili hücreler boş kalır.
         sheet.updateCell(evetIdx, TextCellValue(''));
         sheet.updateCell(hayirIdx, TextCellValue(''));
-      } else {
-        final String sVal = val.toString().trim().toLowerCase();
-        final bool isTrue = (val == true || sVal == 'true' || sVal == 'ü' || sVal == '1' || sVal == 'evet');
-        final bool isFalse = (val == false || sVal == 'false' || sVal == '0' || sVal == 'hayir' || sVal == 'hayır');
+        if (labelCellRef != null) {
+          sheet.updateCell(CellIndex.indexByString(labelCellRef), TextCellValue(''));
+        }
+        return;
+      }
 
-        if (isTrue) {
-          sheet.updateCell(evetIdx, TextCellValue('ü'));
+      if (isBreakerSheet) {
+        // Kesici sayfasında ayrı bir metin hücresi yok; seçilen ifade doğrudan
+        // evet/hayır işaret hücresine yazılır.
+        if (isPositive) {
+          sheet.updateCell(evetIdx, TextCellValue(selectedLabel!));
           sheet.updateCell(hayirIdx, TextCellValue(''));
-        } else if (isFalse) {
-          sheet.updateCell(evetIdx, TextCellValue(''));
-          sheet.updateCell(hayirIdx, TextCellValue('ü'));
         } else {
           sheet.updateCell(evetIdx, TextCellValue(''));
+          sheet.updateCell(hayirIdx, TextCellValue(selectedLabel!));
+        }
+      } else {
+        // ANA SAYFA: işaret hücresi sadece 'ü', ayrı metin hücresi varsa seçilen
+        // ifade oraya tam metin olarak yazılır.
+        if (isPositive) {
+          sheet.updateCell(evetIdx, TextCellValue('ü'));
           sheet.updateCell(hayirIdx, TextCellValue(''));
+        } else {
+          sheet.updateCell(evetIdx, TextCellValue(''));
+          sheet.updateCell(hayirIdx, TextCellValue('ü'));
+        }
+        if (labelCellRef != null) {
+          sheet.updateCell(CellIndex.indexByString(labelCellRef), TextCellValue(selectedLabel!));
         }
       }
     });

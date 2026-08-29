@@ -5,6 +5,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../core/config.dart';
 import '../database/database_helper.dart';
 import '../excel/cell_mapping.dart';
 import '../excel/excel_generator.dart';
@@ -43,6 +44,9 @@ class ReportService extends ChangeNotifier {
       dataJson: <String, dynamic>{
         'report_date': dateStr,
         'test_date': dateStr,
+        'device_model': AppConfig.testDeviceModel,
+        'device_serial': AppConfig.testDeviceSerial,
+        'transformer_temperature_c': '',
         'has_breaker': subType == 'kesici',
         'breaker_included': subType == 'kesici',
         'winding_resistance': <String, dynamic>{},

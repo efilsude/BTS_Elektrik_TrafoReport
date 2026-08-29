@@ -29,12 +29,12 @@ class ExcelCellMapping {
         'G15': 'voltage',
         'O15': 'serial_no',
         'G17': 'oil_brand',
+        'G27': 'transformer_temperature_c',
         'G31': 'dc_redresor_voltage',
         'O17': 'oil_weight',
         'G19': 'connection_group',
         'O19': 'short_circuit_imp_pct',
         'G21': 'tank_type',
-        'G27': 'transformer_temperature',
         'I21': 'tank_mark_hermetik',
         'N21': 'tank_mark_gt',
         'R21': 'tank_mark_kuru',
@@ -343,6 +343,7 @@ class ExcelCellMapping {
         'G15': 'voltage',
         'O15': 'serial_no',
         'G17': 'oil_brand',
+        'G27': 'transformer_temperature_c',
         'G31': 'dc_redresor_voltage',
         'O17': 'oil_weight',
         'G19': 'connection_group',
@@ -556,6 +557,60 @@ class ExcelCellMapping {
       'breaker_control_heater': <String, String>{'evet': 'P30', 'hayir': 'R30'},
       'breaker_control_cable': <String, String>{'evet': 'G32', 'hayir': 'I32'},
       'breaker_control_relay': <String, String>{'evet': 'P32', 'hayir': 'R32'},
+    },
+  };
+
+  /// Kontrol maddesi metin hücreleri: seçilen 'YAPILDI' / 'UYGUN' / 'UYGUN DEĞİL' ifadesinin
+  /// yazı olarak yazıldığı hücreler (ANA SAYFA'daki G/P sütunları). checklist_1 (Trafo Sıcaklık
+  /// Kontrolü) hariçtir; o satırın G hücresi ölçülen sıcaklık değeri için ayrılmıştır
+  /// (bkz. 'transformer_temperature_c'). checklist_3 (DC Redresör Kontrolü) hariçtir;
+  /// o satırın G hücresi seçilen DC voltaj değeri için kullanılır.
+  /// Kesici sayfasında (breaker_control_*) ayrı bir metin hücresi olmadığından, seçilen ifade
+  /// doğrudan evet/hayır işaret hücresine yazılır — bu yüzden burada yer almazlar.
+  static const Map<String, Map<String, String>> checklistLabelCells = <String, Map<String, String>>{
+    'hermetik': <String, String>{
+      'checklist_2': 'G29',
+      'checklist_4': 'G33',
+      'checklist_5': 'G35',
+      'checklist_6': 'G37',
+      'checklist_7': 'G39',
+      'checklist_8': 'G41',
+      'checklist_9': 'P27',
+      'checklist_10': 'P29',
+      'checklist_11': 'P31',
+      'checklist_12': 'P33',
+      'checklist_13': 'P35',
+      'checklist_14': 'P37',
+      'checklist_15': 'P39',
+      'checklist_16': 'P41',
+    },
+    'kuru_tip': <String, String>{
+      'checklist_2': 'G29',
+      'checklist_4': 'G33',
+      'checklist_5': 'G35',
+      'checklist_6': 'G37',
+      'checklist_7': 'P27',
+      'checklist_8': 'P29',
+      'checklist_9': 'P31',
+      'checklist_10': 'P33',
+      'checklist_11': 'P35',
+      'checklist_12': 'P37',
+    },
+    'gt': <String, String>{
+      'checklist_2': 'G29',
+      'checklist_4': 'G33',
+      'checklist_5': 'G35',
+      'checklist_6': 'G37',
+      'checklist_7': 'G39',
+      'checklist_8': 'G41',
+      'checklist_9': 'P27',
+      'checklist_10': 'P29',
+      'checklist_11': 'P31',
+      'checklist_12': 'P33',
+      'checklist_13': 'P35',
+      'checklist_14': 'P37',
+      'checklist_15': 'P39',
+      'checklist_16': 'P41',
     },
   };
 

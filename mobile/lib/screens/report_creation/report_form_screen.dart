@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/config.dart';
 import '../../models/report_model.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
@@ -164,6 +165,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     _oilBrandController.dispose();
     _oilWeightController.dispose();
 
+    _transformerTempController.dispose();
     _ogRabController.dispose();
     _ogRbcController.dispose();
     _ogRcaController.dispose();
@@ -268,6 +270,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _shortCircuitImpController.text = data['short_circuit_imp_pct']?.toString() ?? '';
       _oilBrandController.text = data['oil_brand']?.toString() ?? '';
       _oilWeightController.text = data['oil_weight']?.toString() ?? '';
+
+      _transformerTempController.text = data['transformer_temperature_c']?.toString() ?? '';
 
       // Og Sargı
       _ogRabController.text = data['og_rab']?.toString() ?? '';
@@ -2688,6 +2692,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final String status = feedback['status'] as String;
     final bool hasData = feedback['unbalance'] != null || feedback['error'] != null;
     final Color color = hasData ? (feedback['color'] as Color) : Colors.grey;
+    final List<String> affectedPhases =
+        (feedback['affectedPhases'] as List<String>?) ?? const <String>[];
+    final bool showAffectedPhases = status == 'UYGUN DEĞİL' && affectedPhases.isNotEmpty;
 
     return Card(
       elevation: 0,
@@ -2730,6 +2737,29 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                 ),
               ],
             ),
+            if (showAffectedPhases) ...<Widget>[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.errorColor.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Icon(Icons.warning_amber_rounded, size: 16, color: AppTheme.errorColor),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Dengesizliğe neden olan ölçüm: ${affectedPhases.join(', ')}',
+                        style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppTheme.errorColor),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),

@@ -9,4 +9,10 @@ class AppConfig {
   );
 
   static const Duration requestTimeout = Duration(seconds: 15);
+
+  /// Tüm testlerde kullanılan sabit test cihazı bilgileri.
+  /// Cihaz değişmediği sürece kullanıcıdan tekrar tekrar sorulmaz,
+  /// tüm raporlara otomatik olarak yazılır.
+  static const String testDeviceModel = 'STS 5000';
+  static const String testDeviceSerial = '19B20';
 }
