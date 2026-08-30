@@ -15,4 +15,9 @@ class AppConfig {
   /// tüm raporlara otomatik olarak yazılır.
   static const String testDeviceModel = 'STS 5000';
   static const String testDeviceSerial = '19B20';
+
+  /// İkinci sabit test cihazı: İZOLASYON, TOPRAKLAMALAR, KESİCİ İZOLASYON ve
+  /// AÇMA-KAPAMA sayfalarında kullanılan ayrı ölçüm cihazı.
+  static const String testDeviceModel2 = 'METREL-MI3123';
+  static const String testDeviceSerial2 = '16060016';
 }

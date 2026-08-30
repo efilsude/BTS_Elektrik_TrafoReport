@@ -6,6 +6,7 @@ import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'cell_mapping.dart';
+import '../core/config.dart';
 import '../models/report_model.dart';
 
 class ExcelGenerator {
@@ -390,6 +391,10 @@ class ExcelGenerator {
     dataDict['address'] = dataDict['address'] ?? dataDict['location'] ?? '';
     dataDict['report_date'] = ExcelCellMapping.formatDateDisplay(dataDict['report_date'], fallback: report.createdAt);
     dataDict['test_date'] = ExcelCellMapping.formatDateDisplay(dataDict['test_date'], fallback: report.createdAt);
+    dataDict['device_model'] = (dataDict['device_model']?.toString().trim().isNotEmpty == true) ? dataDict['device_model'] : AppConfig.testDeviceModel;
+    dataDict['device_serial'] = (dataDict['device_serial']?.toString().trim().isNotEmpty == true) ? dataDict['device_serial'] : AppConfig.testDeviceSerial;
+    dataDict['device_model_2'] = (dataDict['device_model_2']?.toString().trim().isNotEmpty == true) ? dataDict['device_model_2'] : AppConfig.testDeviceModel2;
+    dataDict['device_serial_2'] = (dataDict['device_serial_2']?.toString().trim().isNotEmpty == true) ? dataDict['device_serial_2'] : AppConfig.testDeviceSerial2;
     dataDict['creator_display_name'] = report.creatorDisplayName ??
         dataDict['operator_title'] ??
         dataDict['operator_name'] ??
