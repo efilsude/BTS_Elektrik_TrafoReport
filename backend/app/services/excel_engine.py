@@ -93,8 +93,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "Ç.O 34500": {
             "D11": "operator_name",
-            "J11": "device_model_2",
-            "O11": "device_serial_2",
+            "J11": "device_model",
+            "O11": "device_serial",
             "B16": "ttr_tap1_a",
             "C16": "ttr_tap1_b",
             "D16": "ttr_tap1_c",
@@ -123,14 +123,14 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "HV PF": {
             "D11": "operator_name",
-            "J11": "device_model_2",
-            "O11": "device_serial_2",
+            "J11": "device_model",
+            "O11": "device_serial",
             "P17": "pf_hv_humidity",
         },
         "LV PF": {
             "D11": "operator_name",
-            "J11": "device_model_2",
-            "O11": "device_serial_2",
+            "J11": "device_model",
+            "O11": "device_serial",
             "P17": "pf_lv_humidity",
         },
         "ANA SAYFA KESİCİ": {
@@ -154,8 +154,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "KESİCİ KONTAK": {
             "D10": "operator_name",
-            "J10": "device_model_2",
-            "O10": "device_serial_2",
+            "J10": "device_model",
+            "O10": "device_serial",
         },
         "AÇMA-KAPAMA": {
             "D9": "operator_name",
@@ -165,13 +165,13 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "DİĞER": {
             "D9": "operator_name",
-            "J9": "device_model_2",
-            "O9": "device_serial_2",
+            "J9": "device_model",
+            "O9": "device_serial",
         },
         "AKIM TRAFOLARI": {
             "D9": "operator_name",
-            "J9": "device_model_2",
-            "O9": "device_serial_2",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D16": "ct_ratio",
         },
         "HERMETİK YAĞ DİLEKÇESİ": {}
@@ -243,8 +243,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "Ç.O 34500": {
             "D11": "operator_name",
-            "J11": "device_model_2",
-            "O11": "device_serial_2",
+            "J11": "device_model",
+            "O11": "device_serial",
             "B16": "ttr_tap1_a",
             "C16": "ttr_tap1_b",
             "D16": "ttr_tap1_c",
@@ -273,14 +273,14 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "HV PF": {
             "D11": "operator_name",
-            "J11": "device_model_2",
-            "O11": "device_serial_2",
+            "J11": "device_model",
+            "O11": "device_serial",
             "P17": "pf_hv_humidity",
         },
         "LV PF": {
             "D11": "operator_name",
-            "J11": "device_model_2",
-            "O11": "device_serial_2",
+            "J11": "device_model",
+            "O11": "device_serial",
             "P17": "pf_lv_humidity",
         },
         "ANA SAYFA KESİCİ": {
@@ -304,8 +304,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "KESİCİ KONTAK": {
             "D10": "operator_name",
-            "J10": "device_model_2",
-            "O10": "device_serial_2",
+            "J10": "device_model",
+            "O10": "device_serial",
         },
         "AÇMA-KAPAMA": {
             "D9": "operator_name",
@@ -315,13 +315,13 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "DİĞER": {
             "D9": "operator_name",
-            "J9": "device_model_2",
-            "O9": "device_serial_2",
+            "J9": "device_model",
+            "O9": "device_serial",
         },
         "AKIM TRAFOLARI": {
             "D9": "operator_name",
-            "J9": "device_model_2",
-            "O9": "device_serial_2",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D16": "ct_ratio",
         }
     },
@@ -400,8 +400,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "Ç.O 34500": {
             "D11": "operator_name",
-            "J11": "device_model_2",
-            "O11": "device_serial_2",
+            "J11": "device_model",
+            "O11": "device_serial",
             "B16": "ttr_tap1_a",
             "C16": "ttr_tap1_b",
             "D16": "ttr_tap1_c",
@@ -449,8 +449,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "KESİCİ KONTAK": {
             "D10": "operator_name",
-            "J10": "device_model_2",
-            "O10": "device_serial_2",
+            "J10": "device_model",
+            "O10": "device_serial",
         },
         "AÇMA-KAPAMA": {
             "D9": "operator_name",
@@ -460,13 +460,13 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "DİĞER": {
             "D9": "operator_name",
-            "J9": "device_model_2",
-            "O9": "device_serial_2",
+            "J9": "device_model",
+            "O9": "device_serial",
         },
         "AKIM TRAFOLARI": {
             "D9": "operator_name",
-            "J9": "device_model_2",
-            "O9": "device_serial_2",
+            "J9": "device_model",
+            "O9": "device_serial",
             "D16": "ct_ratio",
         },
         "YAĞ RAPORU": {

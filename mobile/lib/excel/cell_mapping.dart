@@ -86,8 +86,8 @@ class ExcelCellMapping {
       },
       'Ç.O 34500': <String, String>{
         'D11': 'operator_name',
-        'J11': 'device_model_2',
-        'O11': 'device_serial_2',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'B16': 'ttr_tap1_a',
         'C16': 'ttr_tap1_b',
         'D16': 'ttr_tap1_c',
@@ -116,14 +116,14 @@ class ExcelCellMapping {
       },
       'HV PF': <String, String>{
         'D11': 'operator_name',
-        'J11': 'device_model_2',
-        'O11': 'device_serial_2',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'P17': 'pf_hv_humidity',
       },
       'LV PF': <String, String>{
         'D11': 'operator_name',
-        'J11': 'device_model_2',
-        'O11': 'device_serial_2',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'P17': 'pf_lv_humidity',
       },
       'ANA SAYFA KESİCİ': <String, String>{
@@ -148,8 +148,8 @@ class ExcelCellMapping {
       },
       'KESİCİ KONTAK': <String, String>{
         'D10': 'operator_name',
-        'J10': 'device_model_2',
-        'O10': 'device_serial_2',
+        'J10': 'device_model',
+        'O10': 'device_serial',
         'N20': 'breaker_contact_r',
       },
       'AÇMA-KAPAMA': <String, String>{
@@ -160,13 +160,13 @@ class ExcelCellMapping {
       },
       'DİĞER': <String, String>{
         'D9': 'operator_name',
-        'J9': 'device_model_2',
-        'O9': 'device_serial_2',
+        'J9': 'device_model',
+        'O9': 'device_serial',
       },
       'AKIM TRAFOLARI': <String, String>{
         'D9': 'operator_name',
-        'J9': 'device_model_2',
-        'O9': 'device_serial_2',
+        'J9': 'device_model',
+        'O9': 'device_serial',
         'D16': 'ct_ratio',
       },
       'HERMETİK YAĞ DİLEKÇESİ': <String, String>{},
@@ -239,8 +239,8 @@ class ExcelCellMapping {
       },
       'Ç.O 34500': <String, String>{
         'D11': 'operator_name',
-        'J11': 'device_model_2',
-        'O11': 'device_serial_2',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'B16': 'ttr_tap1_a',
         'C16': 'ttr_tap1_b',
         'D16': 'ttr_tap1_c',
@@ -269,14 +269,14 @@ class ExcelCellMapping {
       },
       'HV PF': <String, String>{
         'D11': 'operator_name',
-        'J11': 'device_model_2',
-        'O11': 'device_serial_2',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'P17': 'pf_hv_humidity',
       },
       'LV PF': <String, String>{
         'D11': 'operator_name',
-        'J11': 'device_model_2',
-        'O11': 'device_serial_2',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'P17': 'pf_lv_humidity',
       },
       'ANA SAYFA KESİCİ': <String, String>{
@@ -301,8 +301,8 @@ class ExcelCellMapping {
       },
       'KESİCİ KONTAK': <String, String>{
         'D10': 'operator_name',
-        'J10': 'device_model_2',
-        'O10': 'device_serial_2',
+        'J10': 'device_model',
+        'O10': 'device_serial',
         'N20': 'breaker_contact_r',
       },
       'AÇMA-KAPAMA': <String, String>{
@@ -313,13 +313,13 @@ class ExcelCellMapping {
       },
       'DİĞER': <String, String>{
         'D9': 'operator_name',
-        'J9': 'device_model_2',
-        'O9': 'device_serial_2',
+        'J9': 'device_model',
+        'O9': 'device_serial',
       },
       'AKIM TRAFOLARI': <String, String>{
         'D9': 'operator_name',
-        'J9': 'device_model_2',
-        'O9': 'device_serial_2',
+        'J9': 'device_model',
+        'O9': 'device_serial',
         'D16': 'ct_ratio',
       },
     },
@@ -400,8 +400,8 @@ class ExcelCellMapping {
       },
       'Ç.O 34500': <String, String>{
         'D11': 'operator_name',
-        'J11': 'device_model_2',
-        'O11': 'device_serial_2',
+        'J11': 'device_model',
+        'O11': 'device_serial',
         'B16': 'ttr_tap1_a',
         'C16': 'ttr_tap1_b',
         'D16': 'ttr_tap1_c',
@@ -451,8 +451,8 @@ class ExcelCellMapping {
       },
       'KESİCİ KONTAK': <String, String>{
         'D10': 'operator_name',
-        'J10': 'device_model_2',
-        'O10': 'device_serial_2',
+        'J10': 'device_model',
+        'O10': 'device_serial',
         'N20': 'breaker_contact_r',
       },
       'AÇMA-KAPAMA': <String, String>{
