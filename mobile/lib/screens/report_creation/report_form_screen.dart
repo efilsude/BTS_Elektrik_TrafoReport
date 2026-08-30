@@ -250,13 +250,20 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _reportDateController.text = data['report_date']?.toString() ?? '';
       _testDateController.text = data['test_date']?.toString() ?? '';
       _operatorNameController.text = data['operator_name']?.toString() ?? '';
-      _deviceModelController.text = 'METREL-MI3210';
-      _deviceSerialController.text = 'METREL-MI3210';
+      // Sabit test cihazı: STS 5000 / Seri No 19B20 (bkz. AppConfig). Makine değişmediği
+      // sürece kullanıcıdan tekrar sorulmaz, her rapora otomatik yazılır.
+      _deviceModelController.text = AppConfig.testDeviceModel;
+      _deviceSerialController.text = AppConfig.testDeviceSerial;
       _operatorTitleController.text = data['operator_title']?.toString() ?? '';
       _transformerTempController.text = data['transformer_temperature']?.toString() ?? '';
 
-      reportService.updateField('device_model', 'METREL-MI3210');
-      reportService.updateField('device_serial', 'METREL-MI3210');
+      reportService.updateField('device_model', AppConfig.testDeviceModel);
+      reportService.updateField('device_serial', AppConfig.testDeviceSerial);
+
+      // İkinci sabit test cihazı: İZOLASYON, TOPRAKLAMALAR, KESİCİ İZOLASYON ve
+      // AÇMA-KAPAMA sayfalarında kullanılan METREL-MI3123 / Seri No 16060016.
+      reportService.updateField('device_model_2', AppConfig.testDeviceModel2);
+      reportService.updateField('device_serial_2', AppConfig.testDeviceSerial2);
 
       _brandController.text = data['brand']?.toString() ?? '';
       _powerController.text = data['power_kva']?.toString() ?? '';
@@ -270,8 +277,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       _shortCircuitImpController.text = data['short_circuit_imp_pct']?.toString() ?? '';
       _oilBrandController.text = data['oil_brand']?.toString() ?? '';
       _oilWeightController.text = data['oil_weight']?.toString() ?? '';
-
-      _transformerTempController.text = data['transformer_temperature_c']?.toString() ?? '';
 
       // Og Sargı
       _ogRabController.text = data['og_rab']?.toString() ?? '';
@@ -1215,7 +1220,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           ),
         ),
         const SizedBox(height: 24),
-        _buildSectionHeader('Test Cihazı Bilgileri', 'Tüm raporlar için otomatik kullanılan sabit test cihazı.'),
+        _buildSectionHeader('Test Cihazı Bilgileri', 'Tüm raporlar için otomatik kullanılan sabit test cihazları.'),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
@@ -1233,12 +1238,12 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      'Test Cihazı: METREL-MI3210',
+                      'Test Cihazı: ${AppConfig.testDeviceModel}',
                       style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textDark),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Cihaz Seri No: METREL-MI3210',
+                      'Cihaz Seri No: ${AppConfig.testDeviceSerial}',
                       style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textLight),
                     ),
                   ],
@@ -1248,6 +1253,42 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                 label: Text('Sabit Cihaz', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.primaryDark)),
                 backgroundColor: AppTheme.primaryColor.withOpacity(0.15),
                 side: BorderSide.none,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.backgroundColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.borderLight),
+          ),
+          child: Row(
+            children: <Widget>[
+              const Icon(Icons.electrical_services_outlined, color: AppTheme.primaryDark),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Test Cihazı: ${AppConfig.testDeviceModel2}',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textDark),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Cihaz Seri No: ${AppConfig.testDeviceSerial2}',
+                      style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textLight),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'İzolasyon, Topraklamalar, Kesici İzolasyon ve Açma-Kapama sayfalarında kullanılır.',
+                      style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textLight, fontStyle: FontStyle.italic),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

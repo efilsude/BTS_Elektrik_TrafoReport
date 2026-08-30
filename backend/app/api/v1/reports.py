@@ -116,10 +116,10 @@ def get_report(
     if not report:
         raise NotFoundException("Rapor bulunamadı.")
 
-    # Çalışanlar yalnızca kendi raporlarını okuyabilir; adminler hepsini görebilir.
-    if current_user.role != "admin" and report.created_by != current_user.id:
-        raise ForbiddenException("Bu rapora erişim yetkiniz bulunmamaktadır.")
-
+    # PRD §9/§4.2: Rapor Havuzu tüm kimlik doğrulanmış kullanıcılara açıktır — herhangi bir
+    # çalışan başka bir çalışanın kesinleşmiş/taslak raporunu görüntüleyebilir. Sahiplik
+    # kontrolü yalnızca DÜZENLEME ve SİLME işlemlerinde uygulanır (bkz. update_report,
+    # delete_report). Burada bir kısıtlama olmaması bilinçli bir üründür, IDOR açığı değildir.
     return ReportResponse.model_validate(report)
 
 @router.put("/{report_id}", response_model=ReportResponse)
@@ -281,9 +281,9 @@ def download_report_excel(
     if not report:
         raise NotFoundException("Rapor bulunamadı.")
 
-    # Sahiplik kontrolü: çalışanlar yalnızca kendi raporlarını indirebilir (IDOR önlemi)
-    if current_user.role != "admin" and report.created_by != current_user.id:
-        raise ForbiddenException("Bu raporu indirme yetkiniz bulunmamaktadır.")
+    # PRD §9/§4.2: Rapor Havuzundaki herhangi bir rapor tüm kimlik doğrulanmış kullanıcılar
+    # tarafından indirilebilir olmalıdır (ürünün temel özelliği). Sahiplik kontrolü burada
+    # UYGULANMAZ — bkz. get_report üzerindeki not.
 
     # Generate if not already generated
     if not report.excel_path or not os.path.exists(report.excel_path):

@@ -42,8 +42,11 @@ class ExcelGenerator {
     dataDict['report_date'] = ExcelCellMapping.formatDateDisplay(dataDict['report_date'], fallback: report.createdAt);
     dataDict['test_date'] = ExcelCellMapping.formatDateDisplay(dataDict['test_date'], fallback: report.createdAt);
 
-    dataDict['device_model'] = (dataDict['device_model']?.toString().trim().isNotEmpty == true) ? dataDict['device_model'] : 'METREL-MI3210';
-    dataDict['device_serial'] = (dataDict['device_serial']?.toString().trim().isNotEmpty == true) ? dataDict['device_serial'] : 'METREL-MI3210';
+    dataDict['device_model'] = (dataDict['device_model']?.toString().trim().isNotEmpty == true) ? dataDict['device_model'] : 'STS 5000';
+    dataDict['device_serial'] = (dataDict['device_serial']?.toString().trim().isNotEmpty == true) ? dataDict['device_serial'] : '19B20';
+    // İkinci sabit cihaz: İZOLASYON, TOPRAKLAMALAR, KESİCİ İZOLASYON, AÇMA-KAPAMA sayfaları
+    dataDict['device_model_2'] = (dataDict['device_model_2']?.toString().trim().isNotEmpty == true) ? dataDict['device_model_2'] : AppConfig.testDeviceModel2;
+    dataDict['device_serial_2'] = (dataDict['device_serial_2']?.toString().trim().isNotEmpty == true) ? dataDict['device_serial_2'] : AppConfig.testDeviceSerial2;
 
     // Operator profile fields injection
     final String opName = dataDict['operator_name']?.toString().trim() ?? report.creatorDisplayName ?? '';
