@@ -90,8 +90,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "İZOLASYON ": {
             "D11": "operator_name",
-            "J11": "device_model",
-            "O11": "device_serial",
+            "J11": "device_model_2",
+            "O11": "device_serial_2",
             "D16": "iso_og_gnd",
             "D17": "iso_ag_gnd",
             "D30": "iso_temp",
@@ -99,8 +99,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "Ç.O 34500": {
             "D11": "operator_name",
-            "J11": "device_model",
-            "O11": "device_serial",
+            "J11": "device_model_2",
+            "O11": "device_serial_2",
             "B16": "ttr_tap1_a",
             "C16": "ttr_tap1_b",
             "D16": "ttr_tap1_c",
@@ -119,8 +119,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "TOPRAKLAMALAR": {
             "D9": "operator_name",
-            "J9": "device_model",
-            "O9": "device_serial",
+            "J9": "device_model_2",
+            "O9": "device_serial_2",
             "K16": "ground_isletme_notr",
             "K26": "ground_koruma_trafo",
             "K27": "ground_koruma_hucre",
@@ -129,14 +129,14 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "HV PF": {
             "D11": "operator_name",
-            "J11": "device_model",
-            "O11": "device_serial",
+            "J11": "device_model_2",
+            "O11": "device_serial_2",
             "P17": "pf_hv_humidity",
         },
         "LV PF": {
             "D11": "operator_name",
-            "J11": "device_model",
-            "O11": "device_serial",
+            "J11": "device_model_2",
+            "O11": "device_serial_2",
             "P17": "pf_lv_humidity",
         },
         "ANA SAYFA KESİCİ": {
@@ -155,29 +155,29 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "KESİCİ İZOLASYON": {
             "D10": "operator_name",
-            "J10": "device_model",
-            "O10": "device_serial",
+            "J10": "device_model_2",
+            "O10": "device_serial_2",
         },
         "KESİCİ KONTAK": {
             "D10": "operator_name",
-            "J10": "device_model",
-            "O10": "device_serial",
+            "J10": "device_model_2",
+            "O10": "device_serial_2",
         },
         "AÇMA-KAPAMA": {
             "D9": "operator_name",
-            "J9": "device_model",
-            "O9": "device_serial",
+            "J9": "device_model_2",
+            "O9": "device_serial_2",
             "D10": "breaker_timing_open",
         },
         "DİĞER": {
             "D9": "operator_name",
-            "J9": "device_model",
-            "O9": "device_serial",
+            "J9": "device_model_2",
+            "O9": "device_serial_2",
         },
         "AKIM TRAFOLARI": {
             "D9": "operator_name",
-            "J9": "device_model",
-            "O9": "device_serial",
+            "J9": "device_model_2",
+            "O9": "device_serial_2",
             "D16": "ct_ratio",
         },
         "HERMETİK YAĞ DİLEKÇESİ": {}
@@ -240,8 +240,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "İZOLASYON ": {
             "D11": "operator_name",
-            "J11": "device_model",
-            "O11": "device_serial",
+            "J11": "device_model_2",
+            "O11": "device_serial_2",
             "D16": "iso_og_gnd",
             "D17": "iso_ag_gnd",
             "D30": "iso_temp",
@@ -249,8 +249,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "Ç.O 34500": {
             "D11": "operator_name",
-            "J11": "device_model",
-            "O11": "device_serial",
+            "J11": "device_model_2",
+            "O11": "device_serial_2",
             "B16": "ttr_tap1_a",
             "C16": "ttr_tap1_b",
             "D16": "ttr_tap1_c",
@@ -269,8 +269,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "TOPRAKLAMALAR": {
             "D9": "operator_name",
-            "J9": "device_model",
-            "O9": "device_serial",
+            "J9": "device_model_2",
+            "O9": "device_serial_2",
             "K16": "ground_isletme_notr",
             "K26": "ground_koruma_trafo",
             "K27": "ground_koruma_hucre",
@@ -279,14 +279,14 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "HV PF": {
             "D11": "operator_name",
-            "J11": "device_model",
-            "O11": "device_serial",
+            "J11": "device_model_2",
+            "O11": "device_serial_2",
             "P17": "pf_hv_humidity",
         },
         "LV PF": {
             "D11": "operator_name",
-            "J11": "device_model",
-            "O11": "device_serial",
+            "J11": "device_model_2",
+            "O11": "device_serial_2",
             "P17": "pf_lv_humidity",
         },
         "ANA SAYFA KESİCİ": {
@@ -305,29 +305,29 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "KESİCİ İZOLASYON": {
             "D10": "operator_name",
-            "J10": "device_model",
-            "O10": "device_serial",
+            "J10": "device_model_2",
+            "O10": "device_serial_2",
         },
         "KESİCİ KONTAK": {
             "D10": "operator_name",
-            "J10": "device_model",
-            "O10": "device_serial",
+            "J10": "device_model_2",
+            "O10": "device_serial_2",
         },
         "AÇMA-KAPAMA": {
             "D9": "operator_name",
-            "J9": "device_model",
-            "O9": "device_serial",
+            "J9": "device_model_2",
+            "O9": "device_serial_2",
             "D10": "breaker_timing_open",
         },
         "DİĞER": {
             "D9": "operator_name",
-            "J9": "device_model",
-            "O9": "device_serial",
+            "J9": "device_model_2",
+            "O9": "device_serial_2",
         },
         "AKIM TRAFOLARI": {
             "D9": "operator_name",
-            "J9": "device_model",
-            "O9": "device_serial",
+            "J9": "device_model_2",
+            "O9": "device_serial_2",
             "D16": "ct_ratio",
         }
     },
@@ -397,8 +397,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "İZOLASYON ": {
             "D11": "operator_name",
-            "J11": "device_model",
-            "O11": "device_serial",
+            "J11": "device_model_2",
+            "O11": "device_serial_2",
             "D16": "iso_og_gnd",
             "D17": "iso_ag_gnd",
             "D30": "iso_temp",
@@ -406,8 +406,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "Ç.O 34500": {
             "D11": "operator_name",
-            "J11": "device_model",
-            "O11": "device_serial",
+            "J11": "device_model_2",
+            "O11": "device_serial_2",
             "B16": "ttr_tap1_a",
             "C16": "ttr_tap1_b",
             "D16": "ttr_tap1_c",
@@ -426,8 +426,8 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "TOPRAKLAMALAR": {
             "D9": "operator_name",
-            "J9": "device_model",
-            "O9": "device_serial",
+            "J9": "device_model_2",
+            "O9": "device_serial_2",
             "K16": "ground_isletme_notr",
             "K26": "ground_koruma_trafo",
             "K27": "ground_koruma_hucre",
@@ -450,29 +450,29 @@ TYPE_CELL_MAPPINGS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "KESİCİ İZOLASYON": {
             "D10": "operator_name",
-            "J10": "device_model",
-            "O10": "device_serial",
+            "J10": "device_model_2",
+            "O10": "device_serial_2",
         },
         "KESİCİ KONTAK": {
             "D10": "operator_name",
-            "J10": "device_model",
-            "O10": "device_serial",
+            "J10": "device_model_2",
+            "O10": "device_serial_2",
         },
         "AÇMA-KAPAMA": {
             "D9": "operator_name",
-            "J9": "device_model",
-            "O9": "device_serial",
+            "J9": "device_model_2",
+            "O9": "device_serial_2",
             "D10": "breaker_timing_open",
         },
         "DİĞER": {
             "D9": "operator_name",
-            "J9": "device_model",
-            "O9": "device_serial",
+            "J9": "device_model_2",
+            "O9": "device_serial_2",
         },
         "AKIM TRAFOLARI": {
             "D9": "operator_name",
-            "J9": "device_model",
-            "O9": "device_serial",
+            "J9": "device_model_2",
+            "O9": "device_serial_2",
             "D16": "ct_ratio",
         },
         "YAĞ RAPORU": {
@@ -1283,6 +1283,8 @@ def main():
 
     data_dict["device_model"] = str(data_dict.get("device_model") or "").strip() or "STS 5000"
     data_dict["device_serial"] = str(data_dict.get("device_serial") or "").strip() or "19B20"
+    data_dict["device_model_2"] = str(data_dict.get("device_model_2") or "").strip() or "METREL-MI3123"
+    data_dict["device_serial_2"] = str(data_dict.get("device_serial_2") or "").strip() or "16060016"
 
     # Notes field normalization
     notes_text = data_dict.get("notes") or data_dict.get("notes_text") or ""
@@ -1347,7 +1349,7 @@ def main():
 
     # 5. Cell writing loop across sheets (Mapping-first clear-then-write)
     force_overwrite_keys = {
-        "operator_name", "operator_title", "creator_display_name", "notes", "device_model", "device_serial",
+        "operator_name", "operator_title", "creator_display_name", "notes", "device_model", "device_serial", "device_model_2", "device_serial_2",
         "ground_isletme_notr", "ground_koruma_trafo", "ground_koruma_hucre", "ground_koruma_kapilar", "ground_koruma_ag_pano"
     }
 
