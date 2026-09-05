@@ -1,7 +1,11 @@
 # TrafoReport
 
-Trafo bakım ve test saha raporlama sistemi — kurumsal dahili Android (Flutter)
-uygulaması + FastAPI backend + Excel üretim motoru.
+Trafo bakım ve test saha raporlama sistemi — B.T.S. Elektrik kurumsal dahili
+**Android tablet & Windows masaüstü** (Flutter) uygulaması + FastAPI backend +
+Excel üretim motoru.
+
+Backend merkezi bir sunucuda çalışır; mobil/masaüstü istemciler aynı ağ üzerinden
+(veya VPN ile) **birden fazla cihazdan eş zamanlı** olarak bağlanabilir.
 
 Bu repo **iki kişi + iki AI kod ajanı** tarafından paralel geliştirilecek şekilde
 bölünmüştür:
@@ -10,6 +14,16 @@ bölünmüştür:
 - `mobile/` → Mobil geliştiricisi + kendi ajanı (Flutter)
 - `docs/` → İkisinin de okuduğu, belirli dosyaların belirli kişi tarafından
   güncellendiği ortak alan
+
+## Teknoloji Özeti
+
+| Katman | Teknoloji |
+|---|---|
+| Backend | FastAPI (Python 3.11+), SQLite (geliştirme) / PostgreSQL (üretim) |
+| Mobil/Masaüstü | Flutter 3.x (Android tablet + Windows) |
+| API | REST — `docs/API_CONTRACT.md` |
+| Excel üretimi | openpyxl (şablondan birebir .xlsx üretimi) |
+| Kimlik doğrulama | JWT |
 
 ## Her oturuma başlarken (İKİ TARAF İÇİN DE)
 
@@ -41,4 +55,3 @@ Bu adım atlanmadan hiçbir kod değişikliği yapılmaz (bkz. kök `CLAUDE.md`)
 | `TASKS_MOBILE.md` | mobile | backend (referans) |
 
 Detaylı kurallar için `CLAUDE.md` dosyasına bak.
-
