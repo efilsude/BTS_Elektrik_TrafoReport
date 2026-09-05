@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../services/label_ocr_service.dart';
 import '../theme/app_theme.dart';
 
 // Conditionally import Windows-only scanner widget
@@ -37,6 +38,7 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
     facing: CameraFacing.back,
   );
   bool _isProcessing = false;
+  bool _isOcrProcessing = false;
   final TextEditingController _manualController = TextEditingController();
 
   @override
@@ -95,6 +97,65 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
     }
   }
 
+  /// Eski trafolarda etikette QR/barkod BULUNMADIĞI durumlar için: etiketin
+  /// fotoğrafı çekilir ve TAMAMEN CİHAZ ÜZERİNDE (Google ML Kit, internet/
+  /// API anahtarı/sunucu isteği OLMADAN, maliyetsiz) metne dönüştürülür.
+  /// Okunan ham metin, QR akışıyla aynı şekilde geri döndürülür ki bu
+  /// diyaloğu çağıran ekran (`_simulateQrScan`) zaten var olan regex
+  /// tabanlı alan ayrıştırma mantığını hiç değiştirmeden aynen kullanabilsin.
+  /// Kamera/QR tarama akışına dokunulmaz; bu tamamen ayrı, opsiyonel bir
+  /// buton/yoldur.
+  Future<void> _scanLabelPhotoWithOcr() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 90,
+      );
+      if (image == null) return;
+
+      setState(() => _isOcrProcessing = true);
+
+      final String recognizedText = await LabelOcrService.recognizeText(image.path);
+
+      if (recognizedText.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Etikette okunabilir metin bulunamadı. Lütfen etiketin '
+                'tamamının net ve iyi ışıklandırılmış göründüğü bir '
+                'fotoğraf çekip tekrar deneyin.',
+                style: GoogleFonts.inter(),
+              ),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (mounted) {
+        // QR akışındaki regex parse dalını tetiklemesi için okunan ham
+        // metin, QR koddan gelen bir metinmiş gibi geri döndürülür.
+        Navigator.of(context).pop(recognizedText);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Etiket fotoğrafı okunurken hata oluştu: $e'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isOcrProcessing = false);
+      }
+    }
+  }
+
   void _showManualInputDialog() {
     showDialog<void>(
       context: context,
@@ -137,7 +198,7 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
       clipBehavior: Clip.antiAlias,
       child: Container(
         width: 400,
-        height: 480,
+        height: 530,
         color: AppTheme.surfaceColor,
         child: Column(
           children: <Widget>[
@@ -209,6 +270,23 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                       ),
                     ),
                   ),
+                  if (_isOcrProcessing)
+                    Container(
+                      color: Colors.black.withOpacity(0.55),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            const CircularProgressIndicator(color: Colors.white),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Etiket fotoğrafı cihaz üzerinde okunuyor...',
+                              style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -217,21 +295,44 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
             Container(
               padding: const EdgeInsets.all(12),
               color: Colors.grey.shade100,
-              child: Row(
+              child: Column(
                 children: <Widget>[
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _pickFromGallery,
-                      icon: const Icon(Icons.photo_library_outlined, size: 18),
-                      label: Text('Galeriden Seç', style: GoogleFonts.inter(fontSize: 12)),
-                    ),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _isOcrProcessing ? null : _pickFromGallery,
+                          icon: const Icon(Icons.photo_library_outlined, size: 18),
+                          label: Text('Galeriden Seç', style: GoogleFonts.inter(fontSize: 12)),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _isOcrProcessing ? null : _showManualInputDialog,
+                          icon: const Icon(Icons.edit_outlined, size: 18),
+                          label: Text('Manuel Gir', style: GoogleFonts.inter(fontSize: 12)),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
+                  const SizedBox(height: 10),
+                  // Eski trafolarda QR/barkod yoksa: etiketin fotoğrafını
+                  // çekip cihaz üzerinde (ücretsiz, offline) OCR ile
+                  // okutmak için ayrı, opsiyonel buton.
+                  SizedBox(
+                    width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: _showManualInputDialog,
-                      icon: const Icon(Icons.edit_outlined, size: 18),
-                      label: Text('Manuel Gir', style: GoogleFonts.inter(fontSize: 12)),
+                      onPressed: _isOcrProcessing ? null : _scanLabelPhotoWithOcr,
+                      icon: const Icon(Icons.document_scanner_outlined, size: 18),
+                      label: Text(
+                        'QR Yok mu? Etiketi Fotoğrafla (Metin Oku)',
+                        style: GoogleFonts.inter(fontSize: 12),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                      ),
                     ),
                   ),
                 ],

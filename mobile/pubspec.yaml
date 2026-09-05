@@ -39,6 +39,10 @@ dependencies:
   permission_handler: ^11.3.1
   permission_handler_windows: ^0.2.2
 
+  # Eski trafo etiketlerinde QR/barkod yoksa: fotoğraftan cihaz üzerinde
+  # (ücretsiz, internet gerektirmeden) metin okumak için Google ML Kit.
+  google_mlkit_text_recognition: ^0.15.0
+
   # Windows Desktop — QR/Barcode scanning (pure Dart, all platforms)
   zxing_lib: ^1.1.4
   camera: ^0.11.1
